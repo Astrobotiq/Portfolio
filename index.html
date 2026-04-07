@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eren Köselerli — Game Developer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Source+Code+Pro:wght@300;400;500&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0a0a0f;
+    --surface:  #0e0e16;
+    --card:     #12121c;
+    --border:   #1e1e30;
+    --I:        #00f0f0; /* cyan   */
+    --O:        #f0f000; /* yellow */
+    --T:        #a000f0; /* purple */
+    --S:        #00f000; /* green  */
+    --Z:        #f00000; /* red    */
+    --J:        #0000f0; /* blue   */
+    --L:        #f0a000; /* orange */
+    --accent:   #00f0f0;
+    --accent2:  #a000f0;
+    --text:     #e8e8ff;
+    --muted:    #6666aa;
+    --dim:      #1a1a2e;
+    --pixel:    'Press Start 2P', monospace;
+    --mono:     'Source Code Pro', monospace;
+    --body:     'Rajdhani', sans-serif;
+  }
+
+  /* ── LIGHT MODE ── */
+  [data-theme="light"] {
+    --bg:       #f0f0f5;
+    --surface:  #e6e6f0;
+    --card:     #dcdcec;
+    --border:   #c0c0d8;
+    --text:     #18182a;
+    --muted:    #5555aa;
+    --dim:      #d0d0e4;
+    --accent:   #0088cc;
+    --accent2:  #7700cc;
+  }
+  [data-theme="light"] body::before {
+    background-image:
+      linear-gradient(rgba(0,120,200,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,120,200,0.06) 1px, transparent 1px);
+  }
+  [data-theme="light"] .tetris-board-display { background: rgba(220,220,236,0.95); }
+  [data-theme="light"] .tb-cell { background: var(--dim); }
+  [data-theme="light"] nav { background: rgba(240,240,245,0.95); }
+  [data-theme="light"] .mobile-menu { background: rgba(240,240,245,0.99); }
+  [data-theme="light"] .tetris-overlay { background: rgba(220,220,236,0.92); }
+  [data-theme="light"] .game-card:hover { background: #c8c8e0; }
+  [data-theme="light"] .project-card:hover { background: #c8c8e0; }
+  [data-theme="light"] .skill-item:hover { background: #c8c8e0; }
+
+  /* ── TOGGLE CONTROLS ── */
+  .nav-controls { display: flex; align-items: center; gap: 0.75rem; }
+  .toggle-btn {
+    font-family: var(--pixel); font-size: 0.32rem; letter-spacing: 0.06em;
+    padding: 0.4rem 0.6rem; background: var(--surface); color: var(--muted);
+    border: 1px solid var(--border); cursor: pointer;
+    transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+  }
+  .toggle-btn:hover { color: var(--I); border-color: var(--I); background: var(--dim); }
+  .toggle-btn.active { color: var(--I); border-color: var(--I); }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--body); overflow-x: hidden; font-size: 16px; transition: background 0.3s, color 0.3s; }
+
+  /* Grid background */
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,240,240,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,240,240,0.025) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--I); }
+
+  /* Falling pieces canvas */
+  #tetris-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.12; pointer-events: none; }
+
+  @keyframes blink { 0%,49%{opacity:1} 50%,99%{opacity:0} }
+  @keyframes stackIn { from{transform:translateY(-40px);opacity:0} to{transform:translateY(0);opacity:1} }
+  @keyframes blockPulse { 0%,100%{box-shadow:0 0 6px currentColor} 50%{box-shadow:0 0 18px currentColor,0 0 36px currentColor} }
+  @keyframes scanH { 0%{background-position:0 0} 100%{background-position:0 100%} }
+
+  /* Line-clear flash */
+  @keyframes rowFlash {
+    0%   { background: #fff; box-shadow: 0 0 30px #fff, 0 0 60px #fff; transform: scaleY(1); opacity: 1; }
+    35%  { background: #fff; box-shadow: 0 0 30px #fff; transform: scaleY(1.08); opacity: 1; }
+    70%  { background: var(--flash-color, #00f0f0); box-shadow: 0 0 20px var(--flash-color, #00f0f0); transform: scaleY(0.6); opacity: 0.7; }
+    100% { transform: scaleY(0); opacity: 0; }
+  }
+  .tb-cell.clearing {
+    animation: rowFlash 0.38s ease-out forwards;
+    z-index: 5;
+    position: relative;
+  }
+
+  /* Board shake */
+  @keyframes boardShake {
+    0%,100% { transform: translate(0,0); }
+    15%  { transform: translate(-5px, 2px); }
+    30%  { transform: translate(5px, -2px); }
+    45%  { transform: translate(-3px, 3px); }
+    60%  { transform: translate(3px, -1px); }
+    75%  { transform: translate(-2px, 2px); }
+    90%  { transform: translate(2px, -1px); }
+  }
+  .tetris-board-wrap.shake { animation: boardShake 0.35s ease-out; }
+
+  /* Score pop */
+  @keyframes scorePop {
+    0%   { transform: scale(1); color: var(--O); }
+    30%  { transform: scale(1.6); color: #fff; text-shadow: 0 0 20px #fff; }
+    100% { transform: scale(1); color: var(--O); }
+  }
+  .sidebar-val.pop { animation: scorePop 0.45s ease-out; }
+
+  /* Floating score text */
+  .score-float {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    font-family: var(--pixel); font-size: 0.7rem; color: #fff;
+    text-shadow: 0 0 12px #fff, 0 0 24px var(--I);
+    pointer-events: none; z-index: 20;
+    animation: floatUp 0.9s ease-out forwards;
+    white-space: nowrap;
+  }
+  @keyframes floatUp {
+    0%   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1.2); }
+    60%  { opacity: 1; }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-60px) scale(0.8); }
+  }
+
+  /* Particle canvas inside board wrap */
+  #particle-canvas {
+    position: absolute; inset: 0; pointer-events: none; z-index: 15;
+    width: 100%; height: 100%;
+  }
+
+  /* ── INLINE LEADERBOARD ── */
+  .tetris-lb {
+    width: 110px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;
+  }
+  .tetris-lb-title {
+    font-family: var(--pixel); font-size: 0.38rem; color: var(--I);
+    letter-spacing: 0.12em; padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tetris-lb-tabs { display: flex; gap: 2px; }
+  .lb-tab {
+    flex: 1; font-family: var(--pixel); font-size: 0.3rem; letter-spacing: 0.06em;
+    padding: 3px 0; background: var(--dim); color: var(--muted);
+    border: 1px solid var(--border); cursor: pointer; transition: all 0.15s;
+  }
+  .lb-tab.active { background: var(--surface); color: var(--I); border-color: var(--I); }
+  .lb-tab:hover:not(.active) { color: var(--text); }
+  .tetris-lb-list { display: flex; flex-direction: column; gap: 2px; }
+  .lb-entry {
+    display: grid; grid-template-columns: 14px 1fr auto;
+    gap: 3px; align-items: center;
+    padding: 3px 4px;
+    background: var(--surface); border: 1px solid var(--border);
+    animation: stackIn 0.25s ease both;
+  }
+  .lb-entry.gold   { border-color: #ffd700; }
+  .lb-entry.silver { border-color: #888; }
+  .lb-entry.bronze { border-color: #cd7f32; }
+  .lb-entry-rank {
+    font-family: var(--pixel); font-size: 0.3rem; color: var(--muted); text-align: center;
+  }
+  .lb-entry.gold   .lb-entry-rank { color: #ffd700; }
+  .lb-entry.silver .lb-entry-rank { color: #aaa; }
+  .lb-entry.bronze .lb-entry-rank { color: #cd7f32; }
+  .lb-entry-name  { font-family: var(--mono); font-size: 0.5rem; color: var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lb-entry-score { font-family: var(--pixel); font-size: 0.38rem; color: var(--O); text-align:right; }
+  .lb-entry.you   { background: rgba(0,240,240,0.07); }
+  .lb-entry.you .lb-entry-name { color: var(--I); }
+  .lb-empty-msg { font-family: var(--mono); font-size: 0.48rem; color: var(--muted); padding: 6px 2px; line-height: 1.6; }
+
+  /* Name entry in overlay */
+  .overlay-name-row { display: flex; flex-direction: column; gap: 0.5rem; align-items: center; }
+  .overlay-name-label { font-family: var(--pixel); font-size: 0.38rem; color: var(--muted); letter-spacing: 0.15em; }
+  .overlay-name-input {
+    font-family: var(--pixel); font-size: 0.55rem; letter-spacing: 0.1em;
+    background: var(--dim); color: var(--I); border: 2px solid var(--I);
+    padding: 0.4rem 0.6rem; width: 160px; text-align: center; outline: none;
+    text-transform: uppercase;
+  }
+  .overlay-name-input:focus { box-shadow: 0 0 12px var(--I); }
+
+  /* Tetromino block decoration */
+  .tetra-block {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid currentColor;
+    box-shadow: inset 2px 2px 0 rgba(255,255,255,0.3), inset -2px -2px 0 rgba(0,0,0,0.4);
+    flex-shrink: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9500;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 2.5rem;
+    background: rgba(10,10,15,0.95); backdrop-filter: blur(12px);
+    border-bottom: 2px solid var(--border);
+  }
+  nav::after { content:''; position:absolute; bottom:-2px; left:0; right:0; height:2px; background: linear-gradient(90deg, var(--I), var(--T), var(--O), var(--S), var(--Z), var(--J), var(--L)); }
+  .nav-logo { font-family: var(--pixel); font-size: 0.75rem; color: var(--I); text-decoration: none; letter-spacing: 0.05em; text-shadow: 0 0 10px var(--I); }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.2s; position: relative; padding-bottom: 2px; }
+  .nav-links a::after { content:''; position:absolute; bottom:0; left:0; width:0; height:2px; background: var(--I); transition: width 0.2s; }
+  .nav-links a:hover { color: var(--I); }
+  .nav-links a:hover::after { width:100%; }
+
+  .nav-hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; background:none; border:none; padding:4px; }
+  .nav-hamburger span { display:block; width:22px; height:2px; background: var(--I); transition: transform 0.3s, opacity 0.3s; }
+  .nav-hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+  .nav-hamburger.open span:nth-child(2) { opacity:0; }
+  .nav-hamburger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+  .mobile-menu { display:none; position:fixed; inset:0; background:rgba(10,10,15,0.98); z-index:9400; flex-direction:column; align-items:center; justify-content:center; gap:2rem; }
+  .mobile-menu.open { display:flex; }
+  .mobile-menu a { font-family:var(--pixel); font-size:1rem; color:var(--muted); text-decoration:none; transition:color 0.2s; }
+  .mobile-menu a:hover { color:var(--I); }
+
+  /* HERO */
+  .hero { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; position: relative; overflow: hidden; z-index: 1; }
+  .hero-left { display: flex; flex-direction: column; justify-content: center; padding: 8rem 3rem 5rem; position: relative; z-index: 2; }
+
+  .hero-tag { font-family: var(--mono); font-size: 0.65rem; color: var(--S); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem; }
+  .hero-tag .blink { animation: blink 1s step-end infinite; }
+
+  /* Pixel-block name */
+  .hero-name-wrap { margin-bottom: 1rem; position: relative; }
+  .hero-name {
+    font-family: var(--pixel);
+    font-size: clamp(1.8rem, 4vw, 3.8rem);
+    line-height: 1.4;
+    color: #ffffff;
+    font-weight: 400;
+    position: relative; z-index: 1;
+    text-shadow: 3px 3px 0 var(--border);
+  }
+  .hero-name .chunk-I  { color: var(--I);  text-shadow: 3px 3px 0 rgba(0,0,0,0.5), 0 0 20px var(--I); }
+  .hero-name .chunk-T  { color: var(--T);  text-shadow: 3px 3px 0 rgba(0,0,0,0.5), 0 0 20px var(--T); }
+  .hero-name .chunk-O  { color: var(--O);  text-shadow: 3px 3px 0 rgba(0,0,0,0.5), 0 0 20px var(--O); }
+  .hero-name .chunk-S  { color: var(--S);  text-shadow: 3px 3px 0 rgba(0,0,0,0.5), 0 0 20px var(--S); }
+  .hero-name .chunk-L  { color: var(--L);  text-shadow: 3px 3px 0 rgba(0,0,0,0.5), 0 0 20px var(--L); }
+
+  .hero-sub { font-family: var(--pixel); font-size: clamp(0.5rem, 1.2vw, 0.75rem); color: var(--muted); letter-spacing: 0.15em; margin-bottom: 2rem; line-height: 2; }
+  .hero-sub em { color: var(--I); font-style: normal; }
+  .hero-desc { font-size: 1rem; line-height: 1.8; color: var(--muted); max-width: 420px; margin-bottom: 2.5rem; font-weight: 400; }
+
+  /* Score panel */
+  .hero-score {
+    font-family: var(--pixel);
+    font-size: 0.55rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 2rem;
+    display: flex; flex-direction: column; gap: 0.5rem;
+    border: 2px solid var(--border);
+    padding: 1rem;
+    max-width: 280px;
+    background: var(--surface);
+  }
+  .score-row { display: flex; justify-content: space-between; gap: 2rem; }
+  .score-label { color: var(--muted); }
+  .score-val { color: var(--O); }
+
+  .hero-ctas { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .btn-primary {
+    font-family: var(--pixel); font-size: 0.5rem; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 0.9rem 1.6rem; background: var(--I); color: var(--bg);
+    text-decoration: none; border: none; display: inline-block;
+    position: relative; transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 4px 4px 0 rgba(0,240,240,0.3);
+    image-rendering: pixelated;
+  }
+  .btn-primary:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 rgba(0,240,240,0.3); }
+  .btn-primary:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 rgba(0,240,240,0.3); }
+  .btn-outline {
+    font-family: var(--pixel); font-size: 0.5rem; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 0.9rem 1.6rem; background: transparent; color: var(--T);
+    text-decoration: none; border: 2px solid var(--T); display: inline-block;
+    transition: transform 0.1s, box-shadow 0.1s, background 0.1s;
+    box-shadow: 4px 4px 0 rgba(160,0,240,0.3);
+  }
+  .btn-outline:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 rgba(160,0,240,0.3); background: rgba(160,0,240,0.1); }
+
+  /* Hero right — playable tetris */
+  .hero-right { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+
+  .tetris-wrapper { display: flex; gap: 12px; align-items: flex-start; position: relative; z-index: 2; }
+
+  /* Board */
+  .tetris-board-wrap { position: relative; }
+  .tetris-board-display {
+    display: grid;
+    grid-template-columns: repeat(10, 26px);
+    grid-template-rows: repeat(20, 26px);
+    gap: 1px;
+    border: 3px solid var(--border);
+    padding: 3px;
+    background: rgba(10,10,15,0.9);
+  }
+  .tb-cell { width: 26px; height: 26px; background: var(--dim); border: 1px solid rgba(255,255,255,0.03); }
+  .tb-cell.filled { border: 2px solid rgba(255,255,255,0.25); box-shadow: inset 3px 3px 0 rgba(255,255,255,0.2), inset -3px -3px 0 rgba(0,0,0,0.4); }
+  .tb-cell.ghost { opacity: 0.22; border: 1px dashed rgba(255,255,255,0.25); }
+
+  /* Overlay */
+  .tetris-overlay {
+    position: absolute; inset: 0;
+    background: rgba(10,10,15,0.88);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
+    z-index: 10;
+    backdrop-filter: blur(2px);
+  }
+  .tetris-overlay.hidden { display: none; }
+  .overlay-title { font-family: var(--pixel); font-size: 1.4rem; color: var(--I); text-shadow: 0 0 20px var(--I); letter-spacing: 0.1em; }
+  .overlay-sub { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; text-align:center; padding: 0 1rem; }
+  .overlay-btn {
+    font-family: var(--pixel); font-size: 0.5rem; letter-spacing: 0.08em;
+    padding: 0.7rem 1.2rem; background: var(--I); color: var(--bg);
+    border: none; cursor: pointer; margin-top: 0.5rem;
+    box-shadow: 4px 4px 0 rgba(0,240,240,0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .overlay-btn:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 rgba(0,240,240,0.3); }
+  .overlay-btn:active { transform: translate(2px,2px); }
+
+  /* Sidebar */
+  .tetris-sidebar { display: flex; flex-direction: column; gap: 8px; width: 88px; }
+  .sidebar-box {
+    border: 2px solid var(--border); background: var(--surface);
+    padding: 0.6rem 0.5rem; display: flex; flex-direction: column; gap: 5px;
+  }
+  .sidebar-label { font-family: var(--pixel); font-size: 0.38rem; color: var(--muted); letter-spacing: 0.15em; }
+  .sidebar-val { font-family: var(--pixel); font-size: 0.7rem; color: var(--O); text-align: right; letter-spacing: 0.05em; }
+  .next-piece-grid { display: grid; grid-template-columns: repeat(4, 14px); grid-template-rows: repeat(4, 14px); gap: 1px; }
+  .np-cell { width: 14px; height: 14px; background: var(--dim); border: 1px solid rgba(255,255,255,0.03); }
+  .np-cell.filled { border: 1px solid rgba(255,255,255,0.2); box-shadow: inset 2px 2px 0 rgba(255,255,255,0.15), inset -2px -2px 0 rgba(0,0,0,0.35); }
+  .hint-box .hint-line { font-family: var(--mono); font-size: 0.48rem; color: var(--muted); letter-spacing: 0.05em; line-height: 1.7; }
+
+  /* SECTIONS */
+  section { padding: 6rem 3rem; position: relative; z-index: 1; }
+  .section-header { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 3.5rem; }
+  .section-piece { display: grid; gap: 3px; flex-shrink: 0; }
+  .piece-cell { width: 12px; height: 12px; border: 1px solid rgba(255,255,255,0.2); box-shadow: inset 2px 2px 0 rgba(255,255,255,0.2); }
+  .section-label { font-family: var(--mono); font-size: 0.62rem; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; display: block; margin-bottom: 0.4rem; }
+  .section-title { font-family: var(--pixel); font-size: clamp(1.2rem, 3vw, 2.2rem); line-height: 1.3; letter-spacing: 0.04em; font-weight: 400; color: var(--text); }
+  .section-title em { font-style: normal; }
+
+  /* EXPERIENCE */
+  .experience-section { background: var(--bg); }
+  .exp-timeline { margin-left: 0; display: flex; flex-direction: column; gap: 2px; }
+  .exp-item {
+    padding: 2rem 2.5rem;
+    position: relative;
+    border-left: 4px solid var(--border);
+    transition: border-color 0.2s, background 0.2s;
+    background: var(--surface);
+  }
+  .exp-item:hover { border-left-color: var(--I); background: var(--card); }
+  .exp-dot {
+    position: absolute; left: -10px; top: 2.2rem;
+    width: 16px; height: 16px;
+    background: var(--T);
+    border: 2px solid var(--bg);
+    box-shadow: inset 2px 2px 0 rgba(255,255,255,0.3), 0 0 8px var(--T);
+  }
+  .exp-item:hover .exp-dot { background: var(--I); box-shadow: inset 2px 2px 0 rgba(255,255,255,0.3), 0 0 12px var(--I); }
+  .exp-date { font-family: var(--mono); font-size: 0.6rem; color: var(--I); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.4rem; }
+  .exp-company { font-family: var(--pixel); font-size: 1rem; letter-spacing: 0.04em; margin-bottom: 0.3rem; font-weight: 400; color: var(--text); }
+  .exp-role { font-family: var(--mono); font-size: 0.65rem; color: var(--T); letter-spacing: 0.1em; margin-bottom: 0.9rem; }
+  .exp-desc { font-size: 0.95rem; line-height: 1.72; color: var(--muted); max-width: 620px; font-weight: 400; }
+
+  /* EDUCATION */
+  .education-section { background: var(--surface); }
+  .edu-card {
+    display: grid; grid-template-columns: 180px 1fr; gap: 3rem;
+    border: 3px solid var(--border); padding: 2.5rem;
+    transition: border-color 0.25s, box-shadow 0.25s;
+    background: var(--card);
+    box-shadow: 6px 6px 0 var(--border);
+    position: relative;
+  }
+  .edu-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background: linear-gradient(90deg, var(--O), var(--L)); }
+  .edu-card:hover { border-color: var(--O); box-shadow: 6px 6px 0 var(--O); }
+  .edu-years { font-family: var(--pixel); font-size: 0.9rem; color: var(--O); line-height: 1.8; padding-top: 0.2rem; text-shadow: 0 0 10px var(--O); }
+  .edu-school { font-family: var(--pixel); font-size: 0.85rem; letter-spacing: 0.04em; margin-bottom: 0.5rem; font-weight: 400; line-height: 1.6; color: var(--text); }
+  .edu-degree { font-family: var(--mono); font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 0.4rem; }
+  .edu-gpa { font-family: var(--pixel); font-size: 0.6rem; color: var(--S); letter-spacing: 0.1em; margin-bottom: 1rem; }
+  .edu-desc { font-size: 0.95rem; line-height: 1.72; color: var(--muted); max-width: 560px; font-weight: 400; }
+
+  /* SHIPPED TITLES */
+  .games-section { background: var(--bg); }
+  .games-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; background: var(--border); }
+  .game-card {
+    background: var(--card); padding: 2rem;
+    transition: background 0.2s, transform 0.15s;
+    text-decoration: none; color: inherit; display: flex; flex-direction: column;
+    position: relative; overflow: hidden;
+    border-top: 3px solid transparent;
+  }
+  .game-card:nth-child(1) { border-top-color: var(--I); }
+  .game-card:nth-child(2) { border-top-color: var(--T); }
+  .game-card:nth-child(3) { border-top-color: var(--O); }
+  .game-card:hover { background: #161625; transform: translateY(-3px); }
+  .game-icon { font-size: 1.6rem; margin-bottom: 0.8rem; }
+  .game-title { font-family: var(--pixel); font-size: 0.85rem; letter-spacing: 0.04em; margin-bottom: 0.4rem; font-weight: 400; color: var(--text); line-height: 1.5; }
+  .game-role { font-family: var(--mono); font-size: 0.6rem; color: var(--I); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.7rem; }
+  .game-desc { font-size: 0.9rem; line-height: 1.65; color: var(--muted); flex: 1; font-weight: 400; }
+  .game-steam { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.25rem; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); transition: color 0.2s; }
+  .game-card:hover .game-steam { color: var(--I); }
+  .game-steam svg { width: 13px; height: 13px; fill: currentColor; flex-shrink: 0; }
+
+  /* PROJECTS */
+  .projects-section { background: var(--surface); }
+  .projects-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; background: var(--border); }
+  .project-card {
+    background: var(--card); padding: 2rem; position: relative; overflow: hidden;
+    transition: background 0.2s; text-decoration: none; color: inherit; display: flex; flex-direction: column;
+    border-bottom: 3px solid transparent;
+  }
+  .project-card:nth-child(1) { border-bottom-color: var(--I); }
+  .project-card:nth-child(2) { border-bottom-color: var(--T); }
+  .project-card:nth-child(3) { border-bottom-color: var(--S); }
+  .project-card:nth-child(4) { border-bottom-color: var(--O); }
+  .project-card:nth-child(5) { border-bottom-color: var(--L); }
+  .project-card:hover { background: #161625; }
+  .project-card.large { grid-column: span 7; }
+  .project-card.medium { grid-column: span 5; }
+  .project-card.small { grid-column: span 4; }
+  .project-card.wide { grid-column: span 8; }
+  .project-arrow { position:absolute; top:1.5rem; right:1.5rem; font-size:1rem; color:var(--I); opacity:0; transform:translate(-6px,6px); transition:opacity 0.2s,transform 0.2s; pointer-events:none; }
+  .project-card:hover .project-arrow { opacity:1; transform:translate(0,0); }
+  .project-num { font-family: var(--mono); font-size: 0.55rem; color: var(--muted); letter-spacing: 0.2em; margin-bottom: 1.2rem; }
+  .project-preview { width:100%; aspect-ratio:16/9; object-fit:cover; margin-bottom:1.2rem; opacity:0.7; transition:opacity 0.3s; display:block; border:2px solid var(--border); background:var(--surface); }
+  .project-card:hover .project-preview { opacity:1; }
+  .gif-placeholder { width:100%; aspect-ratio:16/9; margin-bottom:1.2rem; border:2px solid var(--border); background:var(--dim); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:0.6rem; opacity:0.6; transition:opacity 0.3s; position:relative; overflow:hidden; }
+  .gif-placeholder::after { content:''; position:absolute; inset:0; background: repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,240,240,0.04) 4px, rgba(0,240,240,0.04) 5px); }
+  .project-card:hover .gif-placeholder { opacity:0.9; }
+  .gif-placeholder-icon { font-size:2rem; }
+  .gif-placeholder-text { font-family:var(--mono); font-size:0.55rem; color:var(--muted); letter-spacing:0.12em; text-transform:uppercase; }
+  .gif-placeholder-sub { font-family:var(--mono); font-size:0.5rem; color:var(--muted); letter-spacing:0.1em; opacity:0.7; }
+  .project-name { font-family: var(--pixel); font-size: 1rem; letter-spacing: 0.04em; margin-bottom: 0.7rem; line-height: 1.4; font-weight: 400; color: var(--text); }
+  .project-desc { font-size: 0.88rem; line-height: 1.65; color: var(--muted); flex: 1; margin-bottom: 1.2rem; font-weight: 400; }
+  .project-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: auto; }
+  .tag {
+    font-family: var(--mono); font-size: 0.55rem; padding: 0.2rem 0.5rem;
+    border: 1px solid var(--border); color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .project-card:hover .tag { border-color: var(--I); color: var(--I); }
+
+  /* SKILLS — tetromino grid */
+  .skills-section { background: var(--bg); }
+  .skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 3px; background: var(--border); }
+  .skill-item {
+    background: var(--card); padding: 1.2rem 1rem; display: flex; flex-direction: column; gap: 0.4rem;
+    position: relative; overflow: hidden; transition: background 0.2s, transform 0.15s; cursor: default;
+    border-top: 3px solid transparent;
+  }
+  .skill-item:nth-child(7n+1) { border-top-color: var(--I); }
+  .skill-item:nth-child(7n+2) { border-top-color: var(--O); }
+  .skill-item:nth-child(7n+3) { border-top-color: var(--T); }
+  .skill-item:nth-child(7n+4) { border-top-color: var(--S); }
+  .skill-item:nth-child(7n+5) { border-top-color: var(--Z); }
+  .skill-item:nth-child(7n+6) { border-top-color: var(--J); }
+  .skill-item:nth-child(7n+0) { border-top-color: var(--L); }
+  .skill-item:hover { background: #161625; transform: translateY(-2px); }
+  .skill-name { font-family: var(--mono); font-size: 0.72rem; color: var(--text); letter-spacing: 0.04em; font-weight: 500; }
+  .skill-type { font-family: var(--mono); font-size: 0.55rem; color: var(--muted); letter-spacing: 0.1em; }
+
+  /* CONTACT */
+  .contact-section { background: var(--surface); position: relative; overflow: hidden; }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start; position: relative; z-index: 1; }
+  .contact-sub { font-size: 1rem; line-height: 1.75; color: var(--muted); margin-bottom: 2.5rem; max-width: 380px; font-weight: 400; }
+  .contact-links { display: flex; flex-direction: column; gap: 3px; }
+  .contact-link {
+    display: flex; align-items: center; gap: 1rem; text-decoration: none; color: var(--text);
+    padding: 1rem 1.2rem; border: 2px solid var(--border);
+    transition: border-color 0.2s, transform 0.15s, background 0.2s, box-shadow 0.2s;
+    font-family: var(--mono); font-size: 0.72rem; background: var(--card);
+  }
+  .contact-link:hover { border-color: var(--I); transform: translateX(6px); background: var(--dim); box-shadow: -6px 0 0 var(--I); }
+  .contact-link-icon { font-size: 0.9rem; opacity: 0.6; flex-shrink: 0; font-family: var(--mono); }
+  .contact-info { display: flex; flex-direction: column; gap: 0; }
+  .info-item { padding: 1rem 1.2rem; border: 2px solid var(--border); border-top: none; background: var(--card); display: flex; justify-content: space-between; align-items: center; }
+  .info-item:first-child { border-top: 2px solid var(--border); border-top-color: var(--T); }
+  .info-item label { font-family: var(--mono); font-size: 0.58rem; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; }
+  .info-item span { font-family: var(--mono); font-size: 0.72rem; color: var(--text); }
+  .info-item span.live { color: var(--S); animation: blockPulse 2s ease-in-out infinite; }
+
+  /* FOOTER */
+  footer {
+    padding: 1.5rem 3rem; display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 1rem; background: var(--bg); position: relative; z-index: 1;
+    border-top: 3px solid var(--border);
+  }
+  footer::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background: linear-gradient(90deg, var(--I), var(--T), var(--O), var(--S), var(--Z), var(--J), var(--L)); }
+  footer span { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); letter-spacing: 0.1em; }
+
+  /* REVEAL */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.5s ease, transform 0.5s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* RESPONSIVE */
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-right { display: none; }
+    .games-grid { grid-template-columns: 1fr 1fr; }
+    .project-card.large, .project-card.medium, .project-card.small, .project-card.wide { grid-column: span 12; }
+    .contact-grid { grid-template-columns: 1fr; gap: 3rem; }
+    .edu-card { grid-template-columns: 1fr; gap: 1rem; }
+    nav { padding: 1rem 1.5rem; }
+    section { padding: 4rem 1.5rem; }
+    .hero-left { padding: 7rem 1.5rem 4rem; }
+  }
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    .nav-hamburger { display: flex; }
+    .games-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="tetris-canvas"></canvas>
+
+<div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Navigation">
+  <a href="#hero"       onclick="closeMobileMenu()" data-i18n="nav_about">About</a>
+  <a href="#experience" onclick="closeMobileMenu()" data-i18n="nav_exp">Experience</a>
+  <a href="#education"  onclick="closeMobileMenu()" data-i18n="nav_edu">Education</a>
+  <a href="#games"      onclick="closeMobileMenu()" data-i18n="nav_games">Shipped Titles</a>
+  <a href="#projects"   onclick="closeMobileMenu()" data-i18n="nav_projects">Projects</a>
+  <a href="#skills"     onclick="closeMobileMenu()" data-i18n="nav_skills">Skills</a>
+  <a href="#contact"    onclick="closeMobileMenu()" data-i18n="nav_contact">Contact</a>
+</div>
+
+<nav>
+  <a href="#hero" class="nav-logo">EK://</a>
+  <ul class="nav-links">
+    <li><a href="#hero" data-i18n="nav_about">About</a></li>
+    <li><a href="#experience" data-i18n="nav_exp">Experience</a></li>
+    <li><a href="#education" data-i18n="nav_edu">Education</a></li>
+    <li><a href="#games" data-i18n="nav_games">Shipped Titles</a></li>
+    <li><a href="#projects" data-i18n="nav_projects">Projects</a></li>
+    <li><a href="#skills" data-i18n="nav_skills">Skills</a></li>
+    <li><a href="#contact" data-i18n="nav_contact">Contact</a></li>
+  </ul>
+  <div class="nav-controls">
+    <button class="toggle-btn" id="langToggle" onclick="toggleLang()" title="Switch language / Dil değiştir">EN / TR</button>
+    <button class="toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle dark/light mode">☀ / ☾</button>
+    <button class="nav-hamburger" id="hamburger" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- 1. ABOUT -->
+<section class="hero" id="hero">
+  <div class="hero-left">
+    <div class="hero-tag">▶ PLAYER_1 <span class="blink">█</span> <span data-i18n="hero_tag">AVAILABLE FOR HIRE</span></div>
+    <div class="hero-name-wrap">
+      <h1 class="hero-name">
+        <span class="chunk-I">ERE</span><span class="chunk-T">N</span><br>
+        <span class="chunk-S">KÖS</span><span class="chunk-O">EL</span><span class="chunk-L">ERLI</span>
+      </h1>
+    </div>
+    <div class="hero-sub">GAME <em>/</em> SYSTEMS DEVELOPER</div>
+    <p class="hero-desc" data-i18n="hero_desc">Software Engineering graduate specializing in robust game mechanics and flexible system design. Crafting sustainable game systems through Unity and C# with a methodical, architecture-first approach.</p>
+    <div class="hero-score">
+      <div class="score-row"><span class="score-label" data-i18n="stat_location">LOCATION</span><span class="score-val">IZMIR.TR</span></div>
+      <div class="score-row"><span class="score-label" data-i18n="stat_stack">STACK</span><span class="score-val">UNITY·C#·C++</span></div>
+      <div class="score-row"><span class="score-label" data-i18n="stat_exploring">EXPLORING</span><span class="score-val">UNITY DOTS</span></div>
+      <div class="score-row"><span class="score-label" data-i18n="stat_status">STATUS</span><span class="score-val" style="color:var(--S)" data-i18n="stat_open">● OPEN</span></div>
+    </div>
+    <div class="hero-ctas">
+      <a href="#projects" class="btn-primary" data-i18n="cta_projects">▶ VIEW PROJECTS</a>
+      <a href="#contact" class="btn-outline" data-i18n="cta_contact">GET IN TOUCH</a>
+    </div>
+  </div>
+  <div class="hero-right" aria-label="Playable Tetris">
+    <div class="tetris-wrapper">
+      <!-- Sidebar: next piece + stats -->
+      <div class="tetris-sidebar">
+        <div class="sidebar-box">
+          <div class="sidebar-label">NEXT</div>
+          <div class="next-piece-grid" id="nextPieceGrid"></div>
+        </div>
+        <div class="sidebar-box">
+          <div class="sidebar-label">SCORE</div>
+          <div class="sidebar-val" id="scoreDisplay">0</div>
+        </div>
+        <div class="sidebar-box">
+          <div class="sidebar-label">LINES</div>
+          <div class="sidebar-val" id="linesDisplay">0</div>
+        </div>
+        <div class="sidebar-box">
+          <div class="sidebar-label">LEVEL</div>
+          <div class="sidebar-val" id="levelDisplay">1</div>
+        </div>
+        <div class="sidebar-box hint-box">
+          <div class="sidebar-label" data-i18n="keys_label">KEYS</div>
+          <div class="hint-line" data-i18n="key_move">← → move</div>
+          <div class="hint-line" data-i18n="key_rotate">↑ rotate</div>
+          <div class="hint-line" data-i18n="key_soft">↓ soft drop</div>
+          <div class="hint-line" data-i18n="key_hard">SPC hard drop</div>
+          <div class="hint-line" data-i18n="key_pause">P pause</div>
+        </div>
+      </div>
+      <!-- Board -->
+      <div class="tetris-board-wrap">
+        <div class="tetris-board-display" id="tetrisBoard"></div>
+        <canvas id="particle-canvas"></canvas>
+        <div class="tetris-overlay" id="tetrisOverlay">
+          <div class="overlay-title" id="overlayTitle">TETRIS</div>
+          <div class="overlay-sub" id="overlaySub">PRESS START</div>
+          <div class="overlay-name-row" id="nameRow" style="display:none">
+            <div class="overlay-name-label">ENTER NAME</div>
+            <input class="overlay-name-input" id="playerNameInput" maxlength="8" placeholder="AAA" autocomplete="off" spellcheck="false">
+          </div>
+          <button class="overlay-btn" id="overlayBtn">▶ START GAME</button>
+        </div>
+      </div>
+      <!-- Inline leaderboard -->
+      <div class="tetris-lb">
+        <div class="tetris-lb-title">▶ HIGH SCORES</div>
+        <div class="tetris-lb-tabs">
+          <button class="lb-tab active" id="tabAll"     onclick="switchLbTab('all')">ALL TIME</button>
+          <button class="lb-tab"        id="tabSession" onclick="switchLbTab('session')">SESSION</button>
+        </div>
+        <div class="tetris-lb-list" id="lbAllTime"></div>
+        <div class="tetris-lb-list" id="lbSession" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. EXPERIENCE -->
+<section class="experience-section" id="experience">
+  <div class="section-header">
+    <div class="section-piece" style="grid-template-columns:repeat(3,12px)">
+      <div class="piece-cell" style="background:var(--I);grid-column:1/4"></div>
+      <div class="piece-cell" style="background:var(--I);grid-column:1/4"></div>
+    </div>
+    <div>
+      <div class="section-label" data-i18n="exp_label">career_log.exe</div>
+      <h2 class="section-title" style="color:var(--I)" data-i18n="exp_title">EXPERI<br>ENCE</h2>
+    </div>
+  </div>
+  <div class="exp-timeline">
+    <div class="exp-item reveal">
+      <div class="exp-dot"></div>
+      <div class="exp-date" data-i18n="exp1_date">Jul 2025 — Mar 2026</div>
+      <div class="exp-company">BLAY GAMES</div>
+      <div class="exp-role" data-i18n="exp1_role">// Game Developer [Full-Time]</div>
+      <p class="exp-desc" data-i18n="exp1_desc">Led game development initiatives, building robust and scalable game systems with Unity and C#. Contributed to live product releases — including KissCargo's multiplayer systems via Normcore — maintaining high engineering standards in a professional studio environment.</p>
+    </div>
+    <div class="exp-item reveal">
+      <div class="exp-dot"></div>
+      <div class="exp-date" data-i18n="exp2_date">Oct 2024 — Mar 2025</div>
+      <div class="exp-company">BLAY GAMES</div>
+      <div class="exp-role" data-i18n="exp2_role">// Game Developer Intern</div>
+      <p class="exp-desc" data-i18n="exp2_desc">Solely responsible for the complete Steam port of OROBOROS — independently managing all codebase adaptations and UI implementations for a successful platform release. Also assisted with core coding and the Steam port of GOKA.</p>
+    </div>
+    <div class="exp-item reveal">
+      <div class="exp-dot"></div>
+      <div class="exp-date" data-i18n="exp3_date">Jul 2024 — Aug 2024</div>
+      <div class="exp-company">TESTINIUM</div>
+      <div class="exp-role" data-i18n="exp3_role">// Software Test &amp; QA Intern</div>
+      <p class="exp-desc" data-i18n="exp3_desc">Gained hands-on experience in software quality assurance, testing methodologies, and defect tracking workflows — building a foundation in testing that directly informs a quality-first approach to game development.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3. EDUCATION -->
+<section class="education-section" id="education">
+  <div class="section-header">
+    <div class="section-piece" style="grid-template-columns:repeat(2,12px)">
+      <div class="piece-cell" style="background:var(--O)"></div>
+      <div class="piece-cell" style="background:var(--O)"></div>
+      <div class="piece-cell" style="background:var(--O)"></div>
+      <div class="piece-cell" style="background:var(--O)"></div>
+    </div>
+    <div>
+      <div class="section-label" data-i18n="edu_label">academic_log.exe</div>
+      <h2 class="section-title" style="color:var(--O)" data-i18n="edu_title">EDUCA<br>TION</h2>
+    </div>
+  </div>
+  <div class="edu-card reveal">
+    <div class="edu-years">2020<br>——<br>2025</div>
+    <div class="edu-body">
+      <div class="edu-school">İZMİR UNIVERSITY OF ECONOMICS</div>
+      <div class="edu-degree" data-i18n="edu_degree">Bachelor of Software Engineering</div>
+      <div class="edu-gpa" data-i18n="edu_gpa">▶ GPA: 3.0 / 4.0</div>
+      <p class="edu-desc" data-i18n="edu_desc">Built a strong foundation in software engineering principles, data structures, design patterns, and computer science fundamentals — running parallel to a growing specialization in game development and interactive systems.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. SHIPPED TITLES -->
+<section class="games-section" id="games">
+  <div class="section-header">
+    <div class="section-piece" style="grid-template-columns:repeat(3,12px)">
+      <div class="piece-cell" style="background:transparent"></div>
+      <div class="piece-cell" style="background:var(--T)"></div>
+      <div class="piece-cell" style="background:transparent"></div>
+      <div class="piece-cell" style="background:var(--T)"></div>
+      <div class="piece-cell" style="background:var(--T)"></div>
+      <div class="piece-cell" style="background:var(--T)"></div>
+    </div>
+    <div>
+      <div class="section-label" data-i18n="games_label">shipped_titles.exe</div>
+      <h2 class="section-title" style="color:var(--T)" data-i18n="games_title">SHIPPED<br>TITLES</h2>
+    </div>
+  </div>
+  <div class="games-grid">
+    <a href="https://store.steampowered.com/app/4019450/OROBOROS/" target="_blank" rel="noopener" class="game-card reveal">
+      <div class="game-icon">🐍</div>
+      <div class="game-title">OROBOROS</div>
+      <div class="game-role" data-i18n="game1_role">Sole Steam Port Lead</div>
+      <p class="game-desc" data-i18n="game1_desc">Independently managed all codebase adaptations and UI implementations for a complete and successful Steam release while at Blay Games.</p>
+      <div class="game-steam">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.624 0 11.994-5.372 11.994-12 0-6.629-5.37-12-11.994-12z"/></svg>
+        View on Steam
+      </div>
+    </a>
+    <a href="https://store.steampowered.com/app/2776660/GOKA_Street/" target="_blank" rel="noopener" class="game-card reveal">
+      <div class="game-icon">🎮</div>
+      <div class="game-title">GOKA</div>
+      <div class="game-role" data-i18n="game2_role">Core Developer &amp; Steam Port</div>
+      <p class="game-desc" data-i18n="game2_desc">Assisted with core coding tasks and supported the Steam port release process as part of the Blay Games team.</p>
+      <div class="game-steam">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.624 0 11.994-5.372 11.994-12 0-6.629-5.37-12-11.994-12z"/></svg>
+        View on Steam
+      </div>
+    </a>
+    <a href="https://store.steampowered.com/app/4277540/Kiss_Cargo/" target="_blank" rel="noopener" class="game-card reveal">
+      <div class="game-icon">📦</div>
+      <div class="game-title">KISS CARGO</div>
+      <div class="game-role" data-i18n="game3_role">Multiplayer Systems Developer</div>
+      <p class="game-desc" data-i18n="game3_desc">Developed multiplayer systems utilizing the Normcore framework, enabling real-time online gameplay for a smooth networked experience.</p>
+      <div class="game-steam">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.624 0 11.994-5.372 11.994-12 0-6.629-5.37-12-11.994-12z"/></svg>
+        View on Steam
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- 5. PROJECTS -->
+<section class="projects-section" id="projects">
+  <div class="section-header">
+    <div class="section-piece" style="grid-template-columns:repeat(3,12px)">
+      <div class="piece-cell" style="background:var(--S)"></div>
+      <div class="piece-cell" style="background:var(--S)"></div>
+      <div class="piece-cell" style="background:transparent"></div>
+      <div class="piece-cell" style="background:transparent"></div>
+      <div class="piece-cell" style="background:var(--S)"></div>
+      <div class="piece-cell" style="background:var(--S)"></div>
+    </div>
+    <div>
+      <div class="section-label" data-i18n="proj_label">personal_builds.exe</div>
+      <h2 class="section-title" style="color:var(--S)" data-i18n="proj_title">FEATURED<br>PROJECTS</h2>
+    </div>
+  </div>
+  <div class="projects-grid">
+    <!-- 01 — INTO THE NIGHT (has image) → large hero slot -->
+    <a href="https://github.com/Astrobotiq/Dungeon" target="_blank" rel="noopener" class="project-card large reveal">
+      <span class="project-arrow">→</span>
+      <div class="project-num">01 / CAPSTONE</div>
+      <img class="project-preview" src="https://github.com/user-attachments/assets/0c277484-7743-4a09-bd90-7573b5a931c2" alt="Into the Night gameplay" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="gif-placeholder" style="display:none;"><span class="gif-placeholder-icon">🎮</span><span class="gif-placeholder-text">[ gameplay_preview.gif ]</span><span class="gif-placeholder-sub">click → view on github</span></div>
+      <div class="project-name">INTO THE NIGHT</div>
+      <p class="project-desc" data-i18n="proj2_desc">3D tactical game inspired by Into The Breach with a Viking-era theme. Designed a Utility AI system that dynamically evaluates the environment — calculating optimal attack positions while avoiding hazardous zones.</p>
+      <div class="project-tags">
+        <span class="tag">Utility AI</span><span class="tag">Unity</span><span class="tag">Capstone</span>
+      </div>
+    </a>
+    <!-- 02 — DANCE BATTLE (has image) → medium slot -->
+    <a href="https://github.com/Astrobotiq/Dance-Battle" target="_blank" rel="noopener" class="project-card medium reveal">
+      <span class="project-arrow">→</span>
+      <div class="project-num">02</div>
+      <img class="project-preview" src="https://github.com/user-attachments/assets/7469fa6c-8ab4-4103-952b-cb093d703c00" alt="Dance Battle gameplay" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="gif-placeholder" style="display:none;"><span class="gif-placeholder-icon">🕺</span><span class="gif-placeholder-text">[ gameplay_preview.gif ]</span><span class="gif-placeholder-sub">click → view on github</span></div>
+      <div class="project-name">DANCE BATTLE</div>
+      <p class="project-desc" data-i18n="proj3_desc">Turn-based card game with a vibrant disco aesthetic. Built a flexible card effect system with ScriptableObjects — abstract base class with distinct effect types keeping new cards fully modular.</p>
+      <div class="project-tags">
+        <span class="tag">ScriptableObjects</span><span class="tag">Card Game</span><span class="tag">Unity</span>
+      </div>
+    </a>
+    <!-- 03 — ROCK & SWING (has image) → small slot -->
+    <a href="https://github.com/Astrobotiq/RockTheGame" target="_blank" rel="noopener" class="project-card small reveal">
+      <span class="project-arrow">→</span>
+      <div class="project-num">03</div>
+      <img class="project-preview" src="https://github.com/user-attachments/assets/b259e664-5398-4496-8dac-b98dc4bfffdd" alt="Rock and Swing gameplay" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+      <div class="gif-placeholder" style="display:none;"><span class="gif-placeholder-icon">🪝</span><span class="gif-placeholder-text">[ gameplay_preview.gif ]</span><span class="gif-placeholder-sub">click → view on github</span></div>
+      <div class="project-name">ROCK &amp; SWING</div>
+      <p class="project-desc" data-i18n="proj5_desc">2D physics-based platformer with a grappling hook mechanic built using Unity's Spring Joints. A deep dive into Unity's 2D physics engine and a foundational game development learning experience.</p>
+      <div class="project-tags">
+        <span class="tag">Spring Joints</span><span class="tag">Physics</span><span class="tag">2D</span>
+      </div>
+    </a>
+    <!-- 04 — SHH DON'T WAKE THE BABY (no image) → wide slot -->
+    <a href="https://github.com/Astrobotiq/Shh-Do-Not-Wake-The-Baby" target="_blank" rel="noopener" class="project-card wide reveal">
+      <span class="project-arrow">→</span>
+      <div class="project-num">04</div>
+      <div class="project-name">SHH, DON'T WAKE THE BABY!</div>
+      <p class="project-desc" data-i18n="proj4_desc">Unique tower defense where players defeat enemies without waking a sleeping baby. Grid system for obstacle placement and a Runtime NavMesh that dynamically updates enemy pathfinding as defenses are built — obstacles apply damage or knockdown effects.</p>
+      <div class="project-tags">
+        <span class="tag">Tower Defense</span><span class="tag">Runtime NavMesh</span><span class="tag">Grid System</span><span class="tag">Unity</span>
+      </div>
+    </a>
+    <!-- 05 — PIKMIN CLONE (no image) → small slot -->
+    <a href="https://github.com/Astrobotiq/Personal_Project_About_Resource_And_Combos" target="_blank" rel="noopener" class="project-card small reveal">
+      <span class="project-arrow">→</span>
+      <div class="project-num">05 / PIKMIN CLONE</div>
+      <div class="project-name">PIKMIN CLONE</div>
+      <p class="project-desc" data-i18n="proj1_desc">Reverse-engineered Pikmin's core gameplay loop as a personal experiment. Implemented character pathfinding with Unity's NavMesh and structured the entire minion behavior system using the Command Pattern — enabling scalable, clean execution of diverse minion tasks.</p>
+      <div class="project-tags">
+        <span class="tag">Unity</span><span class="tag">NavMesh</span><span class="tag">Command Pattern</span><span class="tag">C#</span>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- 6. SKILLS -->
+<section class="skills-section" id="skills">
+  <div class="section-header">
+    <div class="section-piece" style="grid-template-columns:repeat(3,12px)">
+      <div class="piece-cell" style="background:var(--L)"></div>
+      <div class="piece-cell" style="background:transparent"></div>
+      <div class="piece-cell" style="background:transparent"></div>
+      <div class="piece-cell" style="background:var(--L)"></div>
+      <div class="piece-cell" style="background:var(--L)"></div>
+      <div class="piece-cell" style="background:var(--L)"></div>
+    </div>
+    <div>
+      <div class="section-label" data-i18n="skills_label">toolkit.exe</div>
+      <h2 class="section-title" style="color:var(--L)" data-i18n="skills_title">SKILLS &amp;<br>TECH</h2>
+    </div>
+  </div>
+  <div class="skills-grid reveal">
+    <div class="skill-item"><span class="skill-name">Unity</span><span class="skill-type">Engine</span></div>
+    <div class="skill-item"><span class="skill-name">C#</span><span class="skill-type">Language</span></div>
+    <div class="skill-item"><span class="skill-name">C++</span><span class="skill-type">Language</span></div>
+    <div class="skill-item"><span class="skill-name">Java</span><span class="skill-type">Language</span></div>
+    <div class="skill-item"><span class="skill-name">Python</span><span class="skill-type">Language</span></div>
+    <div class="skill-item"><span class="skill-name">Unity DOTS</span><span class="skill-type">Framework</span></div>
+    <div class="skill-item"><span class="skill-name">Normcore</span><span class="skill-type">Multiplayer</span></div>
+    <div class="skill-item"><span class="skill-name">Odin Inspector</span><span class="skill-type">Tool</span></div>
+    <div class="skill-item"><span class="skill-name">NavMesh</span><span class="skill-type">Pathfinding</span></div>
+    <div class="skill-item"><span class="skill-name">Design Patterns</span><span class="skill-type">Architecture</span></div>
+    <div class="skill-item"><span class="skill-name">Utility AI</span><span class="skill-type">AI Systems</span></div>
+    <div class="skill-item"><span class="skill-name">Agile</span><span class="skill-type">Methodology</span></div>
+    <div class="skill-item"><span class="skill-name">Software Testing</span><span class="skill-type">QA</span></div>
+    <div class="skill-item"><span class="skill-name">Data Structures</span><span class="skill-type">CS Fundamentals</span></div>
+    <div class="skill-item"><span class="skill-name">Project Mgmt</span><span class="skill-type">Process</span></div>
+    <div class="skill-item"><span class="skill-name">3D Modeling</span><span class="skill-type">Art</span></div>
+  </div>
+</section>
+
+<!-- 7. GET IN TOUCH -->
+<section class="contact-section" id="contact">
+  <div class="section-header">
+    <div class="section-piece" style="grid-template-columns:repeat(3,12px)">
+      <div class="piece-cell" style="background:transparent"></div>
+      <div class="piece-cell" style="background:var(--Z)"></div>
+      <div class="piece-cell" style="background:var(--Z)"></div>
+      <div class="piece-cell" style="background:var(--Z)"></div>
+      <div class="piece-cell" style="background:var(--Z)"></div>
+      <div class="piece-cell" style="background:transparent"></div>
+    </div>
+    <div>
+      <div class="section-label" data-i18n="contact_label">connect.exe</div>
+      <h2 class="section-title" style="color:var(--Z)" data-i18n="contact_title">GET IN<br>TOUCH</h2>
+    </div>
+  </div>
+  <div class="contact-grid">
+    <div class="contact-left">
+      <p class="contact-sub" data-i18n="contact_sub">Currently open to new opportunities. Whether you're building the next great game or need an engineer who thinks in systems — let's talk.</p>
+      <div class="contact-links">
+        <a href="/cdn-cgi/l/email-protection#a4c1d6c1cae4cfcbd7c1c8c1d6c8cd8ac7cbc9" class="contact-link">
+          <span class="contact-link-icon">✉</span>
+          <span class="__cf_email__" data-cfemail="610413040f210a0e12040d04130d084f020e0c">[email&#160;protected]</span>
+        </a>
+        <a href="https://www.linkedin.com/in/eren-k%C3%B6selerli/" target="_blank" rel="noopener" class="contact-link">
+          <span class="contact-link-icon">in</span>
+          linkedin.com/in/eren-köselerli
+        </a>
+        <a href="https://github.com/Astrobotiq" target="_blank" rel="noopener" class="contact-link">
+          <span class="contact-link-icon">&gt;_</span>
+          github.com/Astrobotiq
+        </a>
+      </div>
+    </div>
+    <div class="contact-info reveal">
+      <div class="info-item"><label data-i18n="info_phone">Phone</label><span>(534) 283-2328</span></div>
+      <div class="info-item"><label data-i18n="info_location">Location</label><span>İzmir, Turkey</span></div>
+      <div class="info-item"><label data-i18n="info_stack">Primary Stack</label><span>Unity · C# · C++</span></div>
+      <div class="info-item"><label data-i18n="info_status">Status</label><span class="live" data-i18n="info_available">▶ AVAILABLE</span></div>
+      <div class="info-item"><label data-i18n="info_exploring">Exploring</label><span>Unity DOTS · C++</span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span data-i18n="footer_copy">© 2026 Eren Köselerli — Game Developer</span>
+  <span data-i18n="footer_tag">İzmir, Turkey // GAME OVER? NEVER.</span>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ══════════════════════════════════════════
+//  PLAYABLE TETRIS ENGINE — v2 (juice + leaderboard)
+// ══════════════════════════════════════════
+(function () {
+  const COLS = 10, ROWS = 20;
+  const COLORS = {
+    I: '#00f0f0', O: '#f0f000', T: '#a000f0',
+    S: '#00f000', Z: '#f00000', J: '#0000f0', L: '#f0a000'
+  };
+  const PIECES = {
+    I: [[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+        [[0,0,1,0],[0,0,1,0],[0,0,1,0],[0,0,1,0]],
+        [[0,0,0,0],[0,0,0,0],[1,1,1,1],[0,0,0,0]],
+        [[0,1,0,0],[0,1,0,0],[0,1,0,0],[0,1,0,0]]],
+    O: [[[1,1],[1,1]]],
+    T: [[[0,1,0],[1,1,1],[0,0,0]],
+        [[0,1,0],[0,1,1],[0,1,0]],
+        [[0,0,0],[1,1,1],[0,1,0]],
+        [[0,1,0],[1,1,0],[0,1,0]]],
+    S: [[[0,1,1],[1,1,0],[0,0,0]],
+        [[0,1,0],[0,1,1],[0,0,1]]],
+    Z: [[[1,1,0],[0,1,1],[0,0,0]],
+        [[0,0,1],[0,1,1],[0,1,0]]],
+    J: [[[1,0,0],[1,1,1],[0,0,0]],
+        [[0,1,1],[0,1,0],[0,1,0]],
+        [[0,0,0],[1,1,1],[0,0,1]],
+        [[0,1,0],[0,1,0],[1,1,0]]],
+    L: [[[0,0,1],[1,1,1],[0,0,0]],
+        [[0,1,0],[0,1,0],[0,1,1]],
+        [[0,0,0],[1,1,1],[1,0,0]],
+        [[1,1,0],[0,1,0],[0,1,0]]],
+  };
+  const PIECE_KEYS = Object.keys(PIECES);
+  const LINE_SCORES = [0, 100, 300, 500, 800];
+  const CLEAR_LABELS = ['', 'SINGLE!', 'DOUBLE!!', 'TRIPLE!!!', 'TETRIS!!!!'];
+  const LEVEL_SPEED  = [800,720,630,550,470,380,300,220,130,100,80];
+  const CELL_SIZE = 26; // px — must match CSS grid cell
+
+  // DOM
+  const boardEl    = document.getElementById('tetrisBoard');
+  const boardWrap  = document.querySelector('.tetris-board-wrap');
+  const overlay    = document.getElementById('tetrisOverlay');
+  const overlayBtn = document.getElementById('overlayBtn');
+  const overlayTitle = document.getElementById('overlayTitle');
+  const overlaySub   = document.getElementById('overlaySub');
+  const nameRow      = document.getElementById('nameRow');
+  const nameInput    = document.getElementById('playerNameInput');
+  const scoreEl    = document.getElementById('scoreDisplay');
+  const linesEl    = document.getElementById('linesDisplay');
+  const levelEl    = document.getElementById('levelDisplay');
+  const nextGrid   = document.getElementById('nextPieceGrid');
+  const pCanvas    = document.getElementById('particle-canvas');
+  const pCtx       = pCanvas.getContext('2d');
+
+  // Build board cells
+  const cells = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const d = document.createElement('div');
+      d.className = 'tb-cell';
+      boardEl.appendChild(d);
+      cells.push(d);
+    }
+  }
+
+  // Build next-piece grid (4×4)
+  const npCells = [];
+  for (let i = 0; i < 16; i++) {
+    const d = document.createElement('div');
+    d.className = 'np-cell';
+    nextGrid.appendChild(d);
+    npCells.push(d);
+  }
+
+  // Resize particle canvas to match board
+  function resizeParticleCanvas() {
+    pCanvas.width  = boardEl.offsetWidth  + 6; // +padding
+    pCanvas.height = boardEl.offsetHeight + 6;
+  }
+  window.addEventListener('resize', resizeParticleCanvas);
+  setTimeout(resizeParticleCanvas, 100);
+
+  // ─── PARTICLE SYSTEM ────────────────────────────────
+  let particles = [];
+
+  function spawnRowParticles(rowIndex, color) {
+    resizeParticleCanvas();
+    const cellW = pCanvas.width  / COLS;
+    const cellH = pCanvas.height / ROWS;
+    const y = rowIndex * cellH + cellH / 2;
+    for (let c = 0; c < COLS; c++) {
+      const x = c * cellW + cellW / 2;
+      const count = 6;
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i / count) + (Math.random() - 0.5) * 0.8;
+        const speed = 2 + Math.random() * 4;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 1,
+          life: 1.0,
+          decay: 0.03 + Math.random() * 0.04,
+          size: 3 + Math.random() * 4,
+          color,
+        });
+      }
+    }
+  }
+
+  function tickParticles() {
+    pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+    particles = particles.filter(p => p.life > 0);
+    for (const p of particles) {
+      p.x  += p.vx;
+      p.y  += p.vy;
+      p.vy += 0.18; // gravity
+      p.vx *= 0.97;
+      p.life -= p.decay;
+      pCtx.globalAlpha = Math.max(0, p.life);
+      pCtx.fillStyle = p.color;
+      const s = p.size * p.life;
+      pCtx.fillRect(p.x - s/2, p.y - s/2, s, s);
+    }
+    pCtx.globalAlpha = 1;
+  }
+  setInterval(tickParticles, 16);
+
+  // ─── EFFECTS ────────────────────────────────────────
+  function shakeBoard() {
+    boardWrap.classList.remove('shake');
+    void boardWrap.offsetWidth; // reflow
+    boardWrap.classList.add('shake');
+    boardWrap.addEventListener('animationend', () => boardWrap.classList.remove('shake'), {once:true});
+  }
+
+  function popScore() {
+    scoreEl.classList.remove('pop');
+    void scoreEl.offsetWidth;
+    scoreEl.classList.add('pop');
+    scoreEl.addEventListener('animationend', () => scoreEl.classList.remove('pop'), {once:true});
+  }
+
+  function showFloatingText(text, yRowHint) {
+    const el = document.createElement('div');
+    el.className = 'score-float';
+    el.textContent = text;
+    const topPct = Math.max(5, Math.min(80, (yRowHint / ROWS) * 100));
+    el.style.top = topPct + '%';
+    boardWrap.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+
+  // Flash then remove rows with animation
+  function animateClearRows(rowIndices, color) {
+    return new Promise(resolve => {
+      rowIndices.forEach(r => {
+        for (let c = 0; c < COLS; c++) {
+          const cell = cells[r * COLS + c];
+          cell.style.setProperty('--flash-color', color);
+          cell.classList.add('clearing');
+        }
+        spawnRowParticles(r, color);
+      });
+      setTimeout(() => {
+        rowIndices.forEach(r => {
+          for (let c = 0; c < COLS; c++) {
+            const cell = cells[r * COLS + c];
+            cell.classList.remove('clearing');
+            cell.style.animation = 'none';
+          }
+        });
+        resolve();
+      }, 380);
+    });
+  }
+
+  // ─── GAME STATE ──────────────────────────────────────
+  let grid, cur, rot, curRow, curCol, curKey,
+      nextKey, score, lines, level,
+      running, paused, dropTimer, comboCount, isLocking;
+
+  function initState() {
+    grid = Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
+    score = 0; lines = 0; level = 1; comboCount = 0;
+    running = false; paused = false; isLocking = false;
+    updateHUD();
+  }
+
+  function randKey() { return PIECE_KEYS[Math.floor(Math.random() * PIECE_KEYS.length)]; }
+
+  function spawnPiece(key) {
+    curKey = key; rot = 0;
+    cur = PIECES[curKey][rot];
+    curRow = 0;
+    curCol = Math.floor((COLS - cur[0].length) / 2);
+  }
+
+  function canPlace(piece, row, col) {
+    for (let r = 0; r < piece.length; r++)
+      for (let c = 0; c < piece[r].length; c++)
+        if (piece[r][c]) {
+          const nr = row + r, nc = col + c;
+          if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS || grid[nr][nc]) return false;
+        }
+    return true;
+  }
+
+  async function lock() {
+    if (isLocking) return; isLocking = true;
+    clearTimeout(dropTimer);
+    for (let r = 0; r < cur.length; r++)
+      for (let c = 0; c < cur[r].length; c++)
+        if (cur[r][c]) grid[curRow + r][curCol + c] = COLORS[curKey];
+
+    // Find full rows before clearing
+    const fullRows = [];
+    for (let r = 0; r < ROWS; r++)
+      if (grid[r].every(c => c !== null)) fullRows.push(r);
+
+    if (fullRows.length > 0) {
+      // Determine dominant color for flash
+      const flashColor = grid[fullRows[0]][Math.floor(COLS/2)] || COLORS[curKey];
+      render(); // show locked state first
+      await animateClearRows(fullRows, flashColor);
+
+      // Now remove them — splice all first (high→low so indices stay valid), then add empty rows
+      for (const r of [...fullRows].sort((a,b)=>b-a)) {
+        grid.splice(r, 1);
+      }
+      const cleared = fullRows.length;
+      for (let i = 0; i < cleared; i++) {
+        grid.unshift(Array(COLS).fill(null));
+      }
+      lines  += cleared;
+      comboCount++;
+      const base   = LINE_SCORES[cleared] * level;
+      const combo  = comboCount > 1 ? Math.floor(base * 0.5 * (comboCount - 1)) : 0;
+      score += base + combo;
+      level  = Math.min(10, Math.floor(lines / 10) + 1);
+
+      // Juice
+      shakeBoard();
+      popScore();
+      const label = CLEAR_LABELS[cleared] + (comboCount > 1 ? ` x${comboCount}` : '');
+      showFloatingText(label, fullRows[0]);
+      updateHUD();
+    } else {
+      comboCount = 0;
+    }
+
+    const nk = nextKey;
+    nextKey = randKey();
+    renderNext();
+    spawnPiece(nk);
+    if (!canPlace(cur, curRow, curCol)) { isLocking = false; gameOver(); return; }
+    scheduleGravity();
+    render();
+    isLocking = false;
+  }
+
+  function ghostRow() {
+    let gr = curRow;
+    while (canPlace(cur, gr + 1, curCol)) gr++;
+    return gr;
+  }
+
+  function render() {
+    const ghost = ghostRow();
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const cell = cells[r * COLS + c];
+        // Don't stomp clearing animation
+        if (cell.classList.contains('clearing')) continue;
+        const locked = grid[r][c];
+        if (locked) { styleCell(cell, locked, 'filled'); }
+        else { cell.className = 'tb-cell'; cell.style.background = ''; cell.style.borderColor = ''; cell.style.boxShadow = ''; }
+      }
+    }
+    // Ghost
+    for (let r = 0; r < cur.length; r++)
+      for (let c = 0; c < cur[r].length; c++)
+        if (cur[r][c]) {
+          const nr = ghost + r, nc = curCol + c;
+          if (nr >= 0 && nr < ROWS) {
+            const cell = cells[nr * COLS + nc];
+            if (!grid[nr][nc] && !cell.classList.contains('clearing')) {
+              cell.className = 'tb-cell ghost filled';
+              cell.style.background = COLORS[curKey];
+              cell.style.borderColor = COLORS[curKey];
+              cell.style.boxShadow = '';
+            }
+          }
+        }
+    // Active piece
+    for (let r = 0; r < cur.length; r++)
+      for (let c = 0; c < cur[r].length; c++)
+        if (cur[r][c]) {
+          const nr = curRow + r, nc = curCol + c;
+          if (nr >= 0 && nr < ROWS && !cells[nr*COLS+nc].classList.contains('clearing'))
+            styleCell(cells[nr * COLS + nc], COLORS[curKey], 'filled');
+        }
+  }
+
+  function styleCell(cell, color, cls) {
+    cell.className = `tb-cell ${cls}`;
+    cell.style.background = color;
+    cell.style.borderColor = color;
+    cell.style.boxShadow = `inset 3px 3px 0 rgba(255,255,255,0.25), inset -3px -3px 0 rgba(0,0,0,0.4), 0 0 6px ${color}66`;
+  }
+
+  function renderNext() {
+    npCells.forEach(c => { c.className = 'np-cell'; c.style.cssText = ''; });
+    const shape = PIECES[nextKey][0];
+    const color = COLORS[nextKey];
+    const rowOff = Math.floor((4 - shape.length) / 2);
+    const colOff = Math.floor((4 - shape[0].length) / 2);
+    for (let r = 0; r < shape.length; r++)
+      for (let c = 0; c < shape[r].length; c++)
+        if (shape[r][c]) {
+          const idx = (rowOff + r) * 4 + (colOff + c);
+          npCells[idx].className = 'np-cell filled';
+          npCells[idx].style.background = color;
+          npCells[idx].style.borderColor = color;
+          npCells[idx].style.boxShadow = `inset 2px 2px 0 rgba(255,255,255,0.2), inset -2px -2px 0 rgba(0,0,0,0.35)`;
+        }
+  }
+
+  function updateHUD() {
+    scoreEl.textContent = String(score).padStart(6,'0');
+    linesEl.textContent = lines;
+    levelEl.textContent = level;
+  }
+
+  // ─── GRAVITY ────────────────────────────────────────
+  function scheduleGravity() {
+    clearTimeout(dropTimer);
+    const speed = LEVEL_SPEED[Math.min(level - 1, LEVEL_SPEED.length - 1)];
+    dropTimer = setTimeout(gravityTick, speed);
+  }
+  function gravityTick() {
+    if (!running || paused || isLocking) return;
+    if (canPlace(cur, curRow + 1, curCol)) {
+      curRow++; render(); scheduleGravity();
+    } else { lock(); }
+  }
+
+  // ─── INPUT ──────────────────────────────────────────
+  function moveLeft()  { if (isLocking) return; if (canPlace(cur, curRow, curCol - 1)) { curCol--; render(); } }
+  function moveRight() { if (isLocking) return; if (canPlace(cur, curRow, curCol + 1)) { curCol++; render(); } }
+
+  function rotateCW() {
+    if (isLocking) return;
+    const nextRot = (rot + 1) % PIECES[curKey].length;
+    const next = PIECES[curKey][nextRot];
+    for (const [dr, dc] of [[0,0],[0,-1],[0,1],[0,-2],[0,2],[-1,0]]) {
+      if (canPlace(next, curRow + dr, curCol + dc)) {
+        rot = nextRot; cur = next; curRow += dr; curCol += dc;
+        render(); return;
+      }
+    }
+  }
+
+  function softDrop() {
+    if (isLocking) return;
+    if (canPlace(cur, curRow + 1, curCol)) {
+      curRow++; score += 1; updateHUD(); render(); scheduleGravity();
+    } else { lock(); }
+  }
+
+  function hardDrop() {
+    if (isLocking) return;
+    const gr = ghostRow();
+    score += (gr - curRow) * 2; curRow = gr;
+    updateHUD(); render(); lock();
+  }
+
+  const keysHeld = {};
+  let repeatTimer = null;
+  function startRepeat(fn) { clearInterval(repeatTimer); fn(); repeatTimer = setInterval(fn, 80); }
+  function stopRepeat()    { clearInterval(repeatTimer); }
+
+  document.addEventListener('keydown', e => {
+    if (!running || paused) {
+      if ((e.key === 'p' || e.key === 'P') && running) togglePause();
+      return;
+    }
+    switch (e.key) {
+      case 'ArrowLeft':  e.preventDefault(); if (!keysHeld.left)  { keysHeld.left=true;  startRepeat(moveLeft);  } break;
+      case 'ArrowRight': e.preventDefault(); if (!keysHeld.right) { keysHeld.right=true; startRepeat(moveRight); } break;
+      case 'ArrowDown':  e.preventDefault(); if (!keysHeld.down)  { keysHeld.down=true;  startRepeat(softDrop);  } break;
+      case 'ArrowUp':    e.preventDefault(); rotateCW(); break;
+      case ' ':          e.preventDefault(); hardDrop(); break;
+      case 'p': case 'P': togglePause(); break;
+    }
+  });
+  document.addEventListener('keyup', e => {
+    if (e.key==='ArrowLeft')  { keysHeld.left=false;  stopRepeat(); }
+    if (e.key==='ArrowRight') { keysHeld.right=false; stopRepeat(); }
+    if (e.key==='ArrowDown')  { keysHeld.down=false;  stopRepeat(); }
+  });
+
+  // Touch
+  let touchStartX=0, touchStartY=0, touchLastX=0, touchMoved=false;
+  const SWIPE_THRESH=20;
+  boardWrap.addEventListener('touchstart', e => {
+    const t=e.touches[0]; touchStartX=touchLastX=t.clientX; touchStartY=t.clientY; touchMoved=false;
+  },{passive:true});
+  boardWrap.addEventListener('touchmove', e => {
+    if (!running||paused) return;
+    const t=e.touches[0], dx=t.clientX-touchLastX;
+    if (Math.abs(dx)>SWIPE_THRESH) { dx>0?moveRight():moveLeft(); touchLastX=t.clientX; touchMoved=true; }
+    if (t.clientY-touchStartY>40) { softDrop(); touchStartY=t.clientY; touchMoved=true; }
+    e.preventDefault();
+  },{passive:false});
+  boardWrap.addEventListener('touchend', e => {
+    if (!running||paused) return;
+    if (!touchMoved && Math.abs(e.changedTouches[0].clientX-touchStartX)<10) rotateCW();
+  },{passive:true});
+
+  // ─── LEADERBOARD ────────────────────────────────────
+  const SESSION_SCORES = [];
+  const LS_KEY = 'tetris_lb_v1';
+
+  function loadAllTime() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
+    catch { return []; }
+  }
+  function saveAllTime(arr) {
+    try { localStorage.setItem(LS_KEY, JSON.stringify(arr.slice(0,10))); } catch {}
+  }
+
+  function addScore(name, sc, ln) {
+    const entry = { name: (name||'???').toUpperCase().slice(0,8), score:sc, lines:ln, date: new Date().toLocaleDateString() };
+    SESSION_SCORES.unshift(entry);
+    SESSION_SCORES.sort((a,b)=>b.score-a.score);
+
+    const all = loadAllTime();
+    all.push(entry);
+    all.sort((a,b)=>b.score-a.score);
+    saveAllTime(all);
+
+    renderLeaderboard();
+  }
+
+  const MEDALS = ['gold','silver','bronze'];
+
+  function renderBoard(listEl, entries, highlightName) {
+    listEl.innerHTML = '';
+    if (!entries.length) {
+      listEl.innerHTML = '<div class="lb-empty-msg">no scores yet</div>';
+      return;
+    }
+    entries.slice(0,8).forEach((e,i) => {
+      const row = document.createElement('div');
+      const isYou = highlightName && e.name === highlightName.toUpperCase().slice(0,8);
+      row.className = 'lb-entry' + (i<3?' '+MEDALS[i]:'') + (isYou?' you':'');
+      row.style.animationDelay = (i*0.04)+'s';
+      row.innerHTML =
+        `<span class="lb-entry-rank">${i+1}</span>` +
+        `<span class="lb-entry-name">${e.name}</span>` +
+        `<span class="lb-entry-score">${String(e.score).padStart(6,'0')}</span>`;
+      listEl.appendChild(row);
+    });
+  }
+
+  function renderLeaderboard(highlightName) {
+    renderBoard(document.getElementById('lbAllTime'), loadAllTime(),  highlightName);
+    renderBoard(document.getElementById('lbSession'), SESSION_SCORES, highlightName);
+  }
+
+  window.switchLbTab = function(tab) {
+    document.getElementById('lbAllTime').style.display = tab==='all'     ? '' : 'none';
+    document.getElementById('lbSession').style.display = tab==='session' ? '' : 'none';
+    document.getElementById('tabAll').classList.toggle('active',     tab==='all');
+    document.getElementById('tabSession').classList.toggle('active', tab==='session');
+  };
+
+  renderLeaderboard();
+
+  // ─── GAME FLOW ───────────────────────────────────────
+  function startGame() {
+    initState();
+    nextKey = randKey();
+    renderNext();
+    spawnPiece(randKey());
+    running=true; paused=false;
+    overlay.classList.add('hidden');
+    nameRow.style.display='none';
+    scheduleGravity();
+    render();
+    resizeParticleCanvas();
+  }
+
+  function gameOver() {
+    running=false;
+    clearTimeout(dropTimer);
+    overlayTitle.textContent = 'GAME OVER';
+    overlaySub.textContent   = `SCORE: ${String(score).padStart(6,'0')} · LINES: ${lines}`;
+    nameRow.style.display    = 'flex';
+    nameInput.value          = '';
+    overlayBtn.textContent   = '▶ SAVE & PLAY AGAIN';
+    overlay.classList.remove('hidden');
+    setTimeout(()=>nameInput.focus(), 50);
+  }
+
+  function togglePause() {
+    if (!running) return;
+    paused = !paused;
+    if (!paused) { overlay.classList.add('hidden'); scheduleGravity(); }
+    else {
+      clearTimeout(dropTimer);
+      overlayTitle.textContent='PAUSED'; overlaySub.textContent='PRESS P TO RESUME';
+      nameRow.style.display='none'; overlayBtn.textContent='▶ RESUME';
+      overlay.classList.remove('hidden');
+    }
+  }
+
+  overlayBtn.addEventListener('click', () => {
+    if (running && paused) { togglePause(); return; }
+    if (!running && nameRow.style.display !== 'none') {
+      // game over — save score
+      addScore(nameInput.value || 'AAA', score, lines);
+    }
+    startGame();
+  });
+
+  nameInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') overlayBtn.click();
+  });
+
+  // Init overlay
+  overlayTitle.textContent = 'TETRIS';
+  overlaySub.textContent   = 'Click START or press any arrow key';
+  overlayBtn.textContent   = '▶ START GAME';
+  nameRow.style.display    = 'none';
+
+  document.addEventListener('keydown', function startOnKey(e) {
+    if (['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key) && !running) {
+      document.removeEventListener('keydown', startOnKey);
+      startGame();
+    }
+  });
+
+  initState();
+})();
+
+// ── FALLING BLOCKS CANVAS (background) ──
+const canvas = document.getElementById('tetris-canvas');
+const ctx = canvas.getContext('2d');
+const BG_COLORS = ['#00f0f0','#f0f000','#a000f0','#00f000','#f00000','#0000f0','#f0a000'];
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const bgBlocks = Array(30).fill(null).map(() => ({
+  x: Math.random() * window.innerWidth,
+  y: Math.random() * window.innerHeight - window.innerHeight,
+  size: Math.floor(Math.random() * 3 + 1) * 20,
+  color: BG_COLORS[Math.floor(Math.random() * BG_COLORS.length)],
+  speed: Math.random() * 0.8 + 0.3,
+}));
+
+function drawBgBlocks() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  bgBlocks.forEach(b => {
+    b.y += b.speed;
+    if (b.y > canvas.height + 100) {
+      b.y = -100;
+      b.x = Math.random() * canvas.width;
+      b.color = BG_COLORS[Math.floor(Math.random() * BG_COLORS.length)];
+    }
+    ctx.save();
+    ctx.translate(b.x + b.size/2, b.y + b.size/2);
+    ctx.fillStyle = b.color;
+    ctx.fillRect(-b.size/2, -b.size/2, b.size, b.size);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillRect(-b.size/2, -b.size/2, b.size/2, b.size/2);
+    ctx.restore();
+  });
+}
+setInterval(drawBgBlocks, 40);
+
+// ── REVEAL ──
+const revealEls = document.querySelectorAll('.reveal');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+}, { threshold: 0.1 });
+revealEls.forEach(el => obs.observe(el));
+
+// ── HAMBURGER ──
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+function closeMobileMenu() {
+  hamburger.classList.remove('open'); mobileMenu.classList.remove('open');
+  hamburger.setAttribute('aria-expanded','false'); document.body.style.overflow = '';
+}
+hamburger.addEventListener('click', () => {
+  const open = mobileMenu.classList.toggle('open');
+  hamburger.classList.toggle('open', open);
+  hamburger.setAttribute('aria-expanded', String(open));
+  document.body.style.overflow = open ? 'hidden' : '';
+});
+
+// ══════════════════════════════════════════
+//  THEME TOGGLE (Dark / Light)
+// ══════════════════════════════════════════
+(function() {
+  const root = document.documentElement;
+  const btn  = document.getElementById('themeToggle');
+  let isDark = localStorage.getItem('ek_theme') !== 'light';
+
+  function applyTheme() {
+    root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    btn.textContent = isDark ? '☀ / ☾' : '☾ / ☀';
+    btn.classList.toggle('active', !isDark);
+    localStorage.setItem('ek_theme', isDark ? 'dark' : 'light');
+  }
+
+  window.toggleTheme = function() {
+    isDark = !isDark;
+    applyTheme();
+  };
+
+  applyTheme();
+})();
+
+// ══════════════════════════════════════════
+//  LANGUAGE TOGGLE (EN / TR)
+// ══════════════════════════════════════════
+(function() {
+  const TRANSLATIONS = {
+    en: {
+      // Nav
+      nav_about:    'About',
+      nav_exp:      'Experience',
+      nav_edu:      'Education',
+      nav_games:    'Shipped Titles',
+      nav_projects: 'Projects',
+      nav_skills:   'Skills',
+      nav_contact:  'Contact',
+      // Hero
+      hero_tag:     'AVAILABLE FOR HIRE',
+      hero_desc:    'Software Engineering graduate specializing in robust game mechanics and flexible system design. Crafting sustainable game systems through Unity and C# with a methodical, architecture-first approach.',
+      cta_projects: '▶ VIEW PROJECTS',
+      cta_contact:  'GET IN TOUCH',
+      stat_location:'LOCATION',
+      stat_stack:   'STACK',
+      stat_exploring:'EXPLORING',
+      stat_status:  'STATUS',
+      stat_open:    '● OPEN',
+      // Experience
+      exp_label:    'career_log.exe',
+      exp_title:    'EXPERI<br>ENCE',
+      exp1_date:    'Jul 2025 — Mar 2026',
+      exp1_role:    '// Game Developer [Full-Time]',
+      exp1_desc:    'Led game development initiatives, building robust and scalable game systems with Unity and C#. Contributed to live product releases — including KissCargo\'s multiplayer systems via Normcore — maintaining high engineering standards in a professional studio environment.',
+      exp2_date:    'Oct 2024 — Mar 2025',
+      exp2_role:    '// Game Developer Intern',
+      exp2_desc:    'Solely responsible for the complete Steam port of OROBOROS — independently managing all codebase adaptations and UI implementations for a successful platform release. Also assisted with core coding and the Steam port of GOKA.',
+      exp3_date:    'Jul 2024 — Aug 2024',
+      exp3_role:    '// Software Test & QA Intern',
+      exp3_desc:    'Gained hands-on experience in software quality assurance, testing methodologies, and defect tracking workflows — building a foundation in testing that directly informs a quality-first approach to game development.',
+      // Education
+      edu_label:    'academic_log.exe',
+      edu_title:    'EDUCA<br>TION',
+      edu_degree:   'Bachelor of Software Engineering',
+      edu_gpa:      '▶ GPA: 3.0 / 4.0',
+      edu_desc:     'Built a strong foundation in software engineering principles, data structures, design patterns, and computer science fundamentals — running parallel to a growing specialization in game development and interactive systems.',
+      // Games
+      games_label:  'shipped_titles.exe',
+      games_title:  'SHIPPED<br>TITLES',
+      game1_role:   'Sole Steam Port Lead',
+      game1_desc:   'Independently managed all codebase adaptations and UI implementations for a complete and successful Steam release while at Blay Games.',
+      game2_role:   'Core Developer & Steam Port',
+      game2_desc:   'Assisted with core coding tasks and supported the Steam port release process as part of the Blay Games team.',
+      game3_role:   'Multiplayer Systems Developer',
+      game3_desc:   'Developed multiplayer systems utilizing the Normcore framework, enabling real-time online gameplay for a smooth networked experience.',
+      // Projects
+      proj_label:   'personal_builds.exe',
+      proj_title:   'FEATURED<br>PROJECTS',
+      proj1_desc:   'Reverse-engineered Pikmin\'s core gameplay loop as a personal experiment. Implemented character pathfinding with Unity\'s NavMesh and structured the entire minion behavior system using the Command Pattern — enabling scalable, clean execution of diverse minion tasks.',
+      proj2_desc:   '3D tactical game inspired by Into The Breach with a Viking-era theme. Designed a Utility AI system that dynamically evaluates the environment — calculating optimal attack positions while avoiding hazardous zones.',
+      proj3_desc:   'Turn-based card game with a vibrant disco aesthetic. Built a flexible card effect system with ScriptableObjects — abstract base class with distinct effect types keeping new cards fully modular.',
+      proj4_desc:   'Unique tower defense where players defeat enemies without waking a sleeping baby. Grid system for obstacle placement and a Runtime NavMesh that dynamically updates enemy pathfinding as defenses are built — obstacles apply damage or knockdown effects.',
+      proj5_desc:   '2D physics-based platformer with a grappling hook mechanic built using Unity\'s Spring Joints. A deep dive into Unity\'s 2D physics engine and a foundational game development learning experience.',
+      // Skills
+      skills_label: 'toolkit.exe',
+      skills_title: 'SKILLS &amp;<br>TECH',
+      // Contact
+      contact_label:'connect.exe',
+      contact_title:'GET IN<br>TOUCH',
+      contact_sub:  'Currently open to new opportunities. Whether you\'re building the next great game or need an engineer who thinks in systems — let\'s talk.',
+      info_phone:   'Phone',
+      info_location:'Location',
+      info_stack:   'Primary Stack',
+      info_status:  'Status',
+      info_available:'▶ AVAILABLE',
+      info_exploring:'Exploring',
+      // Tetris
+      keys_label:   'KEYS',
+      key_move:     '← → move',
+      key_rotate:   '↑ rotate',
+      key_soft:     '↓ soft drop',
+      key_hard:     'SPC hard drop',
+      key_pause:    'P pause',
+      // Footer
+      footer_copy:  '© 2026 Eren Köselerli — Game Developer',
+      footer_tag:   'İzmir, Turkey // GAME OVER? NEVER.',
+    },
+    tr: {
+      // Nav
+      nav_about:    'Hakkımda',
+      nav_exp:      'Deneyim',
+      nav_edu:      'Eğitim',
+      nav_games:    'Yayınlanan Oyunlar',
+      nav_projects: 'Projeler',
+      nav_skills:   'Yetenekler',
+      nav_contact:  'İletişim',
+      // Hero
+      hero_tag:     'İŞE ALINMAYA HAZIR',
+      hero_desc:    'Sağlam oyun mekaniği ve esnek sistem tasarımı konusunda uzmanlaşmış Yazılım Mühendisliği mezunu. Unity ve C# ile metodolojik, mimari odaklı bir yaklaşımla sürdürülebilir oyun sistemleri geliştiriyor.',
+      cta_projects: '▶ PROJELERİ GÖR',
+      cta_contact:  'İLETİŞİME GEÇ',
+      stat_location:'KONUM',
+      stat_stack:   'STACK',
+      stat_exploring:'KEŞFEDİYOR',
+      stat_status:  'DURUM',
+      stat_open:    '● AÇIK',
+      // Experience
+      exp_label:    'kariyer_log.exe',
+      exp_title:    'DENEYİM',
+      exp1_date:    'Tem 2025 — Mar 2026',
+      exp1_role:    '// Oyun Geliştirici [Tam Zamanlı]',
+      exp1_desc:    'Unity ve C# ile sağlam ve ölçeklenebilir oyun sistemleri geliştirerek oyun geliştirme süreçlerine liderlik etti. Normcore aracılığıyla KissCargo\'nun çok oyunculu sistemleri dahil canlı ürün sürümlerine katkıda bulundu.',
+      exp2_date:    'Eki 2024 — Mar 2025',
+      exp2_role:    '// Oyun Geliştirici Stajyeri',
+      exp2_desc:    'OROBOROS\'un Steam portunu tamamen tek başına gerçekleştirdi — tüm kod tabanı adaptasyonlarını ve UI implementasyonlarını bağımsız olarak yöneterek başarılı bir platform sürümü ortaya koydu. Ayrıca GOKA\'nın Steam portuna destek verdi.',
+      exp3_date:    'Tem 2024 — Ağu 2024',
+      exp3_role:    '// Yazılım Test & QA Stajyeri',
+      exp3_desc:    'Yazılım kalite güvencesi, test metodolojileri ve hata takip süreçlerinde uygulamalı deneyim kazandı — oyun geliştirmedeki kalite odaklı yaklaşımı doğrudan destekleyen sağlam bir test temeli oluşturdu.',
+      // Education
+      edu_label:    'akademik_log.exe',
+      edu_title:    'EĞİTİM',
+      edu_degree:   'Yazılım Mühendisliği Lisansı',
+      edu_gpa:      '▶ GNO: 3.0 / 4.0',
+      edu_desc:     'Yazılım mühendisliği ilkeleri, veri yapıları, tasarım desenleri ve bilgisayar bilimi temellerinde güçlü bir altyapı oluşturdu — oyun geliştirme ve etkileşimli sistemlerdeki büyüyen uzmanlıkla paralel şekilde ilerledi.',
+      // Games
+      games_label:  'yayinlanan_oyunlar.exe',
+      games_title:  'YAYINLANAN<br>OYUNLAR',
+      game1_role:   'Tek Başına Steam Port Lideri',
+      game1_desc:   'Blay Games bünyesinde tüm kod tabanı adaptasyonlarını ve UI implementasyonlarını bağımsız olarak yöneterek başarılı bir Steam sürümü tamamladı.',
+      game2_role:   'Çekirdek Geliştirici & Steam Port',
+      game2_desc:   'Blay Games ekibinin bir parçası olarak çekirdek kodlama görevlerine destek verdi ve Steam port sürecini destekledi.',
+      game3_role:   'Çok Oyunculu Sistem Geliştiricisi',
+      game3_desc:   'Normcore framework\'ü kullanarak çok oyunculu sistemler geliştirdi; gerçek zamanlı çevrimiçi oyun deneyimi için akıcı bir ağ altyapısı kurdu.',
+      // Projects
+      proj_label:   'kisisel_projeler.exe',
+      proj_title:   'ÖNE ÇIKAN<br>PROJELER',
+      proj1_desc:   'Pikmin\'in temel oyun döngüsünü kişisel bir deney olarak tersine mühendislikle inceledi. Unity\'nin NavMesh\'i ile karakter yol bulma sistemi kurdu; minyon davranış sisteminin tamamını Command Pattern ile yapılandırdı.',
+      proj2_desc:   'Viking dönemi temalı, Into The Breach\'ten ilham alan 3D taktik oyunu. Ortamı dinamik olarak değerlendiren bir Utility AI sistemi tasarladı — tehlikeli bölgelerden kaçınırken optimal saldırı konumlarını hesaplıyor.',
+      proj3_desc:   'Canlı disco estetiğine sahip sıra tabanlı kart oyunu. ScriptableObjects ile esnek bir kart efekti sistemi kurdu — soyut temel sınıf ve ayrı efekt türleri sayesinde yeni kartlar tamamen modüler kalıyor.',
+      proj4_desc:   'Oyuncuların uyuyan bir bebeği uyandırmadan düşmanları alt ettiği özgün bir kule savunması. Engel yerleştirme için ızgara sistemi ve savunmalar inşa edildikçe düşman yol bulmayı dinamik olarak güncelleyen Runtime NavMesh kullanıldı.',
+      proj5_desc:   'Unity\'nin Spring Joints\'i kullanılarak geliştirilen kanca mekaniğine sahip 2D fizik tabanlı platform oyunu. Unity\'nin 2D fizik motoruna derinlemesine dalış ve temel bir oyun geliştirme öğrenme deneyimi.',
+      // Skills
+      skills_label: 'araclar.exe',
+      skills_title: 'YETENEKler &amp;<br>TEKNOLOJİ',
+      // Contact
+      contact_label:'iletisim.exe',
+      contact_title:'İLETİŞİME<br>GEÇ',
+      contact_sub:  'Şu anda yeni fırsatlara açığım. İster bir sonraki büyük oyunu inşa edin, ister sistemler üzerine düşünen bir mühendise ihtiyacınız olsun — konuşalım.',
+      info_phone:   'Telefon',
+      info_location:'Konum',
+      info_stack:   'Ana Stack',
+      info_status:  'Durum',
+      info_available:'▶ MÜSAİT',
+      info_exploring:'Keşfediyor',
+      // Tetris
+      keys_label:   'TUŞLAR',
+      key_move:     '← → hareket',
+      key_rotate:   '↑ döndür',
+      key_soft:     '↓ yavaş düş',
+      key_hard:     'SPC hızlı düş',
+      key_pause:    'P duraklat',
+      // Footer
+      footer_copy:  '© 2026 Eren Köselerli — Oyun Geliştirici',
+      footer_tag:   'İzmir, Türkiye // GAME OVER? ASLA.',
+    }
+  };
+
+  let currentLang = localStorage.getItem('ek_lang') || 'en';
+  const langBtn = document.getElementById('langToggle');
+
+  function applyLang() {
+    const t = TRANSLATIONS[currentLang];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t[key] !== undefined) {
+        el.innerHTML = t[key];
+      }
+    });
+    document.documentElement.lang = currentLang;
+    langBtn.textContent = currentLang === 'en' ? 'TR' : 'EN';
+    langBtn.classList.toggle('active', currentLang === 'tr');
+    localStorage.setItem('ek_lang', currentLang);
+  }
+
+  window.toggleLang = function() {
+    currentLang = currentLang === 'en' ? 'tr' : 'en';
+    applyLang();
+  };
+
+  applyLang();
+})();
+</script>
+</body>
+</html>
