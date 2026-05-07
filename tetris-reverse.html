@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tetris Reverse — Eren Köselerli</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Source+Code+Pro:wght@300;400;500&family=Rajdhani:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1a1826;
+      --surface: #211f30;
+      --card: #2a2740;
+      --border: #46425e;
+      --I: #00b9be;
+      /* teal      */
+      --O: #ffeecc;
+      /* cream     */
+      --T: #7b7499;
+      /* soft purple */
+      --S: #15788c;
+      /* deep teal */
+      --Z: #ff6973;
+      /* coral red */
+      --J: #00b9be;
+      /* teal-blue */
+      --L: #ffb0a3;
+      /* peach     */
+      --accent: #00b9be;
+      --accent2: #ff6973;
+      --text: #ffeecc;
+      --muted: #9691b8;
+      --dim: #2e2b45;
+      --pixel: 'Press Start 2P', monospace;
+      --mono: 'Source Code Pro', monospace;
+      --body: 'Rajdhani', sans-serif;
+      /* Game accent — modified for Tetris Reverse */
+      --game-accent: #ff6973;
+      --game-accent2: #00b9be;
+    }
+
+    [data-theme="light"] {
+      --bg: #ffeecc;
+      --surface: #ffe8b8;
+      --card: #ffdfa0;
+      --border: #ffb0a3;
+      --text: #1a1826;
+      --muted: #46425e;
+      --dim: #ffd880;
+      --accent: #15788c;
+      --accent2: #ff6973;
+      --game-accent: #ff6973;
+    }
+
+    [data-theme="light"] body::before {
+      background-image:
+        linear-gradient(rgba(21, 120, 140, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(21, 120, 140, 0.07) 1px, transparent 1px);
+    }
+
+    [data-theme="light"] nav {
+      background: rgba(255, 238, 204, 0.97);
+    }
+
+    [data-theme="light"] .mobile-menu {
+      background: rgba(255, 238, 204, 0.99);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--body);
+      overflow-x: hidden;
+      font-size: 16px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image:
+        linear-gradient(rgba(255, 105, 115, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 105, 115, 0.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--Z);
+    }
+
+    @keyframes blink {
+
+      0%,
+      49% {
+        opacity: 1
+      }
+
+      50%,
+      99% {
+        opacity: 0
+      }
+    }
+
+    @keyframes stackIn {
+      from {
+        transform: translateY(-30px);
+        opacity: 0
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1
+      }
+    }
+
+    @keyframes fadeUp {
+      from {
+        transform: translateY(24px);
+        opacity: 0
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1
+      }
+    }
+
+    @keyframes scanline {
+      0% {
+        transform: translateY(-100%);
+      }
+
+      100% {
+        transform: translateY(100vh);
+      }
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 9500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2.5rem;
+      background: rgba(10, 10, 15, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 2px solid var(--border);
+    }
+
+    nav::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--Z), var(--T), var(--O), var(--S), var(--I), var(--J), var(--L));
+    }
+
+    .nav-logo {
+      font-family: var(--pixel);
+      font-size: 0.75rem;
+      color: var(--I);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      text-shadow: 0 0 10px var(--I);
+    }
+
+    .nav-back {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-back:hover {
+      color: var(--I);
+    }
+
+    .nav-back::before {
+      content: '←';
+      font-size: 0.8rem;
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .toggle-btn {
+      font-family: var(--pixel);
+      font-size: 0.32rem;
+      letter-spacing: 0.06em;
+      padding: 0.4rem 0.6rem;
+      background: var(--surface);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .toggle-btn:hover {
+      color: var(--I);
+      border-color: var(--I);
+      background: var(--dim);
+    }
+
+    .toggle-btn.active {
+      color: var(--I);
+      border-color: var(--I);
+    }
+
+    /* ── HERO ── */
+    .game-hero {
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 8rem 4rem 4rem;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      border-bottom: 3px solid var(--border);
+    }
+
+    .game-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 70% 50%, rgba(255, 105, 115, 0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 30% 80%, rgba(0, 185, 190, 0.06) 0%, transparent 60%);
+    }
+
+    .game-hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px,
+          rgba(0, 0, 0, 0.08) 2px, rgba(0, 0, 0, 0.08) 4px);
+    }
+
+    .hero-breadcrumb {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-breadcrumb span {
+      color: var(--Z);
+    }
+
+    .game-hero-status {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .status-badge {
+      font-family: var(--pixel);
+      font-size: 0.38rem;
+      letter-spacing: 0.12em;
+      padding: 0.35rem 0.7rem;
+      border: 2px solid var(--S);
+      color: var(--S);
+      background: rgba(0, 240, 0, 0.08);
+      text-shadow: 0 0 8px var(--S);
+      box-shadow: 0 0 12px rgba(0, 240, 0, 0.15);
+    }
+
+    .status-badge.wip {
+      border-color: var(--O);
+      color: var(--O);
+      background: rgba(240, 240, 0, 0.08);
+      text-shadow: 0 0 8px var(--O);
+      box-shadow: 0 0 12px rgba(240, 240, 0, 0.15);
+    }
+
+    .genre-tag {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .game-title-wrap {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 1rem;
+    }
+
+    .game-title-main {
+      font-family: var(--pixel);
+      font-size: clamp(2rem, 6vw, 5rem);
+      line-height: 1.2;
+      font-weight: 400;
+      color: #fff;
+      text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6), 0 0 40px rgba(255, 105, 115, 0.3);
+      letter-spacing: 0.04em;
+    }
+
+    .game-title-main .t-red {
+      color: var(--Z);
+      text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5), 0 0 30px var(--Z);
+    }
+
+    .game-title-main .t-cyan {
+      color: var(--I);
+      text-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5), 0 0 30px var(--I);
+    }
+
+    .game-tagline {
+      font-family: var(--pixel);
+      font-size: clamp(0.45rem, 1.2vw, 0.65rem);
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      line-height: 2;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 2rem;
+    }
+
+    .game-tagline em {
+      color: var(--Z);
+      font-style: normal;
+    }
+
+    .hero-meta {
+      display: flex;
+      gap: 2px;
+      position: relative;
+      z-index: 1;
+      flex-wrap: wrap;
+    }
+
+    .meta-chip {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
+      padding: 0.4rem 0.8rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .meta-chip .chip-label {
+      color: var(--muted);
+      font-size: 0.52rem;
+    }
+
+    .meta-chip .chip-val {
+      color: var(--text);
+    }
+
+    /* ── LAYOUT ── */
+    main {
+      position: relative;
+      z-index: 1;
+    }
+
+    .page-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 0;
+      border-top: none;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      border-right: 2px solid var(--border);
+      padding: 3rem 2rem;
+      position: sticky;
+      top: 80px;
+      height: fit-content;
+      background: var(--surface);
+    }
+
+    .sidebar-section {
+      margin-bottom: 2.5rem;
+    }
+
+    .sidebar-label {
+      font-family: var(--pixel);
+      font-size: 0.38rem;
+      color: var(--Z);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-intro {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .sidebar-intro strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* Philosophy points */
+    .philo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .philo-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.7rem 0.8rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--border);
+      transition: border-left-color 0.2s, background 0.2s;
+    }
+
+    .philo-item:hover {
+      background: var(--dim);
+      border-left-color: var(--Z);
+    }
+
+    .philo-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--Z);
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+
+    .philo-text {
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .philo-text strong {
+      color: var(--text);
+      display: block;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.1rem;
+    }
+
+    /* Tech stack */
+    .tech-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+
+    .tech-chip {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      padding: 0.25rem 0.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .tech-chip:hover {
+      border-color: var(--Z);
+      color: var(--Z);
+    }
+
+    /* Mechanics summary */
+    .mechanic-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .mechanic-item {
+      padding: 0.6rem 0.8rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+      cursor: default;
+    }
+
+    .mechanic-item:nth-child(1) {
+      border-left-color: var(--Z);
+    }
+
+    .mechanic-item:nth-child(2) {
+      border-left-color: var(--I);
+    }
+
+    .mechanic-item:nth-child(3) {
+      border-left-color: var(--O);
+    }
+
+    .mechanic-item:nth-child(4) {
+      border-left-color: var(--S);
+    }
+
+    .mechanic-item:hover {
+      background: var(--dim);
+    }
+
+    .mechanic-name {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--text);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .mechanic-sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.15rem;
+      line-height: 1.4;
+    }
+
+    /* ── MAIN CONTENT ── */
+    .content-area {
+      padding: 3rem 3.5rem;
+    }
+
+    /* Section separator */
+    .content-sep {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .content-sep-label {
+      font-family: var(--pixel);
+      font-size: 0.38rem;
+      color: var(--game-accent);
+      letter-spacing: 0.15em;
+      white-space: nowrap;
+    }
+
+    .content-sep-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Intro article */
+    .intro-article {
+      margin-bottom: 4rem;
+    }
+
+    .article-body {
+      font-size: 1rem;
+      line-height: 1.85;
+      color: var(--muted);
+      font-weight: 400;
+      max-width: 720px;
+    }
+
+    .article-body p {
+      margin-bottom: 1.25rem;
+    }
+
+    .article-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    .article-body strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .article-body em {
+      color: var(--Z);
+      font-style: normal;
+    }
+
+    .article-body code {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--Z);
+      background: var(--dim);
+      padding: 0.1em 0.35em;
+      border: 1px solid var(--border);
+    }
+
+    /* ── TIMELINE / DEVLOG ── */
+    .devlog-section {}
+
+    .devlog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+
+    .devlog-count {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .devlog-count span {
+      color: var(--Z);
+    }
+
+    /* Timeline rail */
+    .timeline {
+      position: relative;
+      padding-left: 2rem;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 8px;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--Z), var(--T), transparent);
+    }
+
+    /* Entry */
+    .tl-entry {
+      position: relative;
+      margin-bottom: 0;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .tl-entry.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tl-dot {
+      position: absolute;
+      left: -2rem;
+      top: 6px;
+      width: 10px;
+      height: 10px;
+      background: var(--bg);
+      border: 2px solid var(--Z);
+      transform: translateX(-4px);
+      transition: background 0.2s, box-shadow 0.2s;
+      flex-shrink: 0;
+    }
+
+    .tl-entry:hover .tl-dot {
+      background: var(--Z);
+      box-shadow: 0 0 10px var(--Z);
+    }
+
+    .tl-card {
+      border: 2px solid var(--border);
+      background: var(--card);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      margin-bottom: 3px;
+    }
+
+    .tl-entry:hover .tl-card {
+      border-color: var(--Z);
+      box-shadow: 4px 4px 0 var(--border);
+    }
+
+    .tl-head {
+      padding: 1.25rem 1.5rem;
+      cursor: pointer;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: 1rem;
+      user-select: none;
+    }
+
+    .tl-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .tl-date {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      color: var(--Z);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .tl-week {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      padding: 0.1rem 0.4rem;
+      background: var(--dim);
+      border: 1px solid var(--border);
+    }
+
+    .tl-tags {
+      display: flex;
+      gap: 2px;
+      flex-wrap: wrap;
+    }
+
+    .tl-tag {
+      font-family: var(--mono);
+      font-size: 0.48rem;
+      padding: 0.15rem 0.4rem;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .tl-tag.cpp {
+      border-color: rgba(255, 105, 115, 0.4);
+      color: var(--Z);
+    }
+
+    .tl-tag.arch {
+      border-color: rgba(0, 185, 190, 0.4);
+      color: var(--I);
+    }
+
+    .tl-tag.design {
+      border-color: rgba(240, 240, 0, 0.4);
+      color: var(--O);
+    }
+
+    .tl-tag.perf {
+      border-color: rgba(240, 160, 0, 0.4);
+      color: var(--L);
+    }
+
+    .tl-title {
+      font-family: var(--pixel);
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      line-height: 1.5;
+      font-weight: 400;
+    }
+
+    .tl-summary {
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+
+    .tl-toggle {
+      font-family: var(--pixel);
+      font-size: 0.45rem;
+      color: var(--muted);
+      padding: 0.4rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      white-space: nowrap;
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: all 0.2s;
+      align-self: start;
+      margin-top: 4px;
+    }
+
+    .tl-entry:hover .tl-toggle {
+      color: var(--Z);
+      border-color: var(--Z);
+    }
+
+    .tl-toggle.open {
+      color: var(--Z);
+      border-color: var(--Z);
+      background: var(--dim);
+    }
+
+    .tl-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s;
+      padding: 0 1.5rem;
+    }
+
+    .tl-body.open {
+      max-height: 2500px;
+      padding: 0 1.5rem 1.5rem;
+    }
+
+    .tl-body-inner {
+      border-top: 1px solid var(--border);
+      padding-top: 1.25rem;
+    }
+
+    .tl-content {
+      font-size: 0.95rem;
+      line-height: 1.85;
+      color: var(--muted);
+      max-width: 680px;
+    }
+
+    .tl-content p {
+      margin-bottom: 1.1rem;
+    }
+
+    .tl-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .tl-content strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .tl-content em {
+      color: var(--Z);
+      font-style: normal;
+    }
+
+    .tl-content code {
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      color: var(--Z);
+      background: var(--dim);
+      padding: 0.1em 0.35em;
+      border: 1px solid var(--border);
+    }
+
+    .tl-content ul {
+      padding-left: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    .tl-content li {
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+    }
+
+    .tl-content li::marker {
+      color: var(--Z);
+    }
+
+    .tl-insight {
+      margin-top: 1.25rem;
+      padding: 1rem 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--Z);
+    }
+
+    .tl-insight-label {
+      font-family: var(--pixel);
+      font-size: 0.35rem;
+      color: var(--Z);
+      letter-spacing: 0.15em;
+      margin-bottom: 0.5rem;
+    }
+
+    .tl-insight p {
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .tl-insight p strong {
+      color: var(--text);
+    }
+
+    .tl-coming {
+      border: 2px dashed var(--border);
+      padding: 2rem;
+      text-align: center;
+      background: var(--surface);
+      margin-top: 3px;
+    }
+
+    .tl-coming-label {
+      font-family: var(--pixel);
+      font-size: 0.45rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      line-height: 2;
+    }
+
+    .tl-coming-label span {
+      animation: blink 1s step-end infinite;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      margin-top: 0;
+      padding: 2rem 4rem;
+      border-top: 2px solid var(--border);
+      background: var(--surface);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    footer::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--Z), var(--T), var(--O), var(--S), var(--I), var(--J), var(--L));
+    }
+
+    .footer-copy {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+    }
+
+    .footer-back {
+      font-family: var(--pixel);
+      font-size: 0.38rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.1em;
+      transition: color 0.2s;
+    }
+
+    .footer-back:hover {
+      color: var(--I);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .page-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        border-right: none;
+        border-bottom: 2px solid var(--border);
+      }
+
+      .content-area {
+        padding: 2rem 1.5rem;
+      }
+
+      .game-hero {
+        padding: 7rem 1.5rem 3rem;
+      }
+
+      nav {
+        padding: 1rem 1.5rem;
+      }
+
+      footer {
+        padding: 2rem 1.5rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">EK://</a>
+    <a href="index.html#active-projects" class="nav-back" data-i18n="nav_back">Active Projects</a>
+    <div class="nav-controls">
+      <button class="toggle-btn" id="langToggle" onclick="toggleLang()" title="Switch language / Dil değiştir">EN /
+        TR</button>
+      <button class="toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">☀ / ☾</button>
+    </div>
+  </nav>
+
+  <header class="game-hero">
+    <div class="hero-breadcrumb">EK:// <span>/</span> active_projects <span>/</span> tetris_reverse</div>
+    <div class="game-hero-status">
+      <div class="status-badge wip" data-i18n="hero_status">▶ IN DEVELOPMENT</div>
+      <div class="genre-tag" data-i18n="hero_genre">TACTICAL PUZZLE</div>
+    </div>
+    <div class="game-title-wrap">
+      <h1 class="game-title-main">
+        <span class="t-cyan">TETRIS</span> <span class="t-red">REVERSE</span>
+      </h1>
+    </div>
+    <div class="game-tagline" data-i18n="hero_tagline">
+      C++17/20 · RAII · ECS ARCHITECTURE // CUSTOM 2D ENGINE
+    </div>
+    <div class="hero-meta">
+      <div class="meta-chip"><span class="chip-label" data-i18n="meta_engine">ENGINE</span><span
+          class="chip-val">SimpleEngine2D</span></div>
+      <div class="meta-chip"><span class="chip-label" data-i18n="meta_lang">LANG</span><span class="chip-val">C++</span>
+      </div>
+      <div class="meta-chip"><span class="chip-label" data-i18n="meta_genre">GENRE</span><span class="chip-val"
+          data-i18n="meta_genre_val">Puzzle</span></div>
+      <div class="meta-chip"><span class="chip-label" data-i18n="meta_inspired">INSPIRED BY</span><span
+          class="chip-val">Tetris</span></div>
+      <div class="meta-chip"><span class="chip-label" data-i18n="meta_status">STATUS</span><span class="chip-val"
+          data-i18n="meta_status_val" style="color:var(--O)">WIP</span></div>
+    </div>
+  </header>
+
+  <main>
+    <div class="page-grid">
+
+      <aside class="sidebar">
+
+        <div class="sidebar-section">
+          <div class="sidebar-label" data-i18n="sb_about">// ABOUT</div>
+          <p class="sidebar-intro" data-i18n="sb_about_text">
+            A tactical reimagining of Tetris powered by a custom-built C++ game engine
+            (<strong>SimpleEngine2D</strong>). Instead of real-time falling blocks, players strategically place pieces
+            via a drag-and-drop deck management system.
+          </p>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-label" data-i18n="sb_philosophy">// ENGINE PHILOSOPHY</div>
+          <div class="philo-list">
+            <div class="philo-item">
+              <div class="philo-dot"></div>
+              <div class="philo-text">
+                <strong data-i18n="philo1_title">Manual Memory (RAII)</strong>
+                <span data-i18n="philo1_text">No garbage collector. Deterministic resource lifecycles using Smart
+                  Pointers and Value Semantics.</span>
+              </div>
+            </div>
+            <div class="philo-item">
+              <div class="philo-dot"></div>
+              <div class="philo-text">
+                <strong data-i18n="philo2_title">Cache Locality</strong>
+                <span data-i18n="philo2_text">Data-oriented design. Contiguous memory allocation using std::array for
+                  the game board.</span>
+              </div>
+            </div>
+            <div class="philo-item">
+              <div class="philo-dot"></div>
+              <div class="philo-text">
+                <strong data-i18n="philo3_title">ECS Architecture</strong>
+                <span data-i18n="philo3_text">Strict separation of data (Components) and logic (Systems) for an
+                  extensible foundation.</span>
+              </div>
+            </div>
+            <div class="philo-item">
+              <div class="philo-dot"></div>
+              <div class="philo-text">
+                <strong data-i18n="philo4_title">Decoupled Systems</strong>
+                <span data-i18n="philo4_text">Type-safe EventBus architecture to broadcast line clears and state changes
+                  across the engine.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-label" data-i18n="sb_mechanics">// CORE MECHANICS</div>
+          <div class="mechanic-list">
+            <div class="mechanic-item">
+              <div class="mechanic-name" data-i18n="mech1_name">Drag & Drop</div>
+              <div class="mechanic-sub" data-i18n="mech1_sub">Tactical placement instead of falling blocks</div>
+            </div>
+            <div class="mechanic-item">
+              <div class="mechanic-name" data-i18n="mech2_name">Deck Management</div>
+              <div class="mechanic-sub" data-i18n="mech2_sub">Manage 3 available pieces strategically</div>
+            </div>
+            <div class="mechanic-item">
+              <div class="mechanic-name" data-i18n="mech3_name">AABB Collision</div>
+              <div class="mechanic-sub" data-i18n="mech3_sub">Custom bounding box checks for placement</div>
+            </div>
+            <div class="mechanic-item">
+              <div class="mechanic-name" data-i18n="mech4_name">Grid Alignment</div>
+              <div class="mechanic-sub" data-i18n="mech4_sub">Pixel-perfect snapping to a 10x18 board</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-label" data-i18n="sb_tech">// TECH STACK</div>
+          <div class="tech-grid">
+            <div class="tech-chip">C++17/20</div>
+            <div class="tech-chip">SimpleEngine2D</div>
+            <div class="tech-chip">ECS</div>
+            <div class="tech-chip">RAII</div>
+            <div class="tech-chip">SDL2</div>
+            <div class="tech-chip">EventBus</div>
+            <div class="tech-chip">Smart Pointers</div>
+            <div class="tech-chip">std::array</div>
+          </div>
+        </div>
+
+      </aside>
+
+      <div class="content-area">
+
+        <div class="intro-article">
+          <div class="content-sep">
+            <div class="content-sep-label" data-i18n="sep_intro">// INTRODUCTION</div>
+            <div class="content-sep-line"></div>
+          </div>
+          <div class="article-body" id="intro-body">
+          </div>
+        </div>
+
+        <div class="devlog-section">
+          <div class="content-sep">
+            <div class="content-sep-label" data-i18n="sep_devlog">// DEVLOG — ENGINE DIARY</div>
+            <div class="content-sep-line"></div>
+            <div class="devlog-count" data-i18n="devlog_count"><span id="entry-count">1</span> ENTRIES</div>
+          </div>
+
+          <div class="timeline" id="timeline">
+
+            <div class="tl-entry" id="entry-01">
+              <div class="tl-dot"></div>
+              <div class="tl-card">
+                <div class="tl-head" onclick="toggleEntry('entry-01')">
+                  <div>
+                    <div class="tl-meta">
+                      <div class="tl-date">2026 — W01</div>
+                      <div class="tl-week" data-i18n="entry01_week">WEEK 01</div>
+                      <div class="tl-tags">
+                        <span class="tl-tag cpp">C++</span>
+                        <span class="tl-tag arch">Architecture</span>
+                        <span class="tl-tag perf">Performance</span>
+                        <span class="tl-tag design">Design</span>
+                      </div>
+                    </div>
+                    <div class="tl-title" data-i18n="entry01_title">Reimagining Tetris with C++</div>
+                    <div class="tl-summary" data-i18n="entry01_summary">Building the SimpleEngine2D foundation, RAII
+                      memory management, and moving from real-time to tactical drag-and-drop gameplay.</div>
+                  </div>
+                  <button class="tl-toggle" id="entry-01-toggle" data-i18n="btn_read">▶ READ</button>
+                </div>
+                <div class="tl-body" id="entry-01-body">
+                  <div class="tl-body-inner">
+                    <div class="tl-content" id="entry01-content">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tl-entry visible" style="transition:none;">
+              <div class="tl-dot" style="border-color:var(--border);"></div>
+              <div class="tl-coming">
+                <div class="tl-coming-label" data-i18n="coming_soon">NEXT ENTRY LOADING<span>█</span></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-copy" data-i18n="footer_copy">© 2026 Eren Köselerli — C++ Engine Developer</div>
+    <a href="index.html#active-projects" class="footer-back" data-i18n="footer_back">← BACK TO PORTFOLIO</a>
+  </footer>
+
+  <script>
+    window.TRANSLATIONS = {
+      en: {
+        nav_back: 'Active Projects',
+        hero_status: '▶ IN DEVELOPMENT',
+        hero_genre: 'TACTICAL PUZZLE',
+        hero_tagline: 'C++17/20 · RAII · ECS ARCHITECTURE // CUSTOM 2D ENGINE',
+        meta_engine: 'ENGINE',
+        meta_lang: 'LANG',
+        meta_genre: 'GENRE',
+        meta_genre_val: 'Puzzle',
+        meta_inspired: 'INSPIRED BY',
+        meta_status: 'STATUS',
+        meta_status_val: 'WIP',
+        sb_about: '// ABOUT',
+        sb_about_text: 'A tactical reimagining of Tetris powered by a custom-built C++ game engine (<strong>SimpleEngine2D</strong>). Instead of real-time falling blocks, players strategically place pieces via a drag-and-drop deck management system.',
+        sb_philosophy: '// ENGINE PHILOSOPHY',
+        philo1_title: 'Manual Memory (RAII)',
+        philo1_text: 'No garbage collector. Deterministic resource lifecycles using Smart Pointers and Value Semantics.',
+        philo2_title: 'Cache Locality',
+        philo2_text: 'Data-oriented design. Contiguous memory allocation using std::array for the game board.',
+        philo3_title: 'ECS Architecture',
+        philo3_text: 'Strict separation of data (Components) and logic (Systems) for an extensible foundation.',
+        philo4_title: 'Decoupled Systems',
+        philo4_text: 'Type-safe EventBus architecture to broadcast line clears and state changes across the engine.',
+        sb_mechanics: '// CORE MECHANICS',
+        mech1_name: 'Drag & Drop',
+        mech1_sub: 'Tactical placement instead of falling blocks',
+        mech2_name: 'Deck Management',
+        mech2_sub: 'Manage 3 available pieces strategically',
+        mech3_name: 'AABB Collision',
+        mech3_sub: 'Custom bounding box checks for placement',
+        mech4_name: 'Grid Alignment',
+        mech4_sub: 'Pixel-perfect snapping to a 10x18 board',
+        sb_tech: '// TECH STACK',
+        sep_intro: '// INTRODUCTION',
+        sep_devlog: '// DEVLOG — ENGINE DIARY',
+        devlog_count: '<span id="entry-count">1</span> ENTRIES',
+        btn_read: '▶ READ',
+        entry01_week: 'WEEK 01',
+        entry01_title: 'Reimagining Tetris with C++',
+        entry01_summary: 'Building the SimpleEngine2D foundation, RAII memory management, and moving from real-time to tactical drag-and-drop gameplay.',
+        coming_soon: 'NEXT ENTRY LOADING<span>█</span>',
+        footer_copy: '© 2026 Eren Köselerli — C++ Engine Developer',
+        footer_back: '← BACK TO PORTFOLIO',
+      },
+      tr: {
+        nav_back: 'Aktif Projeler',
+        hero_status: '▶ GELİŞTİRİLİYOR',
+        hero_genre: 'TAKTİKSEL BULMACA',
+        hero_tagline: 'C++17/20 · RAII · ECS MİMARİSİ // ÖZEL 2D MOTOR',
+        meta_engine: 'MOTOR',
+        meta_lang: 'DİL',
+        meta_genre: 'TÜR',
+        meta_genre_val: 'Bulmaca',
+        meta_inspired: 'İLHAM',
+        meta_status: 'DURUM',
+        meta_status_val: 'GELİŞTİRİLİYOR',
+        sb_about: '// HAKKINDA',
+        sb_about_text: 'Özel geliştirilmiş bir C++ oyun motoru (<strong>SimpleEngine2D</strong>) ile güçlendirilmiş taktiksel bir Tetris yorumu. Gerçek zamanlı düşen bloklar yerine, oyuncular sürükle-bırak deste yönetim sistemiyle parçaları stratejik olarak yerleştirir.',
+        sb_philosophy: '// MOTOR FELSEFESİ',
+        philo1_title: 'Manuel Bellek (RAII)',
+        philo1_text: 'Çöp toplayıcı (GC) yok. Akıllı İşaretçiler ve Değer Semantiği kullanılarak deterministik kaynak yönetimi.',
+        philo2_title: 'Cache Locality',
+        philo2_text: 'Veri odaklı tasarım. Oyun tahtası için std::array kullanılarak bellekte bitişik tahsisat.',
+        philo3_title: 'ECS Mimarisi',
+        philo3_text: 'Genişletilebilir bir temel için veri (Component) ve mantığın (System) kesin ayrımı.',
+        philo4_title: 'Gevşek Bağlılık',
+        philo4_text: 'Satır silinmelerini ve durum değişikliklerini motora yayınlamak için tip-güvenli EventBus mimarisi.',
+        sb_mechanics: '// TEMEL MEKANİKLER',
+        mech1_name: 'Sürükle & Bırak',
+        mech1_sub: 'Düşen bloklar yerine taktiksel yerleştirme',
+        mech2_name: 'Deste Yönetimi',
+        mech2_sub: 'Mevcut 3 parçayı stratejik olarak yönetme',
+        mech3_name: 'AABB Çarpışma',
+        mech3_sub: 'Yerleştirme için özel sınır kutusu testleri',
+        mech4_name: 'Grid Hizalama',
+        mech4_sub: '10x18 tahtaya piksel hassasiyetinde tutunma',
+        sb_tech: '// TEKNOLOJİ',
+        sep_intro: '// GİRİŞ',
+        sep_devlog: '// DEVLOG — MOTOR GÜNLÜĞÜ',
+        devlog_count: '<span id="entry-count">1</span> GİRİŞ',
+        btn_read: '▶ OKU',
+        entry01_week: 'HAFTA 01',
+        entry01_title: 'C++ ile Tetris\'i Yeniden Hayal Etmek',
+        entry01_summary: 'SimpleEngine2D temelinin atılması, RAII bellek yönetimi ve gerçek zamanlıdan taktiksel sürükle-bırak mekaniğine geçiş.',
+        coming_soon: 'SONRAKİ GİRİŞ YÜKLÜYOR<span>█</span>',
+        footer_copy: '© 2026 Eren Köselerli — C++ Motor Geliştirici',
+        footer_back: '← PORTFOLYOYA DÖN',
+      }
+    };
+    window.ENTRY_CONTENT = {
+      intro: {
+        en: `
+      <p>When starting this project, my goal wasn't just to make a Tetris clone; it was to build a performant game engine architecture (<strong>SimpleEngine2D</strong>) using modern C++ without compromising memory safety. Unlike many developers relying on an automatic Garbage Collector (GC), I chose to manage resource lifecycles entirely through the <strong>RAII (Resource Acquisition Is Initialization)</strong> principle.</p>
+      <p>This approach allows us to strip away the "magic" of commercial engines and understand what actually happens in the memory layer. The result is a highly educational laboratory that marries modern C++17/20 features with Data-Oriented Design principles.</p>
+    `,
+        tr: `
+      <p>Bu projeye başlarken amacım sadece bir Tetris klonu yapmak değildi; modern C++'ın sunduğu imkanlarla, bellek güvenliğinden ödün vermeden performanslı bir oyun motoru mimarisi (<strong>SimpleEngine2D</strong>) inşa etmekti. Birçok geliştiricinin aksine, bu projede otomatik bir çöp toplayıcıya (GC) güvenmek yerine, kaynakların yaşam döngüsünü <strong>RAII (Resource Acquisition Is Initialization)</strong> prensibiyle yönetmeyi seçtim.</p>
+      <p>Bu yaklaşım, ticari motorların "sihrini" bir kenara bırakıp bellek katmanında gerçekte neler olup bittiğini anlamamızı sağlıyor. Ortaya çıkan sonuç ise modern C++17/20 özelliklerini Veri Odaklı Tasarım (Data-Oriented Design) prensipleriyle harmanlayan son derece eğitici bir laboratuvar.</p>
+    `
+      },
+      entry01: {
+        en: `
+      <h3 style="font-family:var(--pixel);font-size:0.55rem;color:var(--text);letter-spacing:0.08em;margin:0 0 0.75rem;">1. Design: Drag and Drop Mechanic</h3>
+      <p>In classic Tetris, pieces fall from top to bottom while we guide them. In our version, the game winks at a <strong>Mathematical Deck Management</strong> style. We manually drag and place 3 different pieces sitting on our bottom bar onto the board. This completely shifted the genre from "real-time reflex" to "tactical placement."</p>
+
+      <h3 style="font-family:var(--pixel);font-size:0.55rem;color:var(--text);letter-spacing:0.08em;margin:1.5rem 0 0.75rem;">2. Memory Management and Object Lifecycle</h3>
+      <p>Modern C++ (17/20) has very strict rules regarding object <strong>ownership</strong>. I structured the lifecycle of pieces as follows:</p>
+      <ul>
+        <li><strong>Value Semantics:</strong> I defined <code>Tetromino</code> pieces as <code>struct</code>s. Instead of treating everything as a "reference" like in C#, I kept pieces on the <strong>stack</strong>, significantly speeding up memory access.</li>
+        <li><strong>Smart Pointers:</strong> Core engine systems are stored using <code>std::unique_ptr</code>. This guarantees a single owner, ensuring memory is automatically and cleanly released when the engine shuts down.</li>
+        <li><strong>Decoupling:</strong> I implemented a type-safe <strong>EventBus</strong> architecture to notify the entire engine seamlessly when a piece is dropped or a line is cleared.</li>
+      </ul>
+
+      <h3 style="font-family:var(--pixel);font-size:0.55rem;color:var(--text);letter-spacing:0.08em;margin:1.5rem 0 0.75rem;">3. Technical Architecture: ECS</h3>
+      <p>The heart of SimpleEngine2D is the <strong>Entity-Component-System (ECS)</strong> architecture. A Tetris block is simply an <code>Entity</code> (an ID), while its position is stored in a <code>TransformComponent</code> and its visual representation in a <code>SpriteComponent</code>.</p>
+      
+      <div class="tl-insight">
+        <div class="tl-insight-label">▶ MENTOR INSIGHT (C++ GEM)</div>
+        <p>Why <code>std::array</code> over <code>std::vector</code> for the board? The 10x18 grid is a fixed-size structure. Using <code>std::array</code> ensures the data is stored contiguously in memory. This greatly maximizes CPU Cache Locality, a cornerstone of high-performance engine development compared to typical Unity/C# heap allocations.</p>
+      </div>
+
+      <h3 style="font-family:var(--pixel);font-size:0.55rem;color:var(--text);letter-spacing:0.08em;margin:1.5rem 0 0.75rem;">4. Modern C++ Touches</h3>
+      <p>Tools introduced in C++17, like <code>std::optional</code> and <code>std::variant</code>, elevated our error handling. For instance, when checking if a piece is currently held by the mouse, I used <code>std::optional&lt;Piece&gt;</code> instead of checking a raw null pointer. It keeps the codebase much cleaner and memory-safe.</p>
+    `,
+        tr: `
+      <h3 style="font-family:var(--pixel);font-size:0.55rem;color:var(--text);letter-spacing:0.08em;margin:0 0 0.75rem;">1. Tasarım: Sürükle-Bırak Mekaniği</h3>
+      <p>Klasik Tetris'te parça yukarıdan aşağıya inerken biz onu yönlendiririz. Bizim versiyonumuzda ise oyun, bir <strong>Mathematical Deck Management</strong> oyununa göz kırpıyor. Alt barımızda duran 3 farklı parçayı fareyle tahtaya biz yerleştiriyoruz. Bu durum, oyunun "gerçek zamanlı refleks" türünden "taktiksel yerleştirme" türüne evrilmesini sağladı.</p>
+
+      <h3 style="font-family:var(--pixel);font-size:0.55rem;color:var(--text);letter-spacing:0.08em;margin:1.5rem 0 0.75rem;">2. Bellek Yönetimi ve Nesne Yaşam Döngüsü</h3>
+      <p>Modern C++ (C++17/20), nesnelerin sahipliği (<strong>ownership</strong>) konusunda çok net kurallara sahiptir. Projede parçaların yaşam döngüsünü şu şekilde kurguladım:</p>
+      <ul>
+        <li><strong>Değer Semantiği (Value Semantics):</strong> <code>Tetromino</code> parçalarını <code>struct</code> olarak tanımladım. C#'taki gibi her şeyi "referans" olarak düşünmek yerine, parçaları yığında (<strong>stack</strong>) tutarak bellek erişimini hızlandırdım.</li>
+        <li><strong>Akıllı İşaretçiler (Smart Pointers):</strong> Oyun sistemlerini (System) motorun kalbinde <code>std::unique_ptr</code> ile saklıyorum. Bu, sistemin tek bir sahibi olduğunu ve motor kapandığında belleğin otomatik olarak temizleneceğini garanti eder.</li>
+        <li><strong>Gevşek Bağlılık (Decoupling):</strong> Parça tahtaya bırakıldığında veya bir satır silindiğinde, tüm motoru haberdar etmek için tip-güvenli bir <strong>EventBus</strong> mimarisi kullandım.</li>
+      </ul>
+
+      <h3 style="font-family:var(--pixel);font-size:0.55rem;color:var(--text);letter-spacing:0.08em;margin:1.5rem 0 0.75rem;">3. Teknik Mimari: ECS (Entity-Component-System)</h3>
+      <p>SimpleEngine2D'nin kalbinde <strong>ECS</strong> mimarisi yatıyor. Tetris bloğu sadece bir <code>Entity</code> (ID) iken, onun konumu bir <code>TransformComponent</code>, görüntüsü ise <code>SpriteComponent</code> içinde saklanıyor.</p>
+      
+      <div class="tl-insight">
+        <div class="tl-insight-label">▶ MENTOR NOTU (C++ GEM)</div>
+        <p>Oyun tahtası için neden <code>std::vector</code> yerine <code>std::array</code> kullanıldı? 10x18'lik grid sabit boyutlu bir yapıdır. <code>std::array</code> kullanmak, verilerin bellekte bitişik (contiguous) durmasını garanti eder. Unity/C# tabanlı geleneksel heap tahsisatlarına kıyasla bu, işlemci önbelleğini (CPU Cache Locality) maksimize ederek performanslı motor geliştirmenin temel taşıdır.</p>
+      </div>
+
+      <h3 style="font-family:var(--pixel);font-size:0.55rem;color:var(--text);letter-spacing:0.08em;margin:1.5rem 0 0.75rem;">4. Modern C++ Dokunuşları</h3>
+      <p>C++17'nin sunduğu <code>std::optional</code> ve <code>std::variant</code> gibi araçlar, hata yönetimini bir üst seviyeye taşıdı. Örneğin, fareyle tutulan bir parçanın olup olmadığını kontrol ederken ham işaretçi (null check) yerine <code>std::optional&lt;Piece&gt;</code> kullanarak daha temiz ve güvenli kodlar yazdım.</p>
+    `
+      }
+    };
+    window.onLanguageChanged = function (lang) {
+      const introEl = document.getElementById('intro-body');
+      if (introEl) introEl.innerHTML = window.ENTRY_CONTENT.intro[lang];
+      const e01 = document.getElementById('entry01-content');
+      if (e01) e01.innerHTML = window.ENTRY_CONTENT.entry01[lang];
+      const countEl = document.getElementById('entry-count');
+      if (countEl) countEl.textContent = '1';
+
+      const toggle = document.getElementById('entry-01-toggle');
+      if (toggle) {
+        const isOpen = document.getElementById('entry-01-body').classList.contains('open');
+        toggle.textContent = isOpen
+          ? (lang === 'tr' ? '▲ KAPAT' : '▲ CLOSE')
+          : (lang === 'tr' ? '▶ OKU' : '▶ READ');
+      }
+    };
+
+    window.toggleEntry = function (id) {
+      const body = document.getElementById(id + '-body');
+      const toggle = document.getElementById(id + '-toggle');
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open', !isOpen);
+      toggle.classList.toggle('open', !isOpen);
+
+      const lang = document.documentElement.lang || 'en';
+      toggle.textContent = isOpen
+        ? (lang === 'tr' ? '▶ OKU' : '▶ READ')
+        : (lang === 'tr' ? '▲ KAPAT' : '▲ CLOSE');
+    };
+  </script>
+  <script src="js/ui/theme.js"></script>
+  <script src="js/ui/lang.js"></script>
+  <script src="js/ui/menu.js"></script>
+  <script src="js/ui/reveal.js"></script>
+</body>
+
+</html>

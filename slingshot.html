@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slingshot — Eren Köselerli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Source+Code+Pro:wght@300;400;500&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #1a1826;
+    --surface:  #211f30;
+    --card:     #2a2740;
+    --border:   #46425e;
+    --I:        #00b9be; /* teal      */
+    --O:        #ffeecc; /* cream     */
+    --T:        #7b7499; /* soft purple */
+    --S:        #15788c; /* deep teal */
+    --Z:        #ff6973; /* coral red */
+    --J:        #00b9be; /* teal-blue */
+    --L:        #ffb0a3; /* peach     */
+    --accent:   #00b9be;
+    --accent2:  #ff6973;
+    --text:     #ffeecc;
+    --muted:    #9691b8;
+    --dim:      #2e2b45;
+    --pixel:    'Press Start 2P', monospace;
+    --mono:     'Source Code Pro', monospace;
+    --body:     'Rajdhani', sans-serif;
+    /* Game accent — teal for Slingshot */
+    --game-accent: #00b9be;
+    --game-accent2: #ff6973;
+  }
+
+  [data-theme="light"] {
+    --bg:       #ffeecc;
+    --surface:  #ffe8b8;
+    --card:     #ffdfa0;
+    --border:   #ffb0a3;
+    --text:     #1a1826;
+    --muted:    #46425e;
+    --dim:      #ffd880;
+    --accent:   #15788c;
+    --accent2:  #ff6973;
+    --game-accent: #15788c;
+  }
+  [data-theme="light"] body::before {
+    background-image:
+      linear-gradient(rgba(21,120,140,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(21,120,140,0.07) 1px, transparent 1px);
+  }
+  [data-theme="light"] nav { background: rgba(255,238,204,0.97); }
+  [data-theme="light"] .mobile-menu { background: rgba(255,238,204,0.99); }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--body); overflow-x: hidden; font-size: 16px; transition: background 0.3s, color 0.3s; }
+
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,185,190,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,185,190,0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--I); }
+
+  @keyframes blink { 0%,49%{opacity:1} 50%,99%{opacity:0} }
+  @keyframes stackIn { from{transform:translateY(-30px);opacity:0} to{transform:translateY(0);opacity:1} }
+  @keyframes fadeUp { from{transform:translateY(24px);opacity:0} to{transform:translateY(0);opacity:1} }
+  @keyframes scanline {
+    0%   { transform: translateY(-100%); }
+    100% { transform: translateY(100vh); }
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9500;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 2.5rem;
+    background: rgba(10,10,15,0.95); backdrop-filter: blur(12px);
+    border-bottom: 2px solid var(--border);
+  }
+  nav::after { content:''; position:absolute; bottom:-2px; left:0; right:0; height:2px; background: linear-gradient(90deg, var(--I), var(--T), var(--O), var(--S), var(--Z), var(--J), var(--L)); }
+  .nav-logo { font-family: var(--pixel); font-size: 0.75rem; color: var(--I); text-decoration: none; letter-spacing: 0.05em; text-shadow: 0 0 10px var(--I); }
+  .nav-back {
+    font-family: var(--mono); font-size: 0.65rem; color: var(--muted);
+    text-decoration: none; letter-spacing: 0.1em; text-transform: uppercase;
+    transition: color 0.2s; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .nav-back:hover { color: var(--I); }
+  .nav-back::before { content: '←'; font-size: 0.8rem; }
+  .nav-controls { display: flex; align-items: center; gap: 0.75rem; }
+  .toggle-btn {
+    font-family: var(--pixel); font-size: 0.32rem; letter-spacing: 0.06em;
+    padding: 0.4rem 0.6rem; background: var(--surface); color: var(--muted);
+    border: 1px solid var(--border); cursor: pointer;
+    transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
+  }
+  .toggle-btn:hover { color: var(--I); border-color: var(--I); background: var(--dim); }
+  .toggle-btn.active { color: var(--I); border-color: var(--I); }
+
+  /* ── HERO ── */
+  .game-hero {
+    min-height: 60vh; display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 8rem 4rem 4rem; position: relative; overflow: hidden; z-index: 1;
+    border-bottom: 3px solid var(--border);
+  }
+  .game-hero::before {
+    content: '';
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 70% 50%, rgba(0,185,190,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 30% 80%, rgba(255,105,115,0.06) 0%, transparent 60%);
+  }
+  /* Scanline effect on hero */
+  .game-hero::after {
+    content: '';
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 2px,
+      rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
+    );
+  }
+  .hero-breadcrumb {
+    font-family: var(--mono); font-size: 0.6rem; color: var(--muted);
+    letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 0.5rem; position: relative; z-index: 1;
+  }
+  .hero-breadcrumb span { color: var(--I); }
+  .game-hero-status {
+    display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;
+    position: relative; z-index: 1;
+  }
+  .status-badge {
+    font-family: var(--pixel); font-size: 0.38rem; letter-spacing: 0.12em;
+    padding: 0.35rem 0.7rem;
+    border: 2px solid var(--S); color: var(--S);
+    background: rgba(0,240,0,0.08);
+    text-shadow: 0 0 8px var(--S);
+    box-shadow: 0 0 12px rgba(0,240,0,0.15);
+  }
+  .status-badge.wip { border-color: var(--O); color: var(--O); background: rgba(240,240,0,0.08); text-shadow: 0 0 8px var(--O); box-shadow: 0 0 12px rgba(240,240,0,0.15); }
+  .genre-tag {
+    font-family: var(--mono); font-size: 0.6rem; color: var(--muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .game-title-wrap { position: relative; z-index: 1; margin-bottom: 1rem; }
+  .game-title-main {
+    font-family: var(--pixel);
+    font-size: clamp(2rem, 6vw, 5rem);
+    line-height: 1.2; font-weight: 400;
+    color: #fff;
+    text-shadow: 4px 4px 0 rgba(0,0,0,0.6), 0 0 40px rgba(0,240,240,0.3);
+    letter-spacing: 0.04em;
+  }
+  .game-title-main .t-cyan   { color: var(--I);  text-shadow: 4px 4px 0 rgba(0,0,0,0.5), 0 0 30px var(--I); }
+  .game-title-main .t-purple { color: var(--T);  text-shadow: 4px 4px 0 rgba(0,0,0,0.5), 0 0 30px var(--T); }
+  .game-tagline {
+    font-family: var(--pixel); font-size: clamp(0.45rem, 1.2vw, 0.65rem);
+    color: var(--muted); letter-spacing: 0.15em; line-height: 2;
+    position: relative; z-index: 1; margin-bottom: 2rem;
+  }
+  .game-tagline em { color: var(--I); font-style: normal; }
+  .hero-meta {
+    display: flex; gap: 2px; position: relative; z-index: 1; flex-wrap: wrap;
+  }
+  .meta-chip {
+    font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em;
+    padding: 0.4rem 0.8rem; background: var(--card); border: 1px solid var(--border);
+    color: var(--muted); display: flex; align-items: center; gap: 0.4rem;
+  }
+  .meta-chip .chip-label { color: var(--muted); font-size: 0.52rem; }
+  .meta-chip .chip-val   { color: var(--text); }
+
+  /* ── LAYOUT ── */
+  main { position: relative; z-index: 1; }
+  .page-grid {
+    display: grid; grid-template-columns: 320px 1fr; gap: 0;
+    border-top: none;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    border-right: 2px solid var(--border);
+    padding: 3rem 2rem;
+    position: sticky; top: 80px; height: fit-content;
+    background: var(--surface);
+  }
+  .sidebar-section { margin-bottom: 2.5rem; }
+  .sidebar-label {
+    font-family: var(--pixel); font-size: 0.38rem; color: var(--I);
+    letter-spacing: 0.15em; text-transform: uppercase;
+    margin-bottom: 1rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-intro { font-size: 0.95rem; line-height: 1.75; color: var(--muted); font-weight: 400; }
+  .sidebar-intro strong { color: var(--text); font-weight: 600; }
+
+  /* Philosophy points */
+  .philo-list { display: flex; flex-direction: column; gap: 2px; }
+  .philo-item {
+    display: flex; align-items: flex-start; gap: 0.6rem;
+    padding: 0.7rem 0.8rem; background: var(--card); border: 1px solid var(--border);
+    border-left: 3px solid var(--border);
+    transition: border-left-color 0.2s, background 0.2s;
+  }
+  .philo-item:hover { background: var(--dim); border-left-color: var(--I); }
+  .philo-dot { width: 6px; height: 6px; background: var(--I); flex-shrink: 0; margin-top: 5px; }
+  .philo-text { font-size: 0.82rem; line-height: 1.5; color: var(--muted); }
+  .philo-text strong { color: var(--text); display: block; font-size: 0.75rem; letter-spacing: 0.05em; margin-bottom: 0.1rem; }
+
+  /* Tech stack */
+  .tech-grid { display: flex; flex-wrap: wrap; gap: 2px; }
+  .tech-chip {
+    font-family: var(--mono); font-size: 0.55rem; padding: 0.25rem 0.5rem;
+    background: var(--card); border: 1px solid var(--border); color: var(--muted);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .tech-chip:hover { border-color: var(--I); color: var(--I); }
+
+  /* Mechanics summary */
+  .mechanic-list { display: flex; flex-direction: column; gap: 2px; }
+  .mechanic-item {
+    padding: 0.6rem 0.8rem; background: var(--card); border: 1px solid var(--border);
+    border-left: 3px solid transparent; transition: all 0.2s;
+    cursor: default;
+  }
+  .mechanic-item:nth-child(1) { border-left-color: var(--I); }
+  .mechanic-item:nth-child(2) { border-left-color: var(--T); }
+  .mechanic-item:nth-child(3) { border-left-color: var(--O); }
+  .mechanic-item:nth-child(4) { border-left-color: var(--S); }
+  .mechanic-item:nth-child(5) { border-left-color: var(--Z); }
+  .mechanic-item:hover { background: var(--dim); }
+  .mechanic-name { font-family: var(--mono); font-size: 0.6rem; color: var(--text); letter-spacing: 0.08em; text-transform: uppercase; }
+  .mechanic-sub  { font-size: 0.78rem; color: var(--muted); margin-top: 0.15rem; line-height: 1.4; }
+
+  /* ── MAIN CONTENT ── */
+  .content-area { padding: 3rem 3.5rem; }
+
+  /* Section separator */
+  .content-sep {
+    display: flex; align-items: center; gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .content-sep-label {
+    font-family: var(--pixel); font-size: 0.38rem; color: var(--game-accent);
+    letter-spacing: 0.15em; white-space: nowrap;
+  }
+  .content-sep-line { flex: 1; height: 1px; background: var(--border); }
+
+  /* Intro article */
+  .intro-article { margin-bottom: 4rem; }
+  .article-body { font-size: 1rem; line-height: 1.85; color: var(--muted); font-weight: 400; max-width: 720px; }
+  .article-body p { margin-bottom: 1.25rem; }
+  .article-body p:last-child { margin-bottom: 0; }
+  .article-body strong { color: var(--text); font-weight: 600; }
+  .article-body em { color: var(--I); font-style: normal; }
+  .article-body code {
+    font-family: var(--mono); font-size: 0.82rem; color: var(--T);
+    background: var(--dim); padding: 0.1em 0.35em; border: 1px solid var(--border);
+  }
+
+  /* Quote callout */
+  .callout {
+    border-left: 3px solid var(--I); padding: 1rem 1.5rem;
+    background: var(--card); margin: 1.5rem 0; max-width: 680px;
+  }
+  .callout p { font-family: var(--pixel); font-size: 0.5rem; line-height: 2; color: var(--I); letter-spacing: 0.08em; }
+
+  /* ── TIMELINE / DEVLOG ── */
+  .devlog-section { }
+  .devlog-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+  .devlog-count {
+    font-family: var(--mono); font-size: 0.6rem; color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+  .devlog-count span { color: var(--I); }
+
+  /* Timeline rail */
+  .timeline {
+    position: relative; padding-left: 2rem;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute; left: 0; top: 8px; bottom: 0;
+    width: 2px; background: linear-gradient(to bottom, var(--I), var(--T), transparent);
+  }
+
+  /* Entry */
+  .tl-entry {
+    position: relative; margin-bottom: 0;
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .tl-entry.visible { opacity: 1; transform: translateY(0); }
+
+  .tl-dot {
+    position: absolute; left: -2rem; top: 6px;
+    width: 10px; height: 10px;
+    background: var(--bg); border: 2px solid var(--I);
+    transform: translateX(-4px);
+    transition: background 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+  }
+  .tl-entry:hover .tl-dot { background: var(--I); box-shadow: 0 0 10px var(--I); }
+
+  .tl-card {
+    border: 2px solid var(--border); background: var(--card);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 3px;
+  }
+  .tl-entry:hover .tl-card { border-color: var(--I); box-shadow: 4px 4px 0 var(--border); }
+
+  /* Card header — always visible, clickable */
+  .tl-head {
+    padding: 1.25rem 1.5rem; cursor: pointer;
+    display: grid; grid-template-columns: 1fr auto;
+    align-items: start; gap: 1rem;
+    user-select: none;
+  }
+  .tl-meta { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+  .tl-date {
+    font-family: var(--mono); font-size: 0.58rem; color: var(--I);
+    letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  .tl-week {
+    font-family: var(--mono); font-size: 0.55rem; color: var(--muted);
+    letter-spacing: 0.08em; padding: 0.1rem 0.4rem;
+    background: var(--dim); border: 1px solid var(--border);
+  }
+  .tl-tags { display: flex; gap: 2px; flex-wrap: wrap; }
+  .tl-tag {
+    font-family: var(--mono); font-size: 0.48rem; padding: 0.15rem 0.4rem;
+    border: 1px solid var(--border); color: var(--muted);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .tl-tag.physics   { border-color: rgba(0,240,240,0.4);  color: var(--I); }
+  .tl-tag.ai        { border-color: rgba(160,0,240,0.4);  color: var(--T); }
+  .tl-tag.design    { border-color: rgba(240,240,0,0.4);  color: var(--O); }
+  .tl-tag.feel      { border-color: rgba(0,240,0,0.4);    color: var(--S); }
+  .tl-tag.arch      { border-color: rgba(240,160,0,0.4);  color: var(--L); }
+  .tl-tag.perf      { border-color: rgba(240,0,0,0.4);    color: var(--Z); }
+
+  .tl-title {
+    font-family: var(--pixel); font-size: 0.7rem; letter-spacing: 0.04em;
+    color: var(--text); line-height: 1.5; font-weight: 400;
+  }
+  .tl-summary { font-size: 0.88rem; line-height: 1.6; color: var(--muted); margin-top: 0.5rem; }
+
+  /* Expand toggle */
+  .tl-toggle {
+    font-family: var(--pixel); font-size: 0.45rem; color: var(--muted);
+    padding: 0.4rem; border: 1px solid var(--border); background: var(--surface);
+    white-space: nowrap; flex-shrink: 0; cursor: pointer;
+    transition: all 0.2s; align-self: start; margin-top: 4px;
+  }
+  .tl-entry:hover .tl-toggle { color: var(--I); border-color: var(--I); }
+  .tl-toggle.open { color: var(--I); border-color: var(--I); background: var(--dim); }
+
+  /* Collapsible body */
+  .tl-body {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4,0,0.2,1), padding 0.3s;
+    padding: 0 1.5rem;
+  }
+  .tl-body.open {
+    max-height: 2000px;
+    padding: 0 1.5rem 1.5rem;
+  }
+  .tl-body-inner { border-top: 1px solid var(--border); padding-top: 1.25rem; }
+  .tl-content { font-size: 0.95rem; line-height: 1.85; color: var(--muted); max-width: 680px; }
+  .tl-content p { margin-bottom: 1.1rem; }
+  .tl-content p:last-child { margin-bottom: 0; }
+  .tl-content strong { color: var(--text); font-weight: 600; }
+  .tl-content em { color: var(--I); font-style: normal; }
+  .tl-content code {
+    font-family: var(--mono); font-size: 0.82rem; color: var(--T);
+    background: var(--dim); padding: 0.1em 0.35em; border: 1px solid var(--border);
+  }
+  .tl-content ul { padding-left: 1.2rem; margin-bottom: 1rem; }
+  .tl-content li { margin-bottom: 0.5rem; line-height: 1.6; }
+  .tl-content li::marker { color: var(--I); }
+
+  /* Insight box inside entry */
+  .tl-insight {
+    margin-top: 1.25rem; padding: 1rem 1.2rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--I);
+  }
+  .tl-insight-label {
+    font-family: var(--pixel); font-size: 0.35rem; color: var(--I);
+    letter-spacing: 0.15em; margin-bottom: 0.5rem;
+  }
+  .tl-insight p { font-size: 0.88rem; line-height: 1.65; color: var(--muted); margin: 0; }
+  .tl-insight p strong { color: var(--text); }
+
+  /* "Coming soon" placeholder */
+  .tl-coming {
+    border: 2px dashed var(--border); padding: 2rem; text-align: center;
+    background: var(--surface); margin-top: 3px;
+  }
+  .tl-coming-label { font-family: var(--pixel); font-size: 0.45rem; color: var(--muted); letter-spacing: 0.15em; line-height: 2; }
+  .tl-coming-label span { animation: blink 1s step-end infinite; }
+
+  /* ── FOOTER ── */
+  footer {
+    margin-top: 0; padding: 2rem 4rem;
+    border-top: 2px solid var(--border); background: var(--surface);
+    display: flex; justify-content: space-between; align-items: center;
+    position: relative; z-index: 1; flex-wrap: wrap; gap: 1rem;
+  }
+  footer::before { content:''; position:absolute; top:-2px; left:0; right:0; height:2px; background: linear-gradient(90deg, var(--I), var(--T), var(--O), var(--S), var(--Z), var(--J), var(--L)); }
+  .footer-copy { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); letter-spacing: 0.1em; }
+  .footer-back { font-family: var(--pixel); font-size: 0.38rem; color: var(--muted); text-decoration: none; letter-spacing: 0.1em; transition: color 0.2s; }
+  .footer-back:hover { color: var(--I); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .page-grid { grid-template-columns: 1fr; }
+    .sidebar { position: static; border-right: none; border-bottom: 2px solid var(--border); }
+    .content-area { padding: 2rem 1.5rem; }
+    .game-hero { padding: 7rem 1.5rem 3rem; }
+    nav { padding: 1rem 1.5rem; }
+    footer { padding: 2rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">EK://</a>
+  <a href="index.html#active-projects" class="nav-back" data-i18n="nav_back">Active Projects</a>
+  <div class="nav-controls">
+    <button class="toggle-btn" id="langToggle" onclick="toggleLang()" title="Switch language / Dil değiştir">EN / TR</button>
+    <button class="toggle-btn" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">☀ / ☾</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="game-hero">
+  <div class="hero-breadcrumb">EK:// <span>/</span> active_projects <span>/</span> slingshot</div>
+  <div class="game-hero-status">
+    <div class="status-badge wip" data-i18n="hero_status">▶ IN DEVELOPMENT</div>
+    <div class="genre-tag" data-i18n="hero_genre">2D PRECISION PLATFORMER</div>
+  </div>
+  <div class="game-title-wrap">
+    <h1 class="game-title-main">
+      <span class="t-cyan">SLING</span><span class="t-purple">SHOT</span>
+    </h1>
+  </div>
+  <div class="game-tagline" data-i18n="hero_tagline">
+    MOMENTUM <em>&</em> PRECISION — HIGH-SKILL 2D PLATFORMER // UNITY · C#
+  </div>
+  <div class="hero-meta">
+    <div class="meta-chip"><span class="chip-label" data-i18n="meta_engine">ENGINE</span><span class="chip-val">Unity</span></div>
+    <div class="meta-chip"><span class="chip-label" data-i18n="meta_lang">LANG</span><span class="chip-val">C#</span></div>
+    <div class="meta-chip"><span class="chip-label" data-i18n="meta_genre">GENRE</span><span class="chip-val" data-i18n="meta_genre_val">Precision Platformer</span></div>
+    <div class="meta-chip"><span class="chip-label" data-i18n="meta_inspired">INSPIRED BY</span><span class="chip-val">Celeste · SMB</span></div>
+    <div class="meta-chip"><span class="chip-label" data-i18n="meta_status">STATUS</span><span class="chip-val" data-i18n="meta_status_val" style="color:var(--O)">WIP</span></div>
+  </div>
+</header>
+
+<main>
+<div class="page-grid">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="sidebar-label" data-i18n="sb_about">// ABOUT</div>
+      <p class="sidebar-intro" data-i18n="sb_about_text">
+        A <strong>high-skill 2D precision platformer</strong> built entirely around speed and momentum. Inspired by Celeste and Super Meat Boy — but with a twist: enemies are movement tools, not just obstacles.
+      </p>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label" data-i18n="sb_philosophy">// DESIGN PHILOSOPHY</div>
+      <div class="philo-list">
+        <div class="philo-item">
+          <div class="philo-dot"></div>
+          <div class="philo-text">
+            <strong data-i18n="philo1_title">Zero Friction Control</strong>
+            <span data-i18n="philo1_text">Kinematic physics — no AddForce. Direct math over every acceleration, friction and gravity value.</span>
+          </div>
+        </div>
+        <div class="philo-item">
+          <div class="philo-dot"></div>
+          <div class="philo-text">
+            <strong data-i18n="philo2_title">Enemies as Tools</strong>
+            <span data-i18n="philo2_text">Every enemy is a mobile node. Dash through them, hook onto them, use them to extend your momentum.</span>
+          </div>
+        </div>
+        <div class="philo-item">
+          <div class="philo-dot"></div>
+          <div class="philo-text">
+            <strong data-i18n="philo3_title">Rank-Based Challenge</strong>
+            <span data-i18n="philo3_text">Survival is the floor. S-Rank without breaking momentum is the ceiling.</span>
+          </div>
+        </div>
+        <div class="philo-item">
+          <div class="philo-dot"></div>
+          <div class="philo-text">
+            <strong data-i18n="philo4_title">Juice Everything</strong>
+            <span data-i18n="philo4_text">HitStop on every impact. The player should feel the weight of each hit in their bones.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label" data-i18n="sb_mechanics">// CORE MECHANICS</div>
+      <div class="mechanic-list">
+        <div class="mechanic-item">
+          <div class="mechanic-name" data-i18n="mech1_name">Kinematic Physics</div>
+          <div class="mechanic-sub" data-i18n="mech1_sub">Custom acceleration / friction / gravity curves</div>
+        </div>
+        <div class="mechanic-item">
+          <div class="mechanic-name" data-i18n="mech2_name">Enemy Dash</div>
+          <div class="mechanic-sub" data-i18n="mech2_sub">Dash through enemies to redirect momentum</div>
+        </div>
+        <div class="mechanic-item">
+          <div class="mechanic-name" data-i18n="mech3_name">Swing / Grapple</div>
+          <div class="mechanic-sub" data-i18n="mech3_sub">Hook onto enemies as mobile swing nodes</div>
+        </div>
+        <div class="mechanic-item">
+          <div class="mechanic-name" data-i18n="mech4_name">Variable Jump</div>
+          <div class="mechanic-sub" data-i18n="mech4_sub">Hold-duration jump height + Coyote Time</div>
+        </div>
+        <div class="mechanic-item">
+          <div class="mechanic-name" data-i18n="mech5_name">HitStop</div>
+          <div class="mechanic-sub" data-i18n="mech5_sub">Millisecond freeze on key impacts for juice</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label" data-i18n="sb_tech">// TECH STACK</div>
+      <div class="tech-grid">
+        <div class="tech-chip">Unity 2D</div>
+        <div class="tech-chip">C#</div>
+        <div class="tech-chip">State Pattern</div>
+        <div class="tech-chip">Kinematic Physics</div>
+        <div class="tech-chip">Tilemap</div>
+        <div class="tech-chip">Cinemachine</div>
+        <div class="tech-chip">ScriptableObjects</div>
+        <div class="tech-chip">Odin Inspector</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="content-area">
+
+    <!-- Intro -->
+    <div class="intro-article">
+      <div class="content-sep">
+        <div class="content-sep-label" data-i18n="sep_intro">// INTRODUCTION</div>
+        <div class="content-sep-line"></div>
+      </div>
+      <div class="article-body" id="intro-body">
+        <!-- Filled by JS / i18n -->
+      </div>
+    </div>
+
+    <!-- Devlog Timeline -->
+    <div class="devlog-section">
+      <div class="content-sep">
+        <div class="content-sep-label" data-i18n="sep_devlog">// DEVLOG — MECHANIC DIARY</div>
+        <div class="content-sep-line"></div>
+        <div class="devlog-count" data-i18n="devlog_count"><span id="entry-count">1</span> ENTRIES</div>
+      </div>
+
+      <div class="timeline" id="timeline">
+
+        <!-- ── ENTRY 01 ── -->
+        <div class="tl-entry" id="entry-01">
+          <div class="tl-dot"></div>
+          <div class="tl-card">
+            <div class="tl-head" onclick="toggleEntry('entry-01')">
+              <div>
+                <div class="tl-meta">
+                  <div class="tl-date">2025 — W01</div>
+                  <div class="tl-week" data-i18n="entry01_week">WEEK 01</div>
+                  <div class="tl-tags">
+                    <span class="tl-tag physics">Physics</span>
+                    <span class="tl-tag feel">Feel</span>
+                    <span class="tl-tag arch">Architecture</span>
+                    <span class="tl-tag design">Design</span>
+                  </div>
+                </div>
+                <div class="tl-title" data-i18n="entry01_title">Momentum ve Hassasiyetin Dansı</div>
+                <div class="tl-summary" data-i18n="entry01_summary">Kinematik fizik altyapısı, tasarım felsefesi ve State Pattern mimarisi — Slingshot'ın temelleri üzerine.</div>
+              </div>
+              <button class="tl-toggle" id="entry-01-toggle" data-i18n="btn_read">▶ READ</button>
+            </div>
+            <div class="tl-body" id="entry-01-body">
+              <div class="tl-body-inner">
+                <div class="tl-content" id="entry01-content">
+                  <!-- Filled by JS / i18n -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ── END ENTRY 01 ── -->
+
+        <!-- Coming soon placeholder -->
+        <div class="tl-entry visible" style="transition:none;">
+          <div class="tl-dot" style="border-color:var(--border);"></div>
+          <div class="tl-coming">
+            <div class="tl-coming-label" data-i18n="coming_soon">NEXT ENTRY LOADING<span>█</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /content-area -->
+</div><!-- /page-grid -->
+</main>
+
+<footer>
+  <div class="footer-copy" data-i18n="footer_copy">© 2026 Eren Köselerli — Game Developer</div>
+  <a href="index.html#active-projects" class="footer-back" data-i18n="footer_back">← BACK TO PORTFOLIO</a>
+</footer>
+
+<script>
+  window.TRANSLATIONS = {
+  en: {
+    nav_back: 'Active Projects',
+    hero_status: '▶ IN DEVELOPMENT',
+    hero_genre: '2D PRECISION PLATFORMER',
+    hero_tagline: 'MOMENTUM & PRECISION — HIGH-SKILL 2D PLATFORMER // UNITY · C#',
+    meta_engine: 'ENGINE',
+    meta_lang: 'LANG',
+    meta_genre: 'GENRE',
+    meta_genre_val: 'Precision Platformer',
+    meta_inspired: 'INSPIRED BY',
+    meta_status: 'STATUS',
+    meta_status_val: 'WIP',
+    sb_about: '// ABOUT',
+    sb_about_text: 'A <strong>high-skill 2D precision platformer</strong> built entirely around speed and momentum. Inspired by Celeste and Super Meat Boy — but with a twist: enemies are movement tools, not just obstacles.',
+    sb_philosophy: '// DESIGN PHILOSOPHY',
+    philo1_title: 'Zero Friction Control',
+    philo1_text: 'Kinematic physics — no AddForce. Direct math over every acceleration, friction and gravity value.',
+    philo2_title: 'Enemies as Tools',
+    philo2_text: 'Every enemy is a mobile node. Dash through them, hook onto them, use them to extend your momentum.',
+    philo3_title: 'Rank-Based Challenge',
+    philo3_text: 'Survival is the floor. S-Rank without breaking momentum is the ceiling.',
+    philo4_title: 'Juice Everything',
+    philo4_text: 'HitStop on every impact. The player should feel the weight of each hit in their bones.',
+    sb_mechanics: '// CORE MECHANICS',
+    mech1_name: 'Kinematic Physics',
+    mech1_sub: 'Custom acceleration / friction / gravity curves',
+    mech2_name: 'Enemy Dash',
+    mech2_sub: 'Dash through enemies to redirect momentum',
+    mech3_name: 'Swing / Grapple',
+    mech3_sub: 'Hook onto enemies as mobile swing nodes',
+    mech4_name: 'Variable Jump',
+    mech4_sub: 'Hold-duration jump height + Coyote Time',
+    mech5_name: 'HitStop',
+    mech5_sub: 'Millisecond freeze on key impacts for juice',
+    sb_tech: '// TECH STACK',
+    sep_intro: '// INTRODUCTION',
+    sep_devlog: '// DEVLOG — MECHANIC DIARY',
+    devlog_count: '<span id="entry-count">1</span> ENTRIES',
+    btn_read: '▶ READ',
+    entry01_week: 'WEEK 01',
+    entry01_title: 'The Dance of Momentum and Precision',
+    entry01_summary: 'Kinematic physics foundation, design philosophy and State Pattern architecture — the fundamentals of Slingshot.',
+    coming_soon: 'NEXT ENTRY LOADING<span>█</span>',
+    footer_copy: '© 2026 Eren Köselerli — Game Developer',
+    footer_back: '← BACK TO PORTFOLIO',
+  },
+  tr: {
+    nav_back: 'Aktif Projeler',
+    hero_status: '▶ GELİŞTİRİLİYOR',
+    hero_genre: '2D PRECİSİON PLATFORMER',
+    hero_tagline: 'MOMENTUM & HASSASİYET — YÜKSEK BECERİ 2D PLATFORMER // UNITY · C#',
+    meta_engine: 'MOTOR',
+    meta_lang: 'DİL',
+    meta_genre: 'TÜR',
+    meta_genre_val: 'Precision Platformer',
+    meta_inspired: 'İLHAM',
+    meta_status: 'DURUM',
+    meta_status_val: 'GELİŞTİRİLİYOR',
+    sb_about: '// HAKKINDA',
+    sb_about_text: 'Tamamen hız ve momentum üzerine kurulu, <strong>yüksek beceri gerektiren bir 2D precision platformer</strong>. Celeste ve Super Meat Boy\'dan ilham alıyor — ama bir farkla: düşmanlar hareket araçları, sadece engel değil.',
+    sb_philosophy: '// TASARIM FELSEFESİ',
+    philo1_title: 'Sıfır Sürtünme Kontrol',
+    philo1_text: 'Kinematik fizik — AddForce yok. Her ivme, sürtünme ve yerçekimi değeri doğrudan matematikle kontrol ediliyor.',
+    philo2_title: 'Düşmanlar Araçtır',
+    philo2_text: 'Her düşman bir mobil node. Üzerinden dash at, kancayla tutun, momentumunu uzatmak için kullan.',
+    philo3_title: 'Rank Bazlı Zorluk',
+    philo3_text: 'Hayatta kalmak taban, momentumu bozmadan S-Rank almak ise tavan.',
+    philo4_title: 'Her Şeyi Jüisle',
+    philo4_text: 'Her çarpışmada HitStop. Oyuncu her darbenin ağırlığını iliklerine kadar hissetmeli.',
+    sb_mechanics: '// TEMEL MEKANİKLER',
+    mech1_name: 'Kinematik Fizik',
+    mech1_sub: 'Özel ivme / sürtünme / yerçekimi eğrileri',
+    mech2_name: 'Düşman Dash',
+    mech2_sub: 'Momentumu yönlendirmek için düşmandan dash at',
+    mech3_name: 'Swing / Kanca',
+    mech3_sub: 'Düşmanları mobil swing node\'u olarak kullan',
+    mech4_name: 'Değişken Zıplama',
+    mech4_sub: 'Tuş süresiyle zıplama yüksekliği + Coyote Time',
+    mech5_name: 'HitStop',
+    mech5_sub: 'Kritik çarpışmalarda milisaniyelik dondurma',
+    sb_tech: '// TEKNOLOJİ',
+    sep_intro: '// GİRİŞ',
+    sep_devlog: '// DEVLOG — MEKANİK GÜNLÜĞÜ',
+    devlog_count: '<span id="entry-count">1</span> GİRİŞ',
+    btn_read: '▶ OKU',
+    entry01_week: 'HAFTA 01',
+    entry01_title: 'Momentum ve Hassasiyetin Dansı',
+    entry01_summary: 'Kinematik fizik altyapısı, tasarım felsefesi ve State Pattern mimarisi — Slingshot\'ın temelleri üzerine.',
+    coming_soon: 'SONRAKİ GİRİŞ YÜKLÜYOR<span>█</span>',
+    footer_copy: '© 2026 Eren Köselerli — Oyun Geliştirici',
+    footer_back: '← PORTFOLYOYA DÖN',
+  }
+};
+  window.ENTRY_CONTENT = {
+  intro: {
+    en: `
+      <p>For me, game development isn't just writing lines of code — it's about designing that <em>feeling</em>. The sensation when a jump arcs perfectly, when a dash snaps you across the screen with surgical precision, when a hit lands with a weight you can almost feel through the controller. Slingshot is the project where I'm trying to make that vision real.</p>
+      <p>Slingshot is a <strong>high-skill 2D precision platformer</strong> built entirely around speed and momentum. If you've spent hours at the opening screen of Celeste or Super Meat Boy, you already understand: every millisecond, every pixel, every keypress carries life-or-death weight. That state of perfect <em>flow</em> — that's what I'm engineering.</p>
+    `,
+    tr: `
+      <p>Benim için oyun geliştirmek sadece satırlarca kod yazmaktan ibaret değil; asıl mesele o <em>hissiyatı</em> tasarlayabilmek. Bir zıplamanın tam kemanında döndüğü an, bir dash'in sizi ekranda cerrahi hassasiyetle savurduğu an, bir darbenin neredeyse kontrolörden hissedebileceğiniz bir ağırlıkla ineceği an. Slingshot, bu vizyonu hayata geçirmeye çalıştığım projedir.</p>
+      <p>Slingshot, tamamen hız ve momentum üzerine kurulu, <strong>yüksek beceri gerektiren bir 2D precision platformer</strong>. Celeste veya Super Meat Boy'un başında saatler harcadıysanız, zaten anlıyorsunuzdur: Her milisaniyenin, her pikselin ve her tuş basışının hayati önem taşıdığı o kusursuz <em>flow state</em> — işte ben bunu mühendislik yapıyorum.</p>
+    `
+  },
+  entry01: {
+    en: `
+      <p>When designing Slingshot, I had one central focus: <strong>zero-friction control</strong>. No layer between the player's intent and the character's response. To achieve this, I abandoned Unity's built-in physics entirely — no <code>AddForce</code>, no <code>Rigidbody</code> velocity manipulation. Instead, I built a fully kinematic physics stack where I directly manipulate acceleration, friction, and gravity as raw mathematical values.</p>
+      <p>The result? The character responds exactly as fast as you want it to, with exactly the weight you designed. It's the difference between driving a sports car and steering a shopping cart — you feel every input.</p>
+      <h3 style="font-family:var(--pixel);font-size:0.55rem;color:var(--text);letter-spacing:0.08em;margin:1.5rem 0 0.75rem;">Standout Mechanics</h3>
+      <ul>
+        <li><strong>Enemies as Movement Nodes:</strong> In Slingshot's world, enemies aren't just things to avoid. I conceptualized them as mobile "nodes" — you can dash through them to redirect momentum, or hook onto them with your grapple to slingshot yourself forward.</li>
+        <li><strong>Momentum-Based Rank System:</strong> Screen-by-screen level progression where the real challenge isn't just surviving — it's reaching the finish line with an unbroken chain of momentum to earn S, A, or B rank.</li>
+        <li><strong>HitStop:</strong> The "juice" that makes hits feel real. A millisecond screen-freeze on every significant collision or movement snap. Players feel the impact — not just see it.</li>
+      </ul>
+      <div class="tl-insight">
+        <div class="tl-insight-label">▶ ENGINEERING INSIGHT</div>
+        <p>The hardest challenge: walking the line between <strong>fairness</strong> and <strong>difficulty</strong>. Variable jump height (how long you hold the button) combined with invisible tolerance mechanics like Coyote Time isn't just engineering — it's applied psychology. The player never feels cheated, even when the level is brutal.</p>
+      </div>
+      <p style="margin-top:1.25rem;">On the architecture side: with this many interacting systems, I used the <strong>State Pattern</strong> to keep everything clean. Each movement state (jumping, dashing, swinging, falling) is fully isolated — modifying one never breaks another. The codebase stays readable and extensible as complexity grows.</p>
+      <p>Slingshot carries the DNA of Celeste's character control and Super Meat Boy's relentless tempo — but my signature is treating enemies as first-class movement tools. This project isn't just a game; it's the intersection of clean code, precise mathematics, and obsessive game feel.</p>
+    `,
+    tr: `
+      <p>Slingshot'ı tasarlarken tek bir merkezi odağım vardı: <strong>sıfır sürtünmeli kontrol</strong>. Oyuncunun niyeti ile karakterin tepkisi arasında hiçbir katman olmamalıydı. Bunu başarmak için Unity'nin yerleşik fizik motorunu tamamen terk ettim — <code>AddForce</code> yok, <code>Rigidbody</code> hız manipülasyonu yok. Bunun yerine, ivme, sürtünme ve yerçekimini ham matematiksel değerler olarak doğrudan manipüle ettiğim tamamen kinematik bir fizik altyapısı kurdum.</p>
+      <p>Sonuç? Karakter tam olarak istediğiniz hızda, tam olarak tasarladığınız ağırlıkla tepki veriyor. Spor araba sürmek ile alışveriş arabası itmek arasındaki fark gibi — her girişi hissediyorsunuz.</p>
+      <h3 style="font-family:var(--pixel);font-size:0.55rem;color:var(--text);letter-spacing:0.08em;margin:1.5rem 0 0.75rem;">Öne Çıkan Mekanikler</h3>
+      <ul>
+        <li><strong>Düşmanlar Hareket Düğümleri:</strong> Slingshot'ın dünyasında düşmanlar sadece kaçılması gereken şeyler değil. Onları mobil "node" olarak kavramsallaştırdım — momentumu yeniden yönlendirmek için üzerlerinden dash atabilir, ya da kanca ile tutunarak kendinizi fırlatabilirsiniz.</li>
+        <li><strong>Momentum Bazlı Rank Sistemi:</strong> Ekran bazlı bölüm ilerlemesinde asıl zorluk sadece hayatta kalmak değil — S, A veya B rank kazanmak için bölümü momentum zincirini hiç kırmadan bitirmek.</li>
+        <li><strong>HitStop:</strong> Darbeleri gerçek hissettiren "juice". Her önemli çarpışmada veya hareket geçişinde milisaniyelik ekran donması. Oyuncular darbeyi sadece görmez — hisseder.</li>
+      </ul>
+      <div class="tl-insight">
+        <div class="tl-insight-label">▶ MÜHENDİSLİK NOTU</div>
+        <p>En zorlu meydan okuma: <strong>adillik</strong> ve <strong>zorluk</strong> arasındaki ince çizgiyi korumak. Değişken zıplama yüksekliği (tuşu ne kadar süre bastığınız) ile Coyote Time gibi görünmez tolerans mekanizmaları — bu salt mühendislik değil, uygulamalı psikoloji. Bölüm ne kadar acımasız olursa olsun, oyuncu asla haksızlığa uğradığını hissetmemeli.</p>
+      </div>
+      <p style="margin-top:1.25rem;">Mimari tarafında: bu kadar birbirine bağlı sistem varken, her şeyi temiz tutmak için <strong>State Pattern</strong>'i kullandım. Her hareket durumu (zıplama, dash, swing, düşme) tamamen izole — birini değiştirmek diğerini asla bozmaz. Karmaşıklık arttıkça kod tabanı okunabilir ve genişletilebilir kalıyor.</p>
+      <p>Slingshot, Celeste'in karakter kontrolünün ve Super Meat Boy'un durdurulamaz temposunun genlerini taşıyor — ama benim imzam, düşmanları birinci sınıf hareket araçlarına dönüştürmek. Bu proje sadece bir oyun değil; temiz kodun, hassas matematiğin ve obsesif oyun hissiyatının kesişim noktası.</p>
+    `
+  }
+};
+  window.onLanguageChanged = function(lang) {
+    const introEl = document.getElementById('intro-body');
+    if (introEl) introEl.innerHTML = window.ENTRY_CONTENT.intro[lang];
+    const e01 = document.getElementById('entry01-content');
+    if (e01) e01.innerHTML = window.ENTRY_CONTENT.entry01[lang];
+    const countEl = document.getElementById('entry-count');
+    if (countEl) countEl.textContent = '1';
+    
+    const toggle = document.getElementById('entry-01-toggle');
+    if (toggle) {
+      const isOpen = document.getElementById('entry-01-body').classList.contains('open');
+      toggle.textContent = isOpen
+        ? (lang === 'tr' ? '▲ KAPAT' : '▲ CLOSE')
+        : (lang === 'tr' ? '▶ OKU' : '▶ READ');
+    }
+  };
+  
+  window.toggleEntry = function(id) {
+    const body   = document.getElementById(id + '-body');
+    const toggle = document.getElementById(id + '-toggle');
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    toggle.classList.toggle('open', !isOpen);
+    
+    const lang = document.documentElement.lang || 'en';
+    toggle.textContent = isOpen
+      ? (lang === 'tr' ? '▶ OKU' : '▶ READ')
+      : (lang === 'tr' ? '▲ KAPAT' : '▲ CLOSE');
+  };
+</script>
+<script src="js/ui/theme.js"></script>
+<script src="js/ui/lang.js"></script>
+<script src="js/ui/menu.js"></script>
+<script src="js/ui/reveal.js"></script>
+</body>
+</html>
+
