@@ -1055,17 +1055,26 @@
       margin-bottom: 0.4rem;
     }
 
+    /* ── FIX: no premature line-break on 4K monitors ── */
     .section-title {
       font-family: var(--pixel);
-      font-size: clamp(1.2rem, 3vw, 2.2rem);
+      font-size: clamp(1.2rem, 2.5vw, 2.8rem);
       line-height: 1.3;
       letter-spacing: 0.04em;
       font-weight: 400;
       color: var(--text);
+      white-space: nowrap;
     }
 
     .section-title em {
       font-style: normal;
+    }
+
+    /* Allow wrapping on narrow screens */
+    @media (max-width: 960px) {
+      .section-title {
+        white-space: normal;
+      }
     }
 
     /* EXPERIENCE */
@@ -1219,20 +1228,17 @@
     }
 
     /* SHIPPED TITLES */
-    .games-section {
-      background: var(--bg);
-    }
-
-    .games-grid {
+    /* SHIPPED TITLES / GAMES */
+    .exp-games {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 3px;
-      background: var(--border);
+      gap: 1.5rem;
+      margin-top: 1.5rem;
     }
 
     .game-card {
       background: var(--card);
-      padding: 2rem;
+      padding: 1.5rem;
       transition: background 0.2s, transform 0.15s;
       text-decoration: none;
       color: inherit;
@@ -1243,26 +1249,45 @@
       border-top: 3px solid transparent;
     }
 
-    .game-card:nth-child(1) {
+    .game-card.c-I {
       border-top-color: var(--I);
     }
 
-    .game-card:nth-child(2) {
+    .game-card.c-T {
       border-top-color: var(--T);
     }
 
-    .game-card:nth-child(3) {
+    .game-card.c-O {
       border-top-color: var(--O);
     }
 
     .game-card:hover {
-      background: #161625;
+      background: #1e1c2e;
       transform: translateY(-3px);
     }
 
-    .game-icon {
-      font-size: 1.6rem;
-      margin-bottom: 0.8rem;
+    /* ── Media embed / image ── */
+    .game-media {
+      width: 100%;
+      aspect-ratio: 16/9;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      background: #000;
+      flex-shrink: 0;
+    }
+
+    .game-media iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    .game-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .game-title {
@@ -1861,10 +1886,6 @@
         display: none;
       }
 
-      .games-grid {
-        grid-template-columns: 1fr 1fr;
-      }
-
       .project-card.large,
       .project-card.medium,
       .project-card.small,
@@ -1895,6 +1916,14 @@
       .hero-left {
         padding: 7rem 1.5rem 4rem;
       }
+
+      .section-title {
+        white-space: normal;
+      }
+
+      .exp-games {
+        grid-template-columns: 1fr 1fr;
+      }
     }
 
     @media (max-width: 640px) {
@@ -1906,7 +1935,7 @@
         display: flex;
       }
 
-      .games-grid {
+      .exp-games {
         grid-template-columns: 1fr;
       }
     }
@@ -1918,27 +1947,22 @@
   <canvas id="tetris-canvas"></canvas>
 
   <div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Navigation">
-    <a href="#hero" onclick="closeMobileMenu()" data-i18n="nav_about">About</a>
-    <a href="#experience" onclick="closeMobileMenu()" data-i18n="nav_exp">Experience</a>
-    <a href="#education" onclick="closeMobileMenu()" data-i18n="nav_edu">Education</a>
-    <a href="#games" onclick="closeMobileMenu()" data-i18n="nav_games">Shipped Titles</a>
+    <a href="#contact"         onclick="closeMobileMenu()" data-i18n="nav_contact">Contact</a>
+    <a href="#experience"      onclick="closeMobileMenu()" data-i18n="nav_exp">Work Experience</a>
+    <a href="#projects"        onclick="closeMobileMenu()" data-i18n="nav_projects">Projects</a>
     <a href="#active-projects" onclick="closeMobileMenu()" data-i18n="nav_active">Active Projects</a>
-    <a href="#projects" onclick="closeMobileMenu()" data-i18n="nav_projects">Projects</a>
-    <a href="#skills" onclick="closeMobileMenu()" data-i18n="nav_skills">Skills</a>
-    <a href="#contact" onclick="closeMobileMenu()" data-i18n="nav_contact">Contact</a>
+    <a href="#education"       onclick="closeMobileMenu()" data-i18n="nav_edu">Education</a>
+    <a href="#hero"            onclick="closeMobileMenu()" data-i18n="nav_about">About</a>
   </div>
 
   <nav>
     <a href="#hero" class="nav-logo">EK://</a>
     <ul class="nav-links">
-      <li><a href="#hero" data-i18n="nav_about">About</a></li>
-      <li><a href="#experience" data-i18n="nav_exp">Experience</a></li>
-      <li><a href="#education" data-i18n="nav_edu">Education</a></li>
-      <li><a href="#games" data-i18n="nav_games">Shipped Titles</a></li>
+      <li><a href="#contact"         data-i18n="nav_contact">Contact</a></li>
+      <li><a href="#experience"      data-i18n="nav_exp">Work Experience</a></li>
+      <li><a href="#projects"        data-i18n="nav_projects">Projects</a></li>
       <li><a href="#active-projects" data-i18n="nav_active">Active Projects</a></li>
-      <li><a href="#projects" data-i18n="nav_projects">Projects</a></li>
-      <li><a href="#skills" data-i18n="nav_skills">Skills</a></li>
-      <li><a href="#contact" data-i18n="nav_contact">Contact</a></li>
+      <li><a href="#education"       data-i18n="nav_edu">Education</a></li>
     </ul>
     <div class="nav-controls">
       <button class="toggle-btn" id="langToggle" onclick="toggleLang()" title="Switch language / Dil değiştir">EN /
@@ -2034,6 +2058,54 @@
     </div>
   </section>
 
+  <!-- ── CONTACT ── -->
+  <section class="contact-section" id="contact">
+    <div class="section-header">
+      <div class="section-piece" style="grid-template-columns:repeat(3,12px)">
+        <div class="piece-cell" style="background:transparent"></div>
+        <div class="piece-cell" style="background:var(--Z)"></div>
+        <div class="piece-cell" style="background:var(--Z)"></div>
+        <div class="piece-cell" style="background:var(--Z)"></div>
+        <div class="piece-cell" style="background:var(--Z)"></div>
+        <div class="piece-cell" style="background:transparent"></div>
+      </div>
+      <div>
+        <div class="section-label" data-i18n="contact_label">connect.exe</div>
+        <h2 class="section-title" style="color:var(--Z)" data-i18n="contact_title">GET IN<br>TOUCH</h2>
+      </div>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-left">
+        <p class="contact-sub" data-i18n="contact_sub">Currently open to new opportunities. Whether you're building the
+          next great game or need an engineer who thinks in systems — let's talk.</p>
+        <div class="contact-links">
+          <a href="mailto:koselerlie@gmail.com" class="contact-link">
+            <span class="contact-link-icon">✉</span>
+            koselerlie@gmail.com
+          </a>
+          <a href="https://www.linkedin.com/in/eren-k%C3%B6selerli/" target="_blank" rel="noopener"
+            class="contact-link">
+            <span class="contact-link-icon">in</span>
+            linkedin.com/in/eren-köselerli
+          </a>
+          <a href="https://github.com/Astrobotiq" target="_blank" rel="noopener" class="contact-link">
+            <span class="contact-link-icon">&gt;_</span>
+            github.com/Astrobotiq
+          </a>
+        </div>
+      </div>
+      <div class="contact-info reveal">
+        <div class="info-item"><label data-i18n="info_phone">Phone</label><span>(534) 283-2328</span></div>
+        <div class="info-item"><label data-i18n="info_location">Location</label><span>İzmir, Turkey</span></div>
+        <div class="info-item"><label data-i18n="info_stack">Primary Stack</label><span>Unity · C# · C++</span></div>
+        <div class="info-item"><label data-i18n="info_status">Status</label><span class="live"
+            data-i18n="info_available">▶ AVAILABLE</span></div>
+        <div class="info-item"><label data-i18n="info_exploring">Exploring</label><span>C++</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WORK EXPERIENCE ── -->
   <section class="experience-section" id="experience">
     <div class="section-header">
       <div class="section-piece" style="grid-template-columns:repeat(3,12px)">
@@ -2042,208 +2114,106 @@
       </div>
       <div>
         <div class="section-label" data-i18n="exp_label">career_log.exe</div>
-        <h2 class="section-title" style="color:var(--I)" data-i18n="exp_title">EXPERI<br>ENCE</h2>
+        <h2 class="section-title" style="color:var(--I)" data-i18n="exp_title">WORK EXPERIENCE</h2>
       </div>
     </div>
     <div class="exp-timeline">
+
+      <!-- Blay Games Full-Time -->
       <div class="exp-item reveal">
         <div class="exp-dot"></div>
         <div class="exp-date" data-i18n="exp1_date">Jul 2025 — Mar 2026</div>
         <div class="exp-company">BLAY GAMES</div>
         <div class="exp-role" data-i18n="exp1_role">// Game Developer [Full-Time]</div>
-        <p class="exp-desc" data-i18n="exp1_desc">Solely responsible for the complete Steam port of OROBOROS —
-          independently managing all codebase adaptations and UI implementations for a successful platform release. Also
-          assisted with core coding and the Steam port of GOKA.</p>
+        <p class="exp-desc" data-i18n="exp1_desc">Solely led the complete Steam port of OROBOROS — independently managing all codebase refactoring, platform adaptations, and UI/UX implementations through to a successful launch. Contributed as part of the programming team on GOKA, supporting core mechanics and the Steam release pipeline. Developed real-time multiplayer networking systems for Kiss Cargo using the Normcore framework, enabling smooth online gameplay.</p>
+
+        <!-- Shipped titles — oyun kartları, her birinde media -->
+        <div class="exp-games">
+
+          <!-- OROBOROS — YouTube trailer embed -->
+          <a href="https://store.steampowered.com/app/4019450/OROBOROS/" target="_blank" rel="noopener" class="game-card c-I">
+            <div class="game-media">
+              <iframe
+                src="https://www.youtube.com/embed/J8HISdL-27Q?rel=0&modestbranding=1"
+                title="OROBOROS Trailer"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                loading="lazy"
+                referrerpolicy="strict-origin-when-cross-origin">
+              </iframe>
+            </div>
+            <div class="game-title">OROBOROS</div>
+            <div class="game-role" data-i18n="game1_role">Sole Steam Port Lead</div>
+            <p class="game-desc" data-i18n="game1_desc">Independently managed all codebase adaptations and UI implementations for a complete and successful Steam release.</p>
+            <div class="game-steam">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.624 0 11.994-5.372 11.994-12 0-6.629-5.37-12-11.994-12z"/></svg>
+              View on Steam
+            </div>
+          </a>
+
+          <!-- GOKA — YouTube trailer embed -->
+          <a href="https://store.steampowered.com/app/2776660/GOKA_Street/" target="_blank" rel="noopener" class="game-card c-T">
+            <div class="game-media">
+              <iframe
+                src="https://www.youtube.com/embed/utI_BC4d59w?rel=0&modestbranding=1"
+                title="GOKA Trailer"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+                loading="lazy"
+                referrerpolicy="strict-origin-when-cross-origin">
+              </iframe>
+            </div>
+            <div class="game-title">GOKA</div>
+            <div class="game-role" data-i18n="game2_role">Core Developer &amp; Steam Port</div>
+            <p class="game-desc" data-i18n="game2_desc">Contributed as part of the programming team on core mechanics and the Steam release pipeline.</p>
+            <div class="game-steam">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.624 0 11.994-5.372 11.994-12 0-6.629-5.37-12-11.994-12z"/></svg>
+              View on Steam
+            </div>
+          </a>
+
+          <!-- KISS CARGO — Steam capsule görseli (YouTube trailer yok) -->
+          <a href="https://store.steampowered.com/app/4277540/Kiss_Cargo/" target="_blank" rel="noopener" class="game-card c-O">
+            <div class="game-media">
+              <img
+                src="https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/4277540/faad4b27889e5156a3854c322807df3637ecaf53/capsule_616x353.jpg"
+                alt="Kiss Cargo Steam capsule"
+                loading="lazy">
+            </div>
+            <div class="game-title">KISS CARGO</div>
+            <div class="game-role" data-i18n="game3_role">Multiplayer Systems Developer</div>
+            <p class="game-desc" data-i18n="game3_desc">Built real-time multiplayer networking using the Normcore framework, enabling smooth online gameplay.</p>
+            <div class="game-steam">
+              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.624 0 11.994-5.372 11.994-12 0-6.629-5.37-12-11.994-12z"/></svg>
+              View on Steam
+            </div>
+          </a>
+
+        </div>
       </div>
+
+      <!-- Blay Games Intern -->
       <div class="exp-item reveal">
         <div class="exp-dot"></div>
         <div class="exp-date" data-i18n="exp2_date">Oct 2024 — Mar 2025</div>
         <div class="exp-company">BLAY GAMES</div>
         <div class="exp-role" data-i18n="exp2_role">// Game Developer Intern</div>
-        <p class="exp-desc" data-i18n="exp2_desc">Maintained "Alice in Blastland", a match-three game, and actively
-          assisted in the core development process of GOKA.</p>
+        <p class="exp-desc" data-i18n="exp2_desc">Maintained Alice in Blastland, a live match-three mobile title, handling ongoing bug fixes and ensuring stability across updates. Contributed to the early-stage core development of GOKA, gaining hands-on experience with production-level Unity workflows and collaborative game development practices.</p>
       </div>
+
+      <!-- Testinium -->
       <div class="exp-item reveal">
         <div class="exp-dot"></div>
         <div class="exp-date" data-i18n="exp3_date">Jul 2024 — Aug 2024</div>
         <div class="exp-company">TESTINIUM</div>
         <div class="exp-role" data-i18n="exp3_role">// Software Test &amp; QA Intern</div>
-        <p class="exp-desc" data-i18n="exp3_desc">Integrated into web-based software testing processes using Java,
-          Selenium, and Gauge. Gained practical experience with Scrum and Agile methodologies within a professional QA
-          environment.</p>
+        <p class="exp-desc" data-i18n="exp3_desc">Integrated into professional web-based software testing workflows using Java, Selenium, and Gauge. Executed structured test protocols for high-scale applications and gained practical exposure to Scrum and Agile methodologies within a cross-functional QA team.</p>
       </div>
+
     </div>
   </section>
 
-  <section class="education-section" id="education">
-    <div class="section-header">
-      <div class="section-piece" style="grid-template-columns:repeat(2,12px)">
-        <div class="piece-cell" style="background:var(--O)"></div>
-        <div class="piece-cell" style="background:var(--O)"></div>
-        <div class="piece-cell" style="background:var(--O)"></div>
-        <div class="piece-cell" style="background:var(--O)"></div>
-      </div>
-      <div>
-        <div class="section-label" data-i18n="edu_label">academic_log.exe</div>
-        <h2 class="section-title" style="color:var(--O)" data-i18n="edu_title">EDUCA<br>TION</h2>
-      </div>
-    </div>
-    <div class="edu-card reveal">
-      <div class="edu-years">2020<br>——<br>2025</div>
-      <div class="edu-body">
-        <div class="edu-school">İZMİR UNIVERSITY OF ECONOMICS</div>
-        <div class="edu-degree" data-i18n="edu_degree">Bachelor of Software Engineering</div>
-        <div class="edu-gpa" data-i18n="edu_gpa">▶ GPA: 3.0 / 4.0</div>
-        <p class="edu-desc" data-i18n="edu_desc">Built a strong foundation in software engineering principles, data
-          structures, design patterns, and computer science fundamentals — running parallel to a growing specialization
-          in game development and interactive systems.</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="games-section" id="games">
-    <div class="section-header">
-      <div class="section-piece" style="grid-template-columns:repeat(3,12px)">
-        <div class="piece-cell" style="background:transparent"></div>
-        <div class="piece-cell" style="background:var(--T)"></div>
-        <div class="piece-cell" style="background:transparent"></div>
-        <div class="piece-cell" style="background:var(--T)"></div>
-        <div class="piece-cell" style="background:var(--T)"></div>
-        <div class="piece-cell" style="background:var(--T)"></div>
-      </div>
-      <div>
-        <div class="section-label" data-i18n="games_label">shipped_titles.exe</div>
-        <h2 class="section-title" style="color:var(--T)" data-i18n="games_title">SHIPPED<br>TITLES</h2>
-      </div>
-    </div>
-    <div class="games-grid">
-      <a href="https://store.steampowered.com/app/4019450/OROBOROS/" target="_blank" rel="noopener"
-        class="game-card reveal">
-        <div class="game-icon">🐍</div>
-        <div class="game-title">OROBOROS</div>
-        <div class="game-role" data-i18n="game1_role">Sole Steam Port Lead</div>
-        <p class="game-desc" data-i18n="game1_desc">Independently managed all codebase adaptations and UI
-          implementations for a complete and successful Steam release while at Blay Games.</p>
-        <div class="game-steam">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path
-              d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.624 0 11.994-5.372 11.994-12 0-6.629-5.37-12-11.994-12z" />
-          </svg>
-          View on Steam
-        </div>
-      </a>
-      <a href="https://store.steampowered.com/app/2776660/GOKA_Street/" target="_blank" rel="noopener"
-        class="game-card reveal">
-        <div class="game-icon">🎮</div>
-        <div class="game-title">GOKA</div>
-        <div class="game-role" data-i18n="game2_role">Core Developer &amp; Steam Port</div>
-        <p class="game-desc" data-i18n="game2_desc">Assisted with core coding tasks and supported the Steam port release
-          process as part of the Blay Games team.</p>
-        <div class="game-steam">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path
-              d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.624 0 11.994-5.372 11.994-12 0-6.629-5.37-12-11.994-12z" />
-          </svg>
-          View on Steam
-        </div>
-      </a>
-      <a href="https://store.steampowered.com/app/4277540/Kiss_Cargo/" target="_blank" rel="noopener"
-        class="game-card reveal">
-        <div class="game-icon">📦</div>
-        <div class="game-title">KISS CARGO</div>
-        <div class="game-role" data-i18n="game3_role">Multiplayer Systems Developer</div>
-        <p class="game-desc" data-i18n="game3_desc">Developed multiplayer systems utilizing the Normcore framework,
-          enabling real-time online gameplay for a smooth networked experience.</p>
-        <div class="game-steam">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path
-              d="M11.979 0C5.678 0 .511 4.86.022 11.037l6.432 2.658c.545-.371 1.203-.59 1.912-.59.063 0 .125.004.188.006l2.861-4.142V8.91c0-2.495 2.028-4.524 4.524-4.524 2.494 0 4.524 2.031 4.524 4.527s-2.03 4.525-4.524 4.525h-.105l-4.076 2.911c0 .052.004.105.004.159 0 1.875-1.515 3.396-3.39 3.396-1.635 0-3.016-1.173-3.331-2.727L.436 15.27C1.862 20.307 6.486 24 11.979 24c6.624 0 11.994-5.372 11.994-12 0-6.629-5.37-12-11.994-12z" />
-          </svg>
-          View on Steam
-        </div>
-      </a>
-    </div>
-  </section>
-
-  <section class="active-section" id="active-projects">
-    <div class="section-header">
-      <div class="section-piece" style="grid-template-columns:repeat(3,12px)">
-        <div class="piece-cell" style="background:var(--I)"></div>
-        <div class="piece-cell" style="background:transparent"></div>
-        <div class="piece-cell" style="background:var(--I)"></div>
-        <div class="piece-cell" style="background:var(--I)"></div>
-        <div class="piece-cell" style="background:var(--I)"></div>
-        <div class="piece-cell" style="background:transparent"></div>
-      </div>
-      <div>
-        <div class="section-label" data-i18n="active_label">active_projects.exe</div>
-        <h2 class="section-title" style="color:var(--I)" data-i18n="active_title">ACTIVE<br>PROJECTS</h2>
-      </div>
-    </div>
-    <div class="active-grid">
-
-      <a href="slingshot.html" class="active-card reveal">
-        <span class="active-arrow">→</span>
-        <div class="active-card-top">
-          <div class="active-status" data-i18n="active_wip">▶ WIP</div>
-          <div class="active-genre" data-i18n="slingshot_genre">2D Precision Platformer</div>
-        </div>
-        <div class="active-title"><span class="t-c">SLING</span><span class="t-p">SHOT</span></div>
-        <p class="active-desc" data-i18n="slingshot_desc">
-          High-skill 2D precision platformer heavily focused on a grappling hook (swing) mechanic. My goal is to bring
-          the robust gamepad controls of Enter the Gungeon into a fluid, Celeste-style platformer.
-        </p>
-        <div>
-          <div class="active-progress">
-            <div class="active-progress-bar" style="width:35%"></div>
-          </div>
-          <div class="active-progress-label" data-i18n="slingshot_progress">PROTOTYPE — 35%</div>
-        </div>
-        <div class="active-footer">
-          <div class="active-tags">
-            <span class="active-tag">Unity</span>
-            <span class="active-tag">C#</span>
-            <span class="active-tag">Kinematic Physics</span>
-            <span class="active-tag">State Pattern</span>
-          </div>
-          <div class="active-devlog-count"><span>1</span> devlog <span data-i18n="active_entry">entry</span></div>
-        </div>
-        <div class="active-cta" data-i18n="active_read">▶ READ DEVLOG →</div>
-      </a>
-
-      <a href="tetris-reverse.html" class="active-card reveal">
-        <span class="active-arrow">→</span>
-        <div class="active-card-top">
-          <div class="active-status" data-i18n="active_wip">▶ WIP</div>
-          <div class="active-genre" data-i18n="tetris_reverse_genre">Tactical Puzzle</div>
-        </div>
-        <div class="active-title"><span class="t-p">TETRIS</span> <span class="t-o">REVERSE</span></div>
-        <p class="active-desc" data-i18n="tetris_reverse_desc">
-          A complete reimagining of Tetris using SimpleEngine2D, a custom high-performance C++ engine I built entirely
-          from scratch. Features drag-and-drop tactical placement instead of real-time falling blocks, with a pure ECS
-          architecture.
-        </p>
-        <div>
-          <div class="active-progress">
-            <div class="active-progress-bar" style="width:45%; background: linear-gradient(90deg, var(--T), var(--O));">
-            </div>
-          </div>
-          <div class="active-progress-label" data-i18n="tetris_reverse_progress">ENGINE / PROTOTYPE — 45%</div>
-        </div>
-        <div class="active-footer">
-          <div class="active-tags">
-            <span class="active-tag">C++</span>
-            <span class="active-tag">Custom Engine</span>
-            <span class="active-tag">ECS</span>
-            <span class="active-tag">RAII</span>
-          </div>
-          <div class="active-devlog-count"><span>1</span> devlog <span data-i18n="active_entry">entry</span></div>
-        </div>
-        <div class="active-cta" data-i18n="active_read">▶ READ DEVLOG →</div>
-      </a>
-    </div>
-  </section>
-
+  <!-- ── FEATURED PROJECTS ── -->
   <section class="projects-section" id="projects">
     <div class="section-header">
       <div class="section-piece" style="grid-template-columns:repeat(3,12px)">
@@ -2348,6 +2318,114 @@
     </div>
   </section>
 
+  <!-- ── ACTIVE PROJECTS ── -->
+  <section class="active-section" id="active-projects">
+    <div class="section-header">
+      <div class="section-piece" style="grid-template-columns:repeat(3,12px)">
+        <div class="piece-cell" style="background:var(--I)"></div>
+        <div class="piece-cell" style="background:transparent"></div>
+        <div class="piece-cell" style="background:var(--I)"></div>
+        <div class="piece-cell" style="background:var(--I)"></div>
+        <div class="piece-cell" style="background:var(--I)"></div>
+        <div class="piece-cell" style="background:transparent"></div>
+      </div>
+      <div>
+        <div class="section-label" data-i18n="active_label">active_projects.exe</div>
+        <h2 class="section-title" style="color:var(--I)" data-i18n="active_title">ACTIVE<br>PROJECTS</h2>
+      </div>
+    </div>
+    <div class="active-grid">
+
+      <a href="slingshot.html" class="active-card reveal">
+        <span class="active-arrow">→</span>
+        <div class="active-card-top">
+          <div class="active-status" data-i18n="active_wip">▶ WIP</div>
+          <div class="active-genre" data-i18n="slingshot_genre">2D Precision Platformer</div>
+        </div>
+        <div class="active-title"><span class="t-c">SLING</span><span class="t-p">SHOT</span></div>
+        <p class="active-desc" data-i18n="slingshot_desc">
+          High-skill 2D precision platformer heavily focused on a grappling hook (swing) mechanic. My goal is to bring
+          the robust gamepad controls of Enter the Gungeon into a fluid, Celeste-style platformer.
+        </p>
+        <div>
+          <div class="active-progress">
+            <div class="active-progress-bar" style="width:35%"></div>
+          </div>
+          <div class="active-progress-label" data-i18n="slingshot_progress">PROTOTYPE — 35%</div>
+        </div>
+        <div class="active-footer">
+          <div class="active-tags">
+            <span class="active-tag">Unity</span>
+            <span class="active-tag">C#</span>
+            <span class="active-tag">Kinematic Physics</span>
+            <span class="active-tag">State Pattern</span>
+          </div>
+          <div class="active-devlog-count"><span>1</span> devlog <span data-i18n="active_entry">entry</span></div>
+        </div>
+        <div class="active-cta" data-i18n="active_read">▶ READ DEVLOG →</div>
+      </a>
+
+      <a href="tetris-reverse.html" class="active-card reveal">
+        <span class="active-arrow">→</span>
+        <div class="active-card-top">
+          <div class="active-status" data-i18n="active_wip">▶ WIP</div>
+          <div class="active-genre" data-i18n="tetris_reverse_genre">Tactical Puzzle</div>
+        </div>
+        <div class="active-title"><span class="t-p">TETRIS</span> <span class="t-o">REVERSE</span></div>
+        <p class="active-desc" data-i18n="tetris_reverse_desc">
+          A complete reimagining of Tetris using SimpleEngine2D, a custom high-performance C++ engine I built entirely
+          from scratch. Features drag-and-drop tactical placement instead of real-time falling blocks, with a pure ECS
+          architecture.
+        </p>
+        <div>
+          <div class="active-progress">
+            <div class="active-progress-bar" style="width:45%; background: linear-gradient(90deg, var(--T), var(--O));">
+            </div>
+          </div>
+          <div class="active-progress-label" data-i18n="tetris_reverse_progress">ENGINE / PROTOTYPE — 45%</div>
+        </div>
+        <div class="active-footer">
+          <div class="active-tags">
+            <span class="active-tag">C++</span>
+            <span class="active-tag">Custom Engine</span>
+            <span class="active-tag">ECS</span>
+            <span class="active-tag">RAII</span>
+          </div>
+          <div class="active-devlog-count"><span>1</span> devlog <span data-i18n="active_entry">entry</span></div>
+        </div>
+        <div class="active-cta" data-i18n="active_read">▶ READ DEVLOG →</div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── EDUCATION ── -->
+  <section class="education-section" id="education">
+    <div class="section-header">
+      <div class="section-piece" style="grid-template-columns:repeat(2,12px)">
+        <div class="piece-cell" style="background:var(--O)"></div>
+        <div class="piece-cell" style="background:var(--O)"></div>
+        <div class="piece-cell" style="background:var(--O)"></div>
+        <div class="piece-cell" style="background:var(--O)"></div>
+      </div>
+      <div>
+        <div class="section-label" data-i18n="edu_label">academic_log.exe</div>
+        <h2 class="section-title" style="color:var(--O)" data-i18n="edu_title">EDUCATION</h2>
+      </div>
+    </div>
+    <div class="edu-card reveal">
+      <div class="edu-years">2020<br>——<br>2025</div>
+      <div class="edu-body">
+        <div class="edu-school">İZMİR UNIVERSITY OF ECONOMICS</div>
+        <div class="edu-degree" data-i18n="edu_degree">Bachelor of Software Engineering</div>
+        <div class="edu-gpa" data-i18n="edu_gpa">▶ GPA: 3.0 / 4.0</div>
+        <p class="edu-desc" data-i18n="edu_desc">Built a strong foundation in software engineering principles, data
+          structures, design patterns, and computer science fundamentals — running parallel to a growing specialization
+          in game development and interactive systems.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SKILLS ── -->
   <section class="skills-section" id="skills">
     <div class="section-header">
       <div class="section-piece" style="grid-template-columns:repeat(3,12px)">
@@ -2385,52 +2463,6 @@
     </div>
   </section>
 
-  <section class="contact-section" id="contact">
-    <div class="section-header">
-      <div class="section-piece" style="grid-template-columns:repeat(3,12px)">
-        <div class="piece-cell" style="background:transparent"></div>
-        <div class="piece-cell" style="background:var(--Z)"></div>
-        <div class="piece-cell" style="background:var(--Z)"></div>
-        <div class="piece-cell" style="background:var(--Z)"></div>
-        <div class="piece-cell" style="background:var(--Z)"></div>
-        <div class="piece-cell" style="background:transparent"></div>
-      </div>
-      <div>
-        <div class="section-label" data-i18n="contact_label">connect.exe</div>
-        <h2 class="section-title" style="color:var(--Z)" data-i18n="contact_title">GET IN<br>TOUCH</h2>
-      </div>
-    </div>
-    <div class="contact-grid">
-      <div class="contact-left">
-        <p class="contact-sub" data-i18n="contact_sub">Currently open to new opportunities. Whether you're building the
-          next great game or need an engineer who thinks in systems — let's talk.</p>
-        <div class="contact-links">
-          <a href="mailto:koselerlie@gmail.com" class="contact-link">
-            <span class="contact-link-icon">✉</span>
-            koselerlie@gmail.com
-          </a>
-          <a href="https://www.linkedin.com/in/eren-k%C3%B6selerli/" target="_blank" rel="noopener"
-            class="contact-link">
-            <span class="contact-link-icon">in</span>
-            linkedin.com/in/eren-köselerli
-          </a>
-          <a href="https://github.com/Astrobotiq" target="_blank" rel="noopener" class="contact-link">
-            <span class="contact-link-icon">&gt;_</span>
-            github.com/Astrobotiq
-          </a>
-        </div>
-      </div>
-      <div class="contact-info reveal">
-        <div class="info-item"><label data-i18n="info_phone">Phone</label><span>(534) 283-2328</span></div>
-        <div class="info-item"><label data-i18n="info_location">Location</label><span>İzmir, Turkey</span></div>
-        <div class="info-item"><label data-i18n="info_stack">Primary Stack</label><span>Unity · C# · C++</span></div>
-        <div class="info-item"><label data-i18n="info_status">Status</label><span class="live"
-            data-i18n="info_available">▶ AVAILABLE</span></div>
-        <div class="info-item"><label data-i18n="info_exploring">Exploring</label><span>C++</span></div>
-      </div>
-    </div>
-  </section>
-
   <footer>
     <span data-i18n="footer_copy">© 2026 Eren Köselerli — Game Developer</span>
     <span data-i18n="footer_tag">İzmir, Turkey // GAME OVER? NEVER.</span>
@@ -2441,12 +2473,10 @@
       en: {
         // Nav
         nav_about: 'About',
-        nav_exp: 'Experience',
+        nav_exp: 'Work Experience',
         nav_edu: 'Education',
-        nav_games: 'Shipped Titles',
         nav_projects: 'Projects',
         nav_active: 'Active Projects',
-        nav_skills: 'Skills',
         nav_contact: 'Contact',
         // Hero
         hero_tag: 'AVAILABLE FOR HIRE',
@@ -2460,37 +2490,35 @@
         stat_open: '● OPEN',
         // Experience
         exp_label: 'career_log.exe',
-        exp_title: 'EXPERI<br>ENCE',
+        exp_title: 'WORK EXPERIENCE',
         exp1_date: 'Jul 2025 — Mar 2026',
         exp1_role: '// Game Developer [Full-Time]',
-        exp1_desc: 'Solely responsible for the complete Steam port of OROBOROS — independently managing all codebase adaptations and UI implementations for a successful platform release. Also assisted with core coding and the Steam port of GOKA.',
+        exp1_desc: 'Solely led the complete Steam port of OROBOROS — independently managing all codebase refactoring, platform adaptations, and UI/UX implementations through to a successful launch. Contributed as part of the programming team on GOKA, supporting core mechanics and the Steam release pipeline. Developed real-time multiplayer networking systems for Kiss Cargo using the Normcore framework, enabling smooth online gameplay.',
         exp2_date: 'Oct 2024 — Mar 2025',
         exp2_role: '// Game Developer Intern',
-        exp2_desc: 'Maintained "Alice in Blastland", a match-three game, and actively assisted in the core development process of GOKA.',
+        exp2_desc: 'Maintained Alice in Blastland, a live match-three mobile title, handling ongoing bug fixes and ensuring stability across updates. Contributed to the early-stage core development of GOKA, gaining hands-on experience with production-level Unity workflows and collaborative game development practices.',
         exp3_date: 'Jul 2024 — Aug 2024',
         exp3_role: '// Software Test & QA Intern',
-        exp3_desc: 'Integrated into web-based software testing processes using Java, Selenium, and Gauge. Gained practical experience with Scrum and Agile methodologies within a professional QA environment.',
+        exp3_desc: 'Integrated into professional web-based software testing workflows using Java, Selenium, and Gauge. Executed structured test protocols for high-scale applications and gained practical exposure to Scrum and Agile methodologies within a cross-functional QA team.',
         // Education
         edu_label: 'academic_log.exe',
-        edu_title: 'EDUCA<br>TION',
+        edu_title: 'EDUCATION',
         edu_degree: 'Bachelor of Software Engineering',
         edu_gpa: '▶ GPA: 3.0 / 4.0',
         edu_desc: 'Built a strong foundation in software engineering principles, data structures, design patterns, and computer science fundamentals — running parallel to a growing specialization in game development and interactive systems.',
-        // Games
-        games_label: 'shipped_titles.exe',
-        games_title: 'SHIPPED<br>TITLES',
+        // Game card info
         game1_role: 'Sole Steam Port Lead',
-        game1_desc: 'Independently managed all codebase adaptations and UI implementations for a complete and successful Steam release while at Blay Games.',
+        game1_desc: 'Independently managed all codebase adaptations and UI implementations for a complete and successful Steam release.',
         game2_role: 'Core Developer & Steam Port',
-        game2_desc: 'Assisted with core coding tasks and supported the Steam port release process as part of the Blay Games team.',
+        game2_desc: 'Contributed as part of the programming team on core mechanics and the Steam release pipeline.',
         game3_role: 'Multiplayer Systems Developer',
-        game3_desc: 'Developed multiplayer systems utilizing the Normcore framework, enabling real-time online gameplay for a smooth networked experience.',
+        game3_desc: 'Built real-time multiplayer networking using the Normcore framework, enabling smooth online gameplay.',
         // Projects
         proj_label: 'personal_builds.exe',
-        proj_title: 'FEATURED<br>PROJECTS',
+        proj_title: 'FEATURED PROJECTS',
         // Active Projects
         active_label: 'active_projects.exe',
-        active_title: 'ACTIVE<br>PROJECTS',
+        active_title: 'ACTIVE PROJECTS',
         active_wip: '▶ WIP',
         active_entry: 'entry',
         active_read: '▶ READ DEVLOG →',
@@ -2510,7 +2538,7 @@
         skills_title: 'SKILLS &amp;<br>TECH',
         // Contact
         contact_label: 'connect.exe',
-        contact_title: 'GET IN<br>TOUCH',
+        contact_title: 'GET IN TOUCH',
         contact_sub: 'Currently open to new opportunities. Whether you\'re building the next great game or need an engineer who thinks in systems — let\'s talk.',
         info_phone: 'Phone',
         info_location: 'Location',
@@ -2532,12 +2560,10 @@
       tr: {
         // Nav
         nav_about: 'Hakkımda',
-        nav_exp: 'Deneyim',
+        nav_exp: 'İş Deneyimi',
         nav_edu: 'Eğitim',
-        nav_games: 'Yayınlanan Oyunlar',
         nav_projects: 'Projeler',
         nav_active: 'Aktif Projeler',
-        nav_skills: 'Yetenekler',
         nav_contact: 'İletişim',
         // Hero
         hero_tag: 'İŞE ALINMAYA HAZIR',
@@ -2551,37 +2577,35 @@
         stat_open: '● AÇIK',
         // Experience
         exp_label: 'kariyer_log.exe',
-        exp_title: 'DENEYİM',
+        exp_title: 'İŞ DENEYİMİ',
         exp1_date: 'Tem 2025 — Mar 2026',
         exp1_role: '// Oyun Geliştirici [Tam Zamanlı]',
-        exp1_desc: 'OROBOROS\'un Steam portunu tamamen tek başıma gerçekleştirdim — tüm kod tabanı adaptasyonlarını ve UI implementasyonlarını başarılı bir platform sürümü için bağımsız olarak yönettim. Ayrıca GOKA\'nın çekirdek kodlamasına ve Steam portuna destek verdim.',
+        exp1_desc: 'OROBOROS\'un Steam portunu tamamen tek başıma gerçekleştirdim — tüm kod tabanı yeniden yapılandırması, platform adaptasyonları ve UI/UX implementasyonlarını başarılı bir lansmana kadar bağımsız olarak yönettim. GOKA\'da programlama ekibinin bir parçası olarak çekirdek mekanikler ve Steam lansman sürecine destek verdim. Kiss Cargo için Normcore framework kullanarak gerçek zamanlı çok oyunculu ağ sistemleri geliştirdim.',
         exp2_date: 'Eki 2024 — Mar 2025',
         exp2_role: '// Oyun Geliştirici Stajyeri',
-        exp2_desc: '"Alice in Blastland" isimli match-three oyununun bakımını üstlendim (maintain ettim) ve GOKA\'nın geliştirme sürecine aktif olarak yardımcı oldum.',
+        exp2_desc: 'Canlı bir match-three mobil oyun olan Alice in Blastland\'in bakımını üstlenerek süregelen hata düzeltmeleri yaptım ve güncellemelerde kararlılığı sağladım. GOKA\'nın erken aşama çekirdek geliştirmesine katkıda bulunarak prodüksiyon seviyesi Unity iş akışları konusunda deneyim kazandım.',
         exp3_date: 'Tem 2024 — Ağu 2024',
         exp3_role: '// Yazılım Test & QA Stajyeri',
-        exp3_desc: 'Java, Selenium ve Gauge ekseninde web tabanlı yazılım test süreçlerine dahil oldum. Profesyonel bir QA ortamında Scrum ve Agile metodolojilerini deneyimledim.',
+        exp3_desc: 'Java, Selenium ve Gauge ekseninde web tabanlı yazılım test süreçlerine dahil oldum. Büyük ölçekli uygulamalar için yapılandırılmış test protokolleri yürüttüm ve çapraz fonksiyonlu bir QA ortamında Scrum ve Agile metodolojilerini deneyimledim.',
         // Education
         edu_label: 'akademik_log.exe',
         edu_title: 'EĞİTİM',
         edu_degree: 'Yazılım Mühendisliği Lisansı',
         edu_gpa: '▶ GNO: 3.0 / 4.0',
         edu_desc: 'Yazılım mühendisliği ilkeleri, veri yapıları, tasarım desenleri ve bilgisayar bilimi temellerinde güçlü bir altyapı oluşturdu — oyun geliştirme ve etkileşimli sistemlerdeki büyüyen uzmanlıkla paralel şekilde ilerledi.',
-        // Games
-        games_label: 'yayinlanan_oyunlar.exe',
-        games_title: 'YAYINLANAN<br>OYUNLAR',
+        // Game card açıklamaları
         game1_role: 'Tek Başına Steam Port Lideri',
-        game1_desc: 'Blay Games bünyesinde tüm kod tabanı adaptasyonlarını ve UI implementasyonlarını bağımsız olarak yöneterek başarılı bir Steam sürümü tamamladı.',
+        game1_desc: 'Tüm kod tabanı adaptasyonlarını ve UI implementasyonlarını bağımsız olarak yöneterek başarılı bir Steam sürümü tamamlandı.',
         game2_role: 'Çekirdek Geliştirici & Steam Port',
-        game2_desc: 'Blay Games ekibinin bir parçası olarak çekirdek kodlama görevlerine destek verdi ve Steam port sürecini destekledi.',
+        game2_desc: 'Programlama ekibinin bir parçası olarak çekirdek mekanikler ve Steam lansman sürecine destek verildi.',
         game3_role: 'Çok Oyunculu Sistem Geliştiricisi',
-        game3_desc: 'Normcore framework\'ü kullanarak çok oyunculu sistemler geliştirdi; gerçek zamanlı çevrimiçi oyun deneyimi için akıcı bir ağ altyapısı kurdu.',
+        game3_desc: 'Normcore framework kullanarak gerçek zamanlı çok oyunculu ağ sistemi kuruldu.',
         // Projects
         proj_label: 'kisisel_projeler.exe',
-        proj_title: 'ÖNE ÇIKAN<br>PROJELER',
+        proj_title: 'ÖNE ÇIKAN PROJELER',
         // Active Projects
         active_label: 'aktif_projeler.exe',
-        active_title: 'AKTİF<br>PROJELER',
+        active_title: 'AKTİF PROJELER',
         active_wip: '▶ GELİŞTİRİLİYOR',
         active_entry: 'giriş',
         active_read: '▶ DEVLOG\'U OKU →',
@@ -2601,7 +2625,7 @@
         skills_title: 'YETENEKler &amp;<br>TEKNOLOJİ',
         // Contact
         contact_label: 'iletisim.exe',
-        contact_title: 'İLETİŞİME<br>GEÇ',
+        contact_title: 'İLETİŞİME GEÇ',
         contact_sub: 'Şu anda yeni fırsatlara açığım. İster bir sonraki büyük oyunu inşa edin, ister sistemler üzerine düşünen bir mühendise ihtiyacınız olsun — konuşalım.',
         info_phone: 'Telefon',
         info_location: 'Konum',
