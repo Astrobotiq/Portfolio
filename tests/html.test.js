@@ -19,6 +19,8 @@ const FIRST_SCREEN_COPY = [
 
 const BANNED_COPY = ['15+ months', 'live-ops', '0%', '100% deterministic'];
 const WORDS = ['oro', 'goka', 'kiss'];
+// 300px, not 100vw: a DPR 2 phone then picks the 600 image.
+const PANEL_SIZES = '(max-aspect-ratio: 1/1) 300px, 34vw';
 
 const tags = (name, source = html) => source.match(new RegExp(`<${name}\\b[^>]*>`, 'g')) ?? [];
 const attr = (tag, name) => tag.match(new RegExp(`\\s${name}(?:="([^"]*)")?(?=[\\s>])`))?.[1];
@@ -54,8 +56,12 @@ test('every panel has real alt text, dimensions and a srcset', () => {
     assert.match(attr(panel, 'width') ?? '', /^\d+$/);
     assert.match(attr(panel, 'height') ?? '', /^\d+$/);
     assert.match(attr(panel, 'srcset') ?? '', /-600\.jpg 600w, .*-1920\.jpg 1920w$/);
-    assert.equal(attr(panel, 'sizes'), '(max-aspect-ratio: 1/1) 100vw, 34vw');
+    assert.equal(attr(panel, 'sizes'), PANEL_SIZES);
   }
+});
+
+test('ghost and panel ask for the same image, so each game downloads one', () => {
+  for (const ghost of images('ghost')) assert.equal(attr(ghost, 'sizes'), PANEL_SIZES);
 });
 
 test('every ghost is hidden from assistive technology', () => {
@@ -138,4 +144,12 @@ test('fonts are self-hosted with swap, and the tokens are the agreed ones', () =
   for (const token of ['--surface: #f1efea', '--fg: #0c0c0d', '#8f7bff', '#ff6fae', '#f5c518']) {
     assert.ok(css.includes(token), `missing: ${token}`);
   }
+});
+
+test('the hero spans the window and the hint needs JS', () => {
+  const css = readFileSync(new URL('css/site.css', root), 'utf8');
+  const hero = css.match(/^\.hero {[^}]*}/m)[0];
+  assert.doesNotMatch(hero, /\bwidth:/, 'the hero takes the full width, not a width from --w');
+  assert.doesNotMatch(hero, /margin: 0 auto/, 'the hero is not centred');
+  assert.match(css, /html:not\(\.js\) \.source b { display: none; }/);
 });

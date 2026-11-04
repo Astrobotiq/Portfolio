@@ -67,11 +67,9 @@ ul { list-style: none; }
 
 .hero {
   position: relative;
-  width: calc(100 * var(--w));
   height: 100vh;
   height: 100svh;
   min-height: calc(56 * var(--u));
-  margin: 0 auto;
   padding: var(--s2) var(--edge) 0;
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr) auto;
@@ -139,6 +137,8 @@ html:not(.js) .ghost { display: none; }
 .base { padding-block: var(--s2); align-items: center; background: var(--surface); }
 .source { grid-column: 1 / 3; font-size: var(--note-size); }
 .source b { font-weight: 700; display: block; font-size: var(--text-size); }
+/* Without JS there is nothing to swing, so the invitation would be untrue. */
+html:not(.js) .source b { display: none; }
 .source a { font-weight: 700; text-underline-offset: .16em; cursor: pointer; }
 .contact {
   padding-right: var(--edge);
