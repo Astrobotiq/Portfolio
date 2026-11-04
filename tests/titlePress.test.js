@@ -43,3 +43,35 @@ test('keyBelongsToGame', () => {
   assert.equal(key({ engaged: true, key: 'Tab' }), false);
   assert.equal(key({ engaged: true, key: 'w' }), true);
 });
+
+test('InputHandler decides a title press the way the rule table says', async () => {
+  const stub = { addEventListener() {} };
+  globalThis.window = stub;
+  globalThis.document = stub;
+  const { InputHandler } = await import('../js/level/InputHandler.js');
+  const make = (touch) => {
+    const h = new InputHandler({ onEngage() {}, screenToWorld: () => ({ x: 0, y: 0 }), isPlaying: () => false });
+    h._titlePress = { x: 0, y: 0, at: performance.now(), touch, timer: setTimeout(() => {}, 0) };
+    return h;
+  };
+
+  const mouse = make(false);
+  mouse._decideTitle(13);
+  assert.equal(mouse.pointerHeld, true);
+  assert.equal(mouse._swallowClick, true);
+  assert.equal(mouse._titlePress, null);
+
+  const touch = make(true);
+  touch._decideTitle(13);
+  assert.equal(touch.pointerHeld, false);
+  assert.equal(touch._titlePress, null);
+
+  const timer = make(false);
+  timer._decideTitle(0, 400);
+  assert.equal(timer.pointerHeld, true);
+  assert.equal(timer._swallowClick, true);
+
+  const still = make(false);
+  still._decideTitle(0);
+  assert.equal(still._titlePress !== null, true, 'a short still press stays a link');
+});

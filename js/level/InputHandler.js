@@ -145,7 +145,8 @@ export class InputHandler {
     const press = this._titlePress;
     if (!press) return;
     const outcome = pressOutcome({
-      playing: false, heldMs: Math.max(minHeldMs, performance.now() - press.at), // The timer fires at the threshold, even if the clock reads a hair under. movedPx, touch: press.touch, modifier: false,
+      // The timer fires at the threshold, even if the clock reads a hair under.
+      playing: false, heldMs: Math.max(minHeldMs, performance.now() - press.at), movedPx, touch: press.touch, modifier: false,
     });
     if (outcome === 'swing') this._claimTitle();
     else if (outcome === 'scroll') this._cancelTitle(); // A swipe stays a scroll.
