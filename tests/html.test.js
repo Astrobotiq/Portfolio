@@ -158,3 +158,10 @@ test('the name has its own cap, independent of --w', () => {
   const css = readFileSync(new URL('css/site.css', root), 'utf8');
   assert.ok(css.includes('--name-size: min(calc(17.58 * var(--cw)), 36vh);'));
 });
+
+test('short landscape windows give the band more room', () => {
+  const css = readFileSync(new URL('css/site.css', root), 'utf8');
+  const short = css.match(/@media \(max-height: 720px\) and \(orientation: landscape\) {[^}]*}/)?.[0] ?? '';
+  assert.ok(short.includes('--name-size: min(calc(17.58 * var(--cw)), 30vh);'));
+  assert.ok(short.includes('--s3: var(--s2);'));
+});

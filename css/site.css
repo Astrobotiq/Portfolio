@@ -155,6 +155,12 @@ html:not(.js) .source b { display: none; }
 .mail { text-underline-offset: .16em; }
 .title:focus-visible, .contact a:focus-visible, .source a:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
 
+/* A short laptop window: the band needs the height more than the name needs the width. */
+@media (max-height: 720px) and (orientation: landscape) {
+  :root { --name-size: min(calc(17.58 * var(--cw)), 30vh); --s3: var(--s2); }
+  .base { padding-block: var(--s1); }
+}
+
 /* A small window, or 200% zoom: the page grows instead of cutting anything off. */
 @media (max-height: 560px), (max-width: 760px) {
   /* The page scrolls here, so height no longer caps the scale and the band still reaches both edges. */
