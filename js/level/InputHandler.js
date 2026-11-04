@@ -73,7 +73,7 @@ export class InputHandler {
         // Could be either. A short still press stays a link; a hold or a drag becomes a swing.
         this._titlePress = {
           x: e.clientX, y: e.clientY, at: this._downAt, touch: e.pointerType === 'touch',
-          timer: setTimeout(() => this._decideTitle(), TITLE_HOLD_MS),
+          timer: setTimeout(() => this._decideTitle(0, TITLE_HOLD_MS), TITLE_HOLD_MS),
         };
         return;
       }
@@ -141,11 +141,11 @@ export class InputHandler {
 
   // Asks the rule table what the press in progress has become, and acts on swing and scroll.
   // Steam is left alone: the click goes through when the press ends.
-  _decideTitle(movedPx = 0) {
+  _decideTitle(movedPx = 0, minHeldMs = 0) {
     const press = this._titlePress;
     if (!press) return;
     const outcome = pressOutcome({
-      playing: false, heldMs: performance.now() - press.at, movedPx, touch: press.touch, modifier: false,
+      playing: false, heldMs: Math.max(minHeldMs, performance.now() - press.at), // The timer fires at the threshold, even if the clock reads a hair under. movedPx, touch: press.touch, modifier: false,
     });
     if (outcome === 'swing') this._claimTitle();
     else if (outcome === 'scroll') this._cancelTitle(); // A swipe stays a scroll.
