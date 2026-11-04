@@ -161,7 +161,21 @@ test('the name has its own cap, independent of --w', () => {
 
 test('short landscape windows give the band more room', () => {
   const css = readFileSync(new URL('css/site.css', root), 'utf8');
-  const short = css.match(/@media \(max-height: 720px\) and \(orientation: landscape\) {[^}]*}/)?.[0] ?? '';
+  const short = css.match(/@media \(max-height: 719px\) and \(orientation: landscape\) {[^}]*}/)?.[0] ?? '';
   assert.ok(short.includes('--name-size: min(calc(17.58 * var(--cw)), 30vh);'));
   assert.ok(short.includes('--s3: var(--s2);'));
+});
+
+test('the level script is a module, and the page still reads whole without it', () => {
+  assert.ok(tags('script').some((tag) => attr(tag, 'type') === 'module' && attr(tag, 'src') === 'js/level/main.js'));
+  assert.match(html, /<h1 class="name"><span class="w">Eren<\/span> <span class="w">Köselerli<\/span><\/h1>/);
+});
+
+test('the page layer leaves colours to the stylesheet and writes no second copy of a word', () => {
+  const page = readFileSync(new URL('js/level/Page.js', root), 'utf8');
+  assert.doesNotMatch(page, /#[0-9a-f]{6}\b/i);
+  assert.doesNotMatch(page, /['"]sr['"]/);
+  assert.doesNotMatch(page, /ghost/, 'the ghosts are in the HTML');
+  const css = readFileSync(new URL('css/site.css', root), 'utf8');
+  assert.match(css, /\.col {[^}]*background: var\(--col\)/);
 });
