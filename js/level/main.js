@@ -9,9 +9,9 @@ import { InputHandler } from './InputHandler.js';
 import { Page } from './Page.js';
 import { View } from './View.js';
 import { buildLevel } from './LevelBuilder.js';
+import { isPlaying as playingRule, RESUME_IDLE_MS } from './titlePress.js';
 
 const params = new URLSearchParams(location.search);
-const RESUME_AFTER_MS = 3500; // A visitor who stops playing gets the rest of the run back.
 const DEBUG = params.get('debug') === '1';
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SPAWN_AT = 0.5;
@@ -72,15 +72,19 @@ function handleEvents(c, { quiet = false } = {}) {
 let lastHumanAt = 0;
 // Holding, moving or airborne counts. Standing still for 1.5 s hands the titles back to the links.
 function isPlaying() {
-  if (mode !== 'human' || !ctx) return false;
-  if (!human.neutral) return true;
-  return !(ctx.CurrentState instanceof GroundedState && performance.now() - lastHumanAt > 1500);
+  if (!ctx) return false;
+  return playingRule({
+    humanMode: mode === 'human',
+    neutral: human.neutral,
+    grounded: ctx.CurrentState instanceof GroundedState,
+    idleMs: performance.now() - lastHumanAt,
+  });
 }
 
 function resumeIfIdle() {
   if (mode !== 'human' || !human.neutral) { lastHumanAt = performance.now(); return; }
   if (!wordsLeft.length || ctx.IsPaused || !(ctx.CurrentState instanceof GroundedState)) return;
-  if (performance.now() - lastHumanAt < RESUME_AFTER_MS) return;
+  if (performance.now() - lastHumanAt < RESUME_IDLE_MS) return;
   note('resume', { words: wordsLeft.length });
   ctx.Input = new ScriptInput();
   startReplan();
@@ -464,6 +468,7 @@ async function boot() {
   human = new InputHandler({
     onEngage: takeControl,
     isPlaying,
+    isHeroVisible: () => page.hero.getBoundingClientRect().bottom > 0,
     screenToWorld: (x, y) => ({ x: x / level.ppu, y: -(y + window.scrollY) / level.ppu }),
   });
   bindScroll();

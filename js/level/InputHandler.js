@@ -5,15 +5,17 @@
 // Mouse: hold to hook toward the pointer, release to let go at swing velocity.
 //   A quick click holds both triggers until SlingshotState launches.
 // Touch: hold to hook toward your finger, release to launch. A swipe stays a normal scroll.
+import { TITLE_HOLD_MS, pressOutcome, keyBelongsToGame } from './titlePress.js';
+
 const TOUCH_HOLD_MS = 110;
-const TOUCH_HOLD_IDLE_MS = 400; // Before playing, a touch is probably a tap or a scroll.
-const TITLE_HOLD_MS = 400;     // A press on a title longer than this is a swing, not a click.
-const TITLE_MOVE_PX = 12;
+const TOUCH_HOLD_IDLE_MS = TITLE_HOLD_MS; // Before playing, a touch is probably a tap or a scroll.
 const TAP_MS = 170;
 
 export class InputHandler {
-  constructor({ onEngage, screenToWorld, isPlaying }) {
+  constructor({ onEngage, screenToWorld, isPlaying, isHeroVisible = () => true }) {
     this.isPlaying = isPlaying;
+    this.isHeroVisible = isHeroVisible;
+    this.engaged = false; // True once a pointer or J/K has started the game.
     this._titlePress = null;
     this._swallowClick = false;
     this.onEngage = onEngage; // Called on the first deliberate input.
@@ -40,10 +42,10 @@ export class InputHandler {
     window.addEventListener('keydown', (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-      const mapped = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'd', 'w', 's', ' ', 'j', 'k'].includes(k);
-      if (!mapped) return;
-      if (k === ' ' && isLink(e.target) && e.target.matches(':focus-visible')) return;
+      const onFocusedLink = !!(isLink(e.target) && e.target.matches(':focus-visible'));
+      if (!keyBelongsToGame({ key: k, engaged: this.engaged, heroVisible: this.isHeroVisible(), onFocusedLink })) return;
       if (!e.repeat) {
+        if (k === 'j' || k === 'k') this.engaged = true;
         if (k === ' ') this._jumpEdge = true;
         this.keys.add(k);
         this.onEngage();
@@ -64,13 +66,14 @@ export class InputHandler {
       const title = titleOf(e.target);
       if (isLink(e.target) && (!title || e.ctrlKey || e.metaKey || e.shiftKey)) return;
       const playing = this.isPlaying();
+      this.engaged = true;
       this.pointer = { x: e.clientX, y: e.clientY };
       this._downAt = performance.now();
       if (title && !playing) {
         // Could be either. A short still press stays a link; a hold or a drag becomes a swing.
         this._titlePress = {
-          x: e.clientX, y: e.clientY, touch: e.pointerType === 'touch',
-          timer: setTimeout(() => this._claimTitle(), TITLE_HOLD_MS),
+          x: e.clientX, y: e.clientY, at: this._downAt, touch: e.pointerType === 'touch',
+          timer: setTimeout(() => this._decideTitle(), TITLE_HOLD_MS),
         };
         return;
       }
@@ -92,10 +95,7 @@ export class InputHandler {
       const press = this._titlePress;
       if (press) {
         this.pointer = { x: e.clientX, y: e.clientY };
-        if (Math.hypot(e.clientX - press.x, e.clientY - press.y) > TITLE_MOVE_PX) {
-          if (press.touch) this._cancelTitle(); // A swipe stays a scroll.
-          else this._claimTitle();
-        }
+        this._decideTitle(Math.hypot(e.clientX - press.x, e.clientY - press.y));
         return;
       }
       if (this.pointerHeld) this.pointer = { x: e.clientX, y: e.clientY };
@@ -137,6 +137,18 @@ export class InputHandler {
     // Once a hold has hooked, the finger belongs to the hook. Until then, scrolling is untouched.
     document.addEventListener('touchmove', (e) => { if (this.pointerHeld) e.preventDefault(); }, { passive: false });
     window.addEventListener('contextmenu', (e) => { if (this.pointerHeld) e.preventDefault(); });
+  }
+
+  // Asks the rule table what the press in progress has become, and acts on swing and scroll.
+  // Steam is left alone: the click goes through when the press ends.
+  _decideTitle(movedPx = 0) {
+    const press = this._titlePress;
+    if (!press) return;
+    const outcome = pressOutcome({
+      playing: false, heldMs: performance.now() - press.at, movedPx, touch: press.touch, modifier: false,
+    });
+    if (outcome === 'swing') this._claimTitle();
+    else if (outcome === 'scroll') this._cancelTitle(); // A swipe stays a scroll.
   }
 
   _claimTitle() {
