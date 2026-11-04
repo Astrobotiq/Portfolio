@@ -1,0 +1,199 @@
+/* Self-hosted type. Archivo is a variable font, so one file serves both weights. */
+@font-face {
+  font-family: "Anton";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/anton-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Anton";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../assets/fonts/anton-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url("../assets/fonts/archivo-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url("../assets/fonts/archivo-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+:root {
+  --surface: #f1efea;
+  --fg: #0c0c0d;
+  /* --cw is 1% of the page without a classic scrollbar, which 1vw would include. */
+  --cw: 1vw;
+  --w: min(var(--cw), 1.9vh);
+  --u: min(var(--cw), 1.6vh);
+  --edge: calc(1.75 * var(--w));
+  --gut: calc(1.1 * var(--w));
+  --s1: calc(.6 * var(--u));
+  --s2: calc(1.2 * var(--u));
+  --s3: calc(2 * var(--u));
+  --display: "Anton", "Arial Narrow", Impact, sans-serif;
+  --body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  /* Floors in rem follow the reader's font setting. The ceilings are the design's values. */
+  --name-size: clamp(3rem, calc(17.58 * var(--cw)), calc(17.58 * var(--w)));
+  --title-size: clamp(1.75rem, calc(5.4 * var(--cw)), calc(5.4 * var(--w)));
+  --role-size: clamp(1.25rem, calc(3.5 * var(--cw)), calc(3.5 * var(--w)));
+  --text-size: clamp(.9375rem, calc(1.3 * var(--cw)), calc(1.3 * var(--u)));
+  --note-size: clamp(.9375rem, calc(1.1 * var(--cw)), calc(1.1 * var(--u)));
+}
+
+@supports (width: 1cqw) {
+  :root { --cw: 1cqw; }
+  main { container-type: inline-size; }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--surface); color: var(--fg); -webkit-text-size-adjust: 100%; }
+body { font: 500 var(--text-size)/1.32 var(--body); }
+a { color: inherit; }
+ul { list-style: none; }
+
+.hero {
+  position: relative;
+  width: calc(100 * var(--w));
+  height: 100vh;
+  height: 100svh;
+  min-height: calc(56 * var(--u));
+  margin: 0 auto;
+  padding: var(--s2) var(--edge) 0;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--surface);
+  isolation: isolate;
+  overflow: hidden;
+}
+/* Pressing the page is the game, so only a running page claims the press. */
+html.js .hero { user-select: none; cursor: crosshair; }
+
+#trail { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; transition: opacity 1.2s ease; }
+#trail.gone { opacity: 0; }
+
+.name, .title { font-family: var(--display); font-weight: 400; line-height: 1; white-space: nowrap; text-decoration: none; }
+.name { font-size: var(--name-size); line-height: 1.04; }
+.name .w { display: inline-block; }
+
+/* One grid: three columns that start at the page's edges, with text inset by --edge in each. */
+.intro, .games, .base {
+  margin-inline: calc(-1 * var(--edge));
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 0;
+}
+.role, .line, .game h2, .cap, .source, .contact {
+  padding-left: var(--edge);
+  padding-right: var(--gut);
+}
+
+.intro { align-items: center; padding-block: var(--s1) var(--s3); }
+.role { font-size: var(--role-size); line-height: 1; white-space: nowrap; }
+.line { grid-column: 2 / 4; }
+
+.games { min-height: 0; grid-template-rows: auto auto minmax(0, 1fr); }
+.game { display: contents; --col: var(--surface); }
+.game[data-word="oro"] { --col: #8f7bff; }
+.game[data-word="goka"] { --col: #ff6fae; }
+.game[data-word="kiss"] { --col: #f5c518; }
+.game:nth-child(1) > * { grid-column: 1; }
+.game:nth-child(2) > * { grid-column: 2; }
+.game:nth-child(3) > * { grid-column: 3; }
+.game h2 { grid-row: 1; font: 400 var(--title-size)/1 var(--display); }
+.cap { grid-row: 2; padding-block: calc(.5 * var(--u)) var(--s2); }
+
+/* Crosshair means swing, a hand means Steam. */
+.title { display: inline-block; font-size: var(--title-size); cursor: pointer; }
+html.playing .title { cursor: crosshair; }
+html:not(.playing) .title:hover { text-decoration: underline; text-decoration-thickness: .05em; text-underline-offset: .1em; }
+
+/* The slots touch, so the three make one unbroken band. */
+.slot { grid-row: 3; position: relative; min-height: 0; overflow: hidden; background: var(--col); pointer-events: none; }
+.panel, .ghost { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+.panel { z-index: 2; }
+html.js .panel:not(.open) { visibility: hidden; }
+/* Before a hit the work is already there, in its column's colour. A hit gives it its real colours. */
+.ghost { opacity: .9; filter: grayscale(1) brightness(1.25) contrast(1.05); mix-blend-mode: luminosity; }
+html:not(.js) .ghost { display: none; }
+/* Only a broken image renders these. They cover the browser's icon and keep the alt text readable. */
+.panel::before, .ghost::before { content: ""; position: absolute; inset: 0; background: var(--col); }
+.panel::after { content: attr(alt); position: absolute; inset: auto 0 0; padding: var(--s2) var(--gut) var(--s2) var(--edge); color: var(--fg); }
+.col { position: absolute; z-index: -1; pointer-events: none; visibility: hidden; }
+.col.open { visibility: visible; }
+
+.base { padding-block: var(--s2); align-items: center; background: var(--surface); }
+.source { grid-column: 1 / 3; font-size: var(--note-size); }
+.source b { font-weight: 700; display: block; font-size: var(--text-size); }
+.source a { font-weight: 700; text-underline-offset: .16em; cursor: pointer; }
+.contact {
+  padding-right: var(--edge);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--u);
+  font: 700 var(--text-size)/1 var(--body);
+  user-select: text;
+}
+.cv, .mail { display: inline-flex; align-items: center; min-height: 44px; cursor: pointer; }
+.cv { background: var(--fg); color: var(--surface); padding: 0 1em; text-decoration: none; white-space: nowrap; }
+.mail { text-underline-offset: .16em; }
+.title:focus-visible, .contact a:focus-visible, .source a:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+
+/* A small window, or 200% zoom: the page grows instead of cutting anything off. */
+@media (max-height: 560px), (max-width: 760px) {
+  /* The page scrolls here, so height no longer caps the scale and the band still reaches both edges. */
+  :root { --w: var(--cw); --u: var(--cw); }
+  .hero { height: auto; min-height: 0; overflow: visible; }
+  .games { grid-template-rows: auto auto auto; }
+  .slot { aspect-ratio: 16 / 9; }
+}
+
+/* A phone reads straight down and scrolls, so each game keeps a usable crop. */
+@media (max-aspect-ratio: 1/1) {
+  :root {
+    --w: var(--cw);
+    --u: var(--cw);
+    --edge: calc(3.2 * var(--cw));
+    --gut: calc(2 * var(--cw));
+    --s1: calc(1.6 * var(--cw));
+    --s2: calc(3.2 * var(--cw));
+    --s3: calc(4.8 * var(--cw));
+    --name-size: calc(17 * var(--cw));
+    --title-size: calc(9 * var(--cw));
+    --role-size: calc(7 * var(--cw));
+    --text-size: clamp(.9375rem, calc(3.7 * var(--cw)), 1.25rem);
+    --note-size: var(--text-size);
+  }
+  .hero { display: block; height: auto; min-height: 100svh; overflow: visible; }
+  .intro, .games, .game { display: block; }
+  .line { margin-top: var(--s1); }
+  .title { line-height: 1.05; }
+  .cap { padding-block: var(--s1); }
+  .slot { margin-bottom: var(--s3); aspect-ratio: 2 / 1; }
+  .base { display: flex; flex-direction: column; align-items: stretch; gap: var(--s2); padding-block: 0 var(--s2); }
+  #trail { display: none; } /* Stacked games leave text inside the band, and text stays clean. */
+}
+
+/* Only once JS has split the type. */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.l { display: inline-block; position: relative; transform-origin: 50% 100%; will-change: transform; }
+.game.hit { --dent: var(--col); }
+.dent { position: absolute; background: var(--dent, var(--surface)); border-radius: 50%; pointer-events: none; z-index: 2; }
+
+#actor { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
