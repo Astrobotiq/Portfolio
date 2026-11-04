@@ -153,3 +153,8 @@ test('the hero spans the window and the hint needs JS', () => {
   assert.doesNotMatch(hero, /margin: 0 auto/, 'the hero is not centred');
   assert.match(css, /html:not\(\.js\) \.source b { display: none; }/);
 });
+
+test('the name has its own cap, independent of --w', () => {
+  const css = readFileSync(new URL('css/site.css', root), 'utf8');
+  assert.ok(css.includes('--name-size: min(calc(17.58 * var(--cw)), 36vh);'));
+});
