@@ -430,7 +430,11 @@ function failFrame(err) {
   note('frameError', { message: String(err && err.message) });
   human.disable();
   cancelPlan();
-  try { view.clearActor(); } catch { /* It was the view that broke, then. */ }
+  try {
+    view.clearActor();
+  } catch {
+    // It was the view that broke, then.
+  }
 }
 
 const frame = guarded((now) => {
