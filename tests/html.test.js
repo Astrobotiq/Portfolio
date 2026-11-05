@@ -34,8 +34,21 @@ const between = (open, close) => {
 };
 const gamesList = () => between('<ul class="games">', '</ul>');
 
+// A non-breaking hyphen is how the copy is set, not a change to it, so it reads as a plain one here.
+const asCopy = (source) => source.replaceAll('\u2011', '-');
+
 test('first-screen copy is verbatim from the spec', () => {
-  for (const line of FIRST_SCREEN_COPY) assert.ok(html.includes(line), `missing: ${line}`);
+  for (const line of FIRST_SCREEN_COPY) assert.ok(asCopy(html).includes(line), `missing: ${line}`);
+});
+
+test('the bio cannot break inside match-3, and the meta tags keep a plain hyphen', () => {
+  const bio = between('<p class="line">', '</p>');
+  assert.ok(bio.includes('match\u20113'), 'non-breaking hyphen in the visible bio');
+  assert.ok(!bio.includes('match-3'));
+  const head = between('<head>', '</head>');
+  assert.ok(!head.includes('\u2011'), 'search results and share cards get the plain hyphen');
+  const description = tags('meta', head).find((tag) => attr(tag, 'name') === 'description');
+  assert.match(attr(description, 'content'), /match-3/);
 });
 
 test('banned phrases are absent', () => {
@@ -331,7 +344,7 @@ test('secondary project titles drop a size, and section headings stay at title s
 });
 
 test('the hero bio keeps a reading measure', () => {
-  assert.match(siteCss(), /^\.line {[^}]*max-width: 60ch;[^}]*text-wrap: pretty/m);
+  assert.match(siteCss(), /^\.line {[^}]*max-width: 78ch;[^}]*text-wrap: pretty/m);
 });
 
 test('only OROBOROS and GOKA get the brighter reveal', () => {
