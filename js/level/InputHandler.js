@@ -16,6 +16,7 @@ export class InputHandler {
     this.isPlaying = isPlaying;
     this.isHeroVisible = isHeroVisible;
     this.engaged = false; // True once a pointer or J/K has started the game.
+    this.disabled = false;
     this._titlePress = null;
     this._swallowClick = false;
     this.onEngage = onEngage; // Called on the first deliberate input.
@@ -40,10 +41,11 @@ export class InputHandler {
     const isLink = (t) => t.closest && t.closest('a, button');
 
     window.addEventListener('keydown', (e) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (this.disabled || e.metaKey || e.ctrlKey || e.altKey) return;
       const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       const onFocusedLink = !!(isLink(e.target) && e.target.matches(':focus-visible'));
-      if (!keyBelongsToGame({ key: k, engaged: this.engaged, heroVisible: this.isHeroVisible(), onFocusedLink })) return;
+      const onVideo = !!(e.target.closest && e.target.closest('.reel, video'));
+      if (!keyBelongsToGame({ key: k, engaged: this.engaged, heroVisible: this.isHeroVisible(), onFocusedLink, onVideo })) return;
       if (!e.repeat) {
         if (k === 'j' || k === 'k') this.engaged = true;
         if (k === ' ') this._jumpEdge = true;
@@ -56,20 +58,19 @@ export class InputHandler {
       const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       this.keys.delete(k);
     });
-    window.addEventListener('blur', () => { this.keys.clear(); this._release(); });
+    window.addEventListener('blur', () => { this.keys.clear(); this._cancelTitle(); this._release(); });
 
     const titleOf = (t) => t.closest && t.closest('a.title');
     const inHero = (t) => t.closest && t.closest('#hero');
 
     window.addEventListener('pointerdown', (e) => {
-      if (!e.isPrimary || e.button !== 0) return;
+      if (this.disabled || !e.isPrimary || e.button !== 0) return;
       this._swallowClick = false;
       // The game is the first screen. Below it, a press belongs to the page.
       if (!inHero(e.target)) return;
       const title = titleOf(e.target);
       if (isLink(e.target) && (!title || e.ctrlKey || e.metaKey || e.shiftKey)) return;
       const playing = this.isPlaying();
-      this.engaged = true;
       this.pointer = { x: e.clientX, y: e.clientY };
       this._downAt = performance.now();
       if (title && !playing) {
@@ -83,12 +84,15 @@ export class InputHandler {
       // While playing, the titles are only something to aim at.
       if (title) this._swallowClick = true;
       if (e.pointerType === 'touch') {
+        // Started only by the hold or by a tap: until then it may still be a swipe.
         this._pendingTouch = setTimeout(() => {
           this._pendingTouch = null;
+          this.engaged = true;
           this.pointerHeld = true;
           this.onEngage();
         }, playing ? TOUCH_HOLD_MS : TOUCH_HOLD_IDLE_MS);
       } else {
+        this.engaged = true;
         this.pointerHeld = true;
         this.onEngage();
       }
@@ -115,6 +119,7 @@ export class InputHandler {
         // A tap that ended before the hold fired.
         clearTimeout(this._pendingTouch);
         this._pendingTouch = null;
+        this.engaged = true;
         this.onEngage();
         this.slingTicks = 30;
         return;
@@ -132,7 +137,8 @@ export class InputHandler {
     });
 
     window.addEventListener('click', (e) => {
-      if (this._swallowClick && titleOf(e.target)) e.preventDefault();
+      // A keyboard Enter arrives as a click with detail 0, and it is always the link.
+      if (this._swallowClick && e.detail > 0 && titleOf(e.target)) e.preventDefault();
       this._swallowClick = false;
     }, true);
     window.addEventListener('dragstart', (e) => { if (isLink(e.target)) e.preventDefault(); });
@@ -160,6 +166,7 @@ export class InputHandler {
     clearTimeout(this._titlePress.timer);
     this._titlePress = null;
     this._swallowClick = true;
+    this.engaged = true;
     this.pointerHeld = true;
     this.onEngage();
   }
@@ -215,6 +222,23 @@ export class InputHandler {
     this.IsJumpPressed = this._jumpEdge;
     this.IsJumpHeld = this.keys.has(' ');
     this._jumpEdge = false;
+  }
+
+  // The game stopped for good: the page's keys and presses are the page's again.
+  disable() {
+    this.disabled = true;
+    this.keys.clear();
+    this.slingTicks = 0;
+    this._swallowClick = false;
+    this._cancelTitle();
+    if (this._pendingTouch) { clearTimeout(this._pendingTouch); this._pendingTouch = null; }
+    this._release();
+  }
+
+  // Input that is already the game's. A press that may yet turn out to be a link or a scroll is not,
+  // and engages by itself if it becomes a swing.
+  get committed() {
+    return this.pointerHeld || this.keys.size > 0 || this.slingTicks > 0;
   }
 
   get neutral() {

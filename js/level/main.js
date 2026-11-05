@@ -9,14 +9,15 @@ import { InputHandler } from './InputHandler.js';
 import { Page } from './Page.js';
 import { View } from './View.js';
 import { buildLevel, clearGlyphCache } from './LevelBuilder.js';
-import { isPlaying as playingRule, RESUME_IDLE_MS } from './titlePress.js';
-import { SLEEP_AFTER_MS, skipVisible, atRest, resizeNeedsRelevel, clampToLevel } from './lifecycle.js';
+import { isPlaying as playingRule, lastActiveAt, RESUME_IDLE_MS } from './titlePress.js';
+import { SLEEP_AFTER_MS, PLANNER_WATCHDOG_MS, skipVisible, atRest, resizeNeedsRelevel, clampToLevel, heroInPlay, pushCapped, guarded } from './lifecycle.js';
 
 const params = new URLSearchParams(location.search);
 const DEBUG = params.get('debug') === '1';
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SPAWN_AT = 0.5;
 const GESTURE_GAP_MS = 220;
+const LOG_LIMIT = 500;
 
 // Spec section 3: the stacked phone layout has no run, the character only falls and can be played.
 const phoneQuery = matchMedia('(max-aspect-ratio: 1/1)');
@@ -25,7 +26,7 @@ const isPhoneLayout = () => phoneQuery.matches;
 const sinceLoad = () => performance.now() / 1000;
 
 const log = [];
-const note = (kind, data = {}) => log.push({ t: +sinceLoad().toFixed(3), kind, ...data });
+const note = (kind, data = {}) => pushCapped(log, { t: +sinceLoad().toFixed(3), kind, ...data }, LOG_LIMIT);
 
 let page, view, level, ctx, human, plan, frames = null, frameBase = 0;
 let mode = 'idle'; // idle | planning | bot | replanning | done | human
@@ -33,7 +34,7 @@ let wordsLeft = ['oro', 'goka', 'kiss'];
 let acc = 0, lastNow = 0, asleep = true;
 let prevPos = { x: 0, y: 0 }, lastThrow = 0;
 let replanWhenGrounded = false;
-let heroVisible = true, quietSince = 0, skipButton = null;
+let heroVisible = true, quietSince = 0, skipButton = null, dead = false;
 const perf = { frames: [], work: [] };
 
 function makeController(input, pos) {
@@ -87,9 +88,12 @@ function isPlaying() {
 }
 
 function resumeIfIdle() {
-  if (mode !== 'human' || !human.neutral) { lastHumanAt = performance.now(); return; }
-  if (!wordsLeft.length || ctx.IsPaused || !(ctx.CurrentState instanceof GroundedState)) return;
-  if (performance.now() - lastHumanAt < RESUME_IDLE_MS) return;
+  const now = performance.now();
+  const grounded = ctx.CurrentState instanceof GroundedState;
+  lastHumanAt = lastActiveAt({ humanMode: mode === 'human', neutral: human.neutral, grounded, was: lastHumanAt, now });
+  if (mode !== 'human' || !human.neutral || !grounded) return;
+  if (!wordsLeft.length || ctx.IsPaused) return;
+  if (now - lastHumanAt < RESUME_IDLE_MS) return;
   note('resume', { words: wordsLeft.length });
   ctx.Input = new ScriptInput();
   startReplan();
@@ -218,7 +222,7 @@ function bindScroll() {
   window.addEventListener('wheel', (e) => {
     seeGesture(performance.now());
     if (e.ctrlKey) spent = true;
-    if (spent || !isHeroVisible()) return;
+    if (spent || !isHeroInPlay()) return;
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1;
     const dy = e.deltaY * unit, dx = e.deltaX * unit;
     if (Math.abs(dy) + Math.abs(dx) < 4) return;
@@ -235,9 +239,10 @@ function bindScroll() {
     lastY = window.scrollY;
     lastT = now;
     seeGesture(now);
-    if (!isHeroVisible()) return;
+    if (!heroVisible) return;
     // The character is on a canvas fixed to the window, so a sleeping loop has to redraw it.
     wake();
+    if (!isHeroInPlay()) return;
     const pxPerS = Math.abs(dy) / (dt / 1000);
     if (spent || pxPerS < 240) return;
     spent = true;
@@ -249,7 +254,7 @@ function bindScroll() {
 
 // --- Planning runs in a worker, so that it cannot cost a frame ---
 
-let worker = null, planSeq = 0, planPending = false;
+let worker = null, planSeq = 0, planPending = false, planWatchdog = 0;
 
 // A search nobody wants would hold up the next one for its whole budget, so it goes with its
 // worker. The promise of a cancelled plan never settles.
@@ -258,6 +263,7 @@ function cancelPlan() {
     worker.terminate();
     worker = null;
   }
+  clearTimeout(planWatchdog);
   planSeq++;
   planPending = false;
   plan = null;
@@ -266,13 +272,14 @@ function cancelPlan() {
 }
 
 // Settles with the planner's answer, which is null when it found no route. A worker that fails
-// to load or throws counts as no route.
+// to load, throws or says nothing for too long counts as no route.
 function askPlanner(msg) {
   const id = ++planSeq;
   planPending = true;
   return new Promise((resolve) => {
     const settle = (result) => {
       if (id !== planSeq) return;
+      clearTimeout(planWatchdog);
       planPending = false;
       resolve(result);
     };
@@ -293,6 +300,7 @@ function askPlanner(msg) {
     worker.onerror = fail;
     worker.onmessage = (e) => { if (e.data.id === id) settle(e.data.result); };
     worker.postMessage({ id, level: level.toJSON(), collider: COLLIDER, ...msg });
+    planWatchdog = setTimeout(fail, PLANNER_WATCHDOG_MS);
   });
 }
 
@@ -341,20 +349,25 @@ function spawnIfReady() {
   mode = plan ? 'bot' : 'done';
   if (!plan) abandonRun();
   note('spawn', { x: +spawn.x.toFixed(2), y: +spawn.y.toFixed(2) });
+  // A press made before there was anyone to control. Left alone, its slingshot never drains.
+  if (human.committed) takeControl();
 }
 
 // --- Frame loop ---
 
 function wake() {
   quietSince = performance.now();
-  if (!asleep || REDUCED || !heroVisible) return;
+  if (!asleep || dead || REDUCED || !heroVisible) return;
   asleep = false;
   lastNow = quietSince;
   requestAnimationFrame(frame);
 }
 
-function isHeroVisible() {
-  return heroVisible;
+// Whether keys and throws are the game's. The loop itself runs while any of the hero shows.
+function isHeroInPlay() {
+  if (dead) return false;
+  const { top, bottom } = page.hero.getBoundingClientRect();
+  return heroInPlay({ top, bottom, viewportHeight: window.innerHeight });
 }
 
 // Off screen nothing ticks and the loop sleeps, so the run waits exactly where it was.
@@ -387,7 +400,20 @@ function canSleep(now) {
   return rest && now - quietSince >= SLEEP_AFTER_MS && view.blinkT < 0;
 }
 
-function frame(now) {
+// Nothing more will be drawn, so the page goes back to its plain form with all of its work showing.
+function failFrame(err) {
+  console.error(err);
+  dead = true;
+  asleep = true;
+  const root = document.documentElement;
+  root.classList.remove('js', 'playing');
+  note('frameError', { message: String(err && err.message) });
+  human.disable();
+  cancelPlan();
+  try { view.clearActor(); } catch { /* It was the view that broke, then. */ }
+}
+
+const frame = guarded((now) => {
   if (!heroVisible) {
     acc = 0;
     asleep = true;
@@ -426,7 +452,7 @@ function frame(now) {
     return;
   }
   requestAnimationFrame(frame);
-}
+}, failFrame);
 
 function currentRenderState(dt) {
   const p = ctx.PlayerRigidbody.position;
@@ -559,6 +585,8 @@ function onLateFont() {
 // --- Boot ---
 
 async function boot() {
+  // Too late: the fallback already gave the page its plain form, and a run would start on top of it.
+  if (!document.documentElement.classList.contains('js')) return;
   window.__booted = true;
   note('boot');
   // Measure only once Anton is really in, and never wait long for it.
@@ -586,7 +614,8 @@ async function boot() {
     window.__site = {
       get ctx() { return ctx; }, get level() { return level; }, get plan() { return plan; }, get mode() { return mode; },
       get wordsLeft() { return wordsLeft; }, get asleep() { return asleep; },
-      log, perf, page, view, relevel, skipRun, isHeroVisible,
+      log, perf, page, view, relevel, skipRun, isHeroInPlay,
+      get heroVisible() { return heroVisible; },
     };
   }
 
@@ -600,7 +629,7 @@ async function boot() {
   human = new InputHandler({
     onEngage: takeControl,
     isPlaying,
-    isHeroVisible,
+    isHeroVisible: isHeroInPlay,
     screenToWorld: (x, y) => ({ x: x / level.ppu, y: -(y + window.scrollY) / level.ppu }),
   });
   bindScroll();

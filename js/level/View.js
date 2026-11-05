@@ -4,8 +4,8 @@
 // in --surface so that it reads on the paper, on black type and on the footage.
 // Squash comes only from velocity: stretch along the velocity vector while moving, and a landing
 // squash scaled by the speed lost at the contact, played through CurvePresetsUtility.GetSpring.
-const VISUAL_SCALE = 2.5;
-const PHONE_VISUAL_SCALE = 1.6;
+export const VISUAL_SCALE = 3;
+export const PHONE_VISUAL_SCALE = 1.6;
 
 // Normalised to height 1, width about 0.8, centred on the collider. Feet at y = +0.5.
 function makeSilhouette() {
@@ -87,7 +87,8 @@ export class View {
     this.trail.width = Math.round(r.width * this.dpr);
     this.trail.height = Math.round(r.height * this.dpr);
     this.tctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-    this.actor.width = Math.round(window.innerWidth * this.dpr);
+    // Its CSS box stops at a classic scrollbar, and innerWidth does not.
+    this.actor.width = Math.round(document.documentElement.clientWidth * this.dpr);
     this.actor.height = Math.round(window.innerHeight * this.dpr);
   }
 

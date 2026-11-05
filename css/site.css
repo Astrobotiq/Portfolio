@@ -83,7 +83,7 @@ ul { list-style: none; }
   overflow: hidden;
 }
 /* Pressing the page is the game, so only a running page claims the press. */
-html.js .hero { user-select: none; cursor: crosshair; }
+html.js .hero { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; cursor: crosshair; }
 
 #trail { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; transition: opacity 1.2s ease; }
 #trail.gone { opacity: 0; }
@@ -170,6 +170,7 @@ html:not(.js) .skip { display: none; }
   justify-content: space-between;
   gap: 0 var(--u);
   font: 700 var(--text-size)/1 var(--body);
+  -webkit-user-select: text;
   user-select: text;
 }
 .cv, .mail { display: inline-flex; align-items: center; min-height: 44px; cursor: pointer; }
@@ -271,7 +272,7 @@ html:not(.js) .skip { display: none; }
    so the page behaves like a plain page and does not invite anyone to swing. */
 @media (prefers-reduced-motion: reduce) {
   html.js .panel:not(.open), .col { visibility: visible; }
-  html.js .hero { user-select: auto; cursor: auto; }
+  html.js .hero { -webkit-user-select: auto; user-select: auto; -webkit-touch-callout: default; cursor: auto; }
   #trail, .source b, .skip, .skip[hidden] { display: none; }
 }
 

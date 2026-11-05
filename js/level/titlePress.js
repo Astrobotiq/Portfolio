@@ -12,6 +12,12 @@ export function isPlaying({ humanMode, neutral, grounded, idleMs }) {
   return !(grounded && idleMs >= PLAY_IDLE_MS);
 }
 
+// The clock isPlaying reads. It runs from the last input or the landing, whichever came later, so a
+// long flight cannot use up the time after it.
+export function lastActiveAt({ humanMode, neutral, grounded, was, now }) {
+  return humanMode && neutral && grounded ? was : now;
+}
+
 export function pressOutcome({ playing, heldMs, movedPx, touch, modifier }) {
   if (modifier) return 'steam';
   if (playing) return 'swing';
@@ -24,13 +30,16 @@ export function pressOutcome({ playing, heldMs, movedPx, touch, modifier }) {
 const NAV_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'd', 'w', 's', ' '];
 const HOOK_KEYS = ['j', 'k'];
 
-// `key` is already lower-cased for single characters. J and K start the game, so they always count.
-// The rest only count once the game has started and while the top of the page is on screen.
-// Space on a link the keyboard focused stays the browser's. Enter is never the game's.
-export function keyBelongsToGame({ key, engaged, heroVisible, onFocusedLink }) {
+// `key` is already lower-cased for single characters. Nothing counts unless the hero is on screen.
+// J and K start the game, so with the hero there they always count. The rest only count once the
+// game has started. Space on a link the keyboard focused stays the browser's, and Space and the
+// arrows on a focused video stay with the video. Enter is never the game's.
+export function keyBelongsToGame({ key, engaged, heroVisible, onFocusedLink, onVideo = false }) {
+  if (!heroVisible) return false;
   if (HOOK_KEYS.includes(key)) return true;
   if (!NAV_KEYS.includes(key)) return false;
-  if (!engaged || !heroVisible) return false;
+  if (!engaged) return false;
   if (key === ' ' && onFocusedLink) return false;
+  if (onVideo && (key === ' ' || key.startsWith('Arrow'))) return false;
   return true;
 }

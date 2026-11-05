@@ -2,6 +2,7 @@
 // when a resize is a new level, and where a character goes when the level changes under it.
 // No DOM here, so they are testable as they stand.
 export const SLEEP_AFTER_MS = 3000;
+export const PLANNER_WATCHDOG_MS = 6000;
 const URL_BAR_PX = 120;
 const RUN_MODES = ['planning', 'bot', 'replanning'];
 
@@ -22,6 +23,32 @@ export function resizeNeedsRelevel({ w, h, phone, lastW, lastH, lastPhone }) {
   if (w === lastW && h === lastH && phone === lastPhone) return false;
   const urlBar = phone && lastPhone && w === lastW && Math.abs(h - lastH) < URL_BAR_PX;
   return !urlBar;
+}
+
+// Game keys and throws belong to the hero only while at least half of it is on screen. A stacked
+// hero can be taller than the window, and then half of the window is the most it can fill.
+export function heroInPlay({ top, bottom, viewportHeight }) {
+  const showing = Math.min(bottom, viewportHeight) - Math.max(top, 0);
+  return showing >= Math.min(bottom - top, viewportHeight) / 2;
+}
+
+export function pushCapped(list, item, max) {
+  list.push(item);
+  if (list.length > max) list.splice(0, list.length - max);
+}
+
+// A frame that throws would stop the loop with the page half hidden. Reports once, then does nothing.
+export function guarded(step, onFail) {
+  let dead = false;
+  return (arg) => {
+    if (dead) return;
+    try {
+      step(arg);
+    } catch (err) {
+      dead = true;
+      onFail(err);
+    }
+  };
 }
 
 // Keeps a collider between the walls, under the top of the page and above the floor. A character
