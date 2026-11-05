@@ -34,21 +34,17 @@ const between = (open, close) => {
 };
 const gamesList = () => between('<ul class="games">', '</ul>');
 
-// A non-breaking hyphen is how the copy is set, not a change to it, so it reads as a plain one here.
-const asCopy = (source) => source.replaceAll('\u2011', '-');
+// The no-wrap span is how the copy is set, not a change to it.
+const asCopy = (source) => source.replace(/<span class="nb">([^<]*)<\/span>/g, '$1');
 
 test('first-screen copy is verbatim from the spec', () => {
   for (const line of FIRST_SCREEN_COPY) assert.ok(asCopy(html).includes(line), `missing: ${line}`);
 });
 
-test('the bio cannot break inside match-3, and the meta tags keep a plain hyphen', () => {
-  const bio = between('<p class="line">', '</p>');
-  assert.ok(bio.includes('match\u20113'), 'non-breaking hyphen in the visible bio');
-  assert.ok(!bio.includes('match-3'));
-  const head = between('<head>', '</head>');
-  assert.ok(!head.includes('\u2011'), 'search results and share cards get the plain hyphen');
-  const description = tags('meta', head).find((tag) => attr(tag, 'name') === 'description');
-  assert.match(attr(description, 'content'), /match-3/);
+test('the bio cannot break inside match-3, using a real hyphen', () => {
+  assert.ok(between('<p class="line">', '</p>').includes('<span class="nb">match-3</span>'));
+  assert.ok(!html.includes('\u2011'));
+  assert.match(siteCss(), /^\.nb { white-space: nowrap; }/m);
 });
 
 test('banned phrases are absent', () => {
@@ -343,8 +339,10 @@ test('secondary project titles drop a size, and section headings stay at title s
   assert.match(css, /\.below h2 { font: 400 var\(--title-size\)/);
 });
 
-test('the hero bio keeps a reading measure', () => {
-  assert.match(siteCss(), /^\.line {[^}]*max-width: 78ch;[^}]*text-wrap: pretty/m);
+test('the hero bio takes the width it needs, because the band needs the height', () => {
+  const rule = siteCss().match(/^\.line {[^}]*}/m)[0];
+  assert.match(rule, /text-wrap: pretty/);
+  assert.doesNotMatch(rule, /max-width/);
 });
 
 test('only OROBOROS and GOKA get the brighter reveal', () => {

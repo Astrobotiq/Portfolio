@@ -106,7 +106,8 @@ html.js .hero { -webkit-user-select: none; user-select: none; -webkit-touch-call
 
 .intro { align-items: center; padding-block: var(--s1) var(--s3); }
 .role { font-size: var(--role-size); line-height: 1; white-space: nowrap; }
-.line { grid-column: 2 / 4; max-width: 78ch; text-wrap: pretty; }
+.line { grid-column: 2 / 4; text-wrap: pretty; }
+.nb { white-space: nowrap; }
 
 .games { min-height: 0; grid-template-rows: auto auto minmax(0, 1fr); }
 .game { display: contents; --col: var(--surface); }
