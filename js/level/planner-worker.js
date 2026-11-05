@@ -9,7 +9,7 @@ import { Planner, runToEnd } from './Planner.js';
 self.onmessage = (e) => {
   const { id, kind, level: levelData, collider, pos, words, tickCount } = e.data;
   const level = new Level(levelData);
-  const planner = new Planner(level, PlayerStatsSO, collider, { deadlineMs: kind === 'first' ? 2000 : 900, sliceMs: 1e9 });
+  const planner = new Planner(level, PlayerStatsSO, collider, { deadlineMs: kind === 'first' ? 4000 : 900, sliceMs: 1e9 });
   let result = null;
   if (kind === 'first') {
     result = runToEnd(planner.planFirstRun());

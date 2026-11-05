@@ -27,7 +27,7 @@ function replay(json, frames, spawn) {
 for (const size of SIZES) {
   const fixture = JSON.parse(readFileSync(new URL(`./fixtures/level-${size}.json`, import.meta.url), 'utf8'));
   let plan;
-  const firstRun = () => (plan ??= runToEnd(new Planner(new Level(fixture), PlayerStatsSO, COLLIDER, { deadlineMs: 10000, sliceMs: 1e9 }).planFirstRun()));
+  const firstRun = () => (plan ??= runToEnd(new Planner(new Level(fixture), PlayerStatsSO, COLLIDER, { deadlineMs: 4000, sliceMs: 1e9 }).planFirstRun()));
 
   test(`${size}: same frames give the same result`, () => {
     const { frames, spawn, ticks } = firstRun();

@@ -15,6 +15,11 @@ const MAX_NAME_BRIDGE = 2; // Units.
 const glyphCache = new Map();
 let rasterCtx = null;
 
+// The cache is keyed by font family, which reads the same before and after the real font arrives.
+export function clearGlyphCache() {
+  glyphCache.clear();
+}
+
 // Top and bottom of the ink per column, in em above the baseline, from a real raster of the glyph.
 function glyphColumns(ch, font) {
   const key = font + '|' + ch;
@@ -132,8 +137,8 @@ export function buildLevel(page, colliderSize, phone = false) {
   // a ledge standing on nothing, and that side stays open.
   if (name.length) {
     const hero = page.hero.getBoundingClientRect();
-    const lowest = name.reduce((p, q) => (q.letters[0].ink.ymin < p.letters[0].ink.ymin ? q : p));
-    const row = name.filter((q) => Math.abs(q.letters[0].ink.ymin - lowest.letters[0].ink.ymin) < 0.5);
+    const bottomWord = name.reduce((p, q) => (q.letters[0].ink.ymin < p.letters[0].ink.ymin ? q : p));
+    const row = name.filter((q) => Math.abs(q.letters[0].ink.ymin - bottomWord.letters[0].ink.ymin) < 0.5);
     const first = row[0].letters[0].ink, last = row.at(-1).letters.at(-1).ink;
     const bridge = (xmin, xmax, ink) => {
       if (xmax - xmin > MAX_NAME_BRIDGE) return;
@@ -194,5 +199,6 @@ export function buildLevel(page, colliderSize, phone = false) {
     }
   }
 
-  return new Level({ rects, nodes, spawns, smallText, width: W, left: WL, top: Y(0), ppu, wordBounds });
+  // The top of the hero, not of the window: a level built while scrolled has the same top.
+  return new Level({ rects, nodes, spawns, smallText, width: W, left: WL, top: Y(heroRect.top), ppu, wordBounds });
 }

@@ -8,16 +8,19 @@ import { ScriptInput, ZERO_FRAME } from './BotInput.js';
 import { InputHandler } from './InputHandler.js';
 import { Page } from './Page.js';
 import { View } from './View.js';
-import { buildLevel } from './LevelBuilder.js';
+import { buildLevel, clearGlyphCache } from './LevelBuilder.js';
 import { isPlaying as playingRule, RESUME_IDLE_MS } from './titlePress.js';
+import { SLEEP_AFTER_MS, skipVisible, atRest, resizeNeedsRelevel, clampToLevel } from './lifecycle.js';
 
 const params = new URLSearchParams(location.search);
 const DEBUG = params.get('debug') === '1';
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SPAWN_AT = 0.5;
+const GESTURE_GAP_MS = 220;
 
 // Spec section 3: the stacked phone layout has no run, the character only falls and can be played.
-const isPhoneLayout = () => matchMedia('(max-aspect-ratio: 1/1)').matches;
+const phoneQuery = matchMedia('(max-aspect-ratio: 1/1)');
+const isPhoneLayout = () => phoneQuery.matches;
 
 const sinceLoad = () => performance.now() / 1000;
 
@@ -30,6 +33,7 @@ let wordsLeft = ['oro', 'goka', 'kiss'];
 let acc = 0, lastNow = 0, asleep = true;
 let prevPos = { x: 0, y: 0 }, lastThrow = 0;
 let replanWhenGrounded = false;
+let heroVisible = true, quietSince = 0, skipButton = null;
 const perf = { frames: [], work: [] };
 
 function makeController(input, pos) {
@@ -48,19 +52,20 @@ function buildAll() {
 
 // --- Events from the simulation drive every page reaction ---
 
-function handleEvents(c, { quiet = false } = {}) {
+function handleEvents(c) {
   for (const e of c.Events) {
     if (e.t === 'contact') {
-      if (!quiet) page.onContact(e);
-      if (e.dir.y < 0 && !quiet) view.noteLanding(e.speed);
+      page.onContact(e);
+      if (e.dir.y < 0) view.noteLanding(e.speed);
       if (e.speed >= 12 && (level.isGameTitle(e.word) || e.word === 'name')) page.dent(e);
-      if (!quiet) note('contact', { word: e.word, speed: +e.speed.toFixed(1) });
+      note('contact', { word: e.word, speed: +e.speed.toFixed(1) });
     } else if (e.t === 'impact') {
-      if (!quiet) { page.flood(e); note('impact', { word: e.word, speed: +e.speed.toFixed(1), tick: e.tick }); }
+      page.flood(e);
+      note('impact', { word: e.word, speed: +e.speed.toFixed(1), tick: e.tick });
       wordsLeft = wordsLeft.filter((w) => w !== e.word);
-      if (!quiet) page.setDay(3 - wordsLeft.length);
-      if (!quiet && mode === 'human' && !wordsLeft.length) view.fadeTrail();
-    } else if (e.t === 'launch' && !quiet) {
+      page.setDay(3 - wordsLeft.length);
+      if (mode === 'human' && !wordsLeft.length) view.fadeTrail();
+    } else if (e.t === 'launch') {
       note('launch', { tick: e.tick });
     }
   }
@@ -105,13 +110,15 @@ function tick() {
   }
   prevPos = { ...ctx.PlayerRigidbody.position };
   ctx.Tick();
-  stampTick(ctx);
+  // The trail is the working-out of a run. The bot's last stretch still draws; after that, nothing.
+  if (mode === 'bot' || wordsLeft.length) stampTick(ctx);
   handleEvents(ctx);
   resumeIfIdle();
 
   if (replanWhenGrounded && ctx.CurrentState instanceof GroundedState && !ctx.IsPaused) {
     replanWhenGrounded = false;
-    startReplan();
+    if (wordsLeft.length) startReplan();
+    else finishRun();
   }
 }
 
@@ -138,20 +145,26 @@ function finishRun() {
   note('runEnd', { on: ctx.PhysicsHandler.GroundRect?.word });
 }
 
-// Ends the run where it stands. The character keeps falling and lands on its own.
-function skipRun() {
-  planSeq++;
-  planPending = false;
-  plan = null;
-  frames = null;
-  replanWhenGrounded = false;
+// No run is going to finish: everything opens, and whatever is in the air comes down by itself.
+function abandonRun() {
+  cancelPlan();
   wordsLeft = [];
-  if (ctx) {
-    if (mode === 'human') ctx.Input = new ScriptInput();
-    mode = 'done';
-  } // Otherwise it is still planning: with no plan, spawnIfReady drops the character and finishes.
   page.revealAll();
+}
+
+function syncSkip() {
+  const hide = !skipVisible({ mode, phone: isPhoneLayout() });
+  if (skipButton.hidden !== hide) skipButton.hidden = hide;
+}
+
+// Ends the run where it stands. The character keeps falling and lands on its own. If it has not
+// spawned yet, spawnIfReady drops it with no plan.
+function skipRun() {
+  abandonRun();
+  if (ctx && mode === 'human') ctx.Input = new ScriptInput();
+  mode = 'done';
   view.fadeTrail();
+  syncSkip();
   note('skip');
   wake();
 }
@@ -162,10 +175,7 @@ function takeControl() {
   if (!ctx || mode === 'human') { wake(); return; }
   note('handover', { vx: +ctx.Velocity.x.toFixed(3), vy: +ctx.Velocity.y.toFixed(3), state: ctx.CurrentState.constructor.name });
   mode = 'human';
-  frames = null;
-  planSeq++;
-  planPending = false;
-  replanWhenGrounded = false;
+  cancelPlan();
   ctx.Input = human;
   wake();
 }
@@ -187,9 +197,7 @@ function throwCharacter(vx, vy) {
   c.TransitionToState(new AirborneState(c, v, { grappleLockout: 0.1 }));
   note('throw', { vx: +v.x.toFixed(2), vy: +v.y.toFixed(2) });
   if (mode === 'bot' || mode === 'replanning') {
-    frames = null;
-    planSeq++;
-    planPending = false;
+    cancelPlan();
     mode = 'bot';
     replanWhenGrounded = true;
   }
@@ -198,16 +206,23 @@ function throwCharacter(vx, vy) {
 
 function bindScroll() {
   let lastY = window.scrollY, lastT = performance.now();
-  let lastWheel = 0;
+  // One throw per gesture, for whichever of the two events sees it first: a wheel turn fires both.
+  // A gap of GESTURE_GAP_MS ends a gesture. Never during a held rope, or on a pinch or Ctrl-zoom.
+  let lastEvent = 0, spent = false;
+  const seeGesture = (now) => {
+    if (now - lastEvent >= GESTURE_GAP_MS) spent = false;
+    lastEvent = now;
+    if (!human.neutral) spent = true;
+  };
+
   window.addEventListener('wheel', (e) => {
-    // One throw per gesture, never during a held rope, never on a pinch or Ctrl-zoom.
-    const nowW = performance.now();
-    const sameGesture = nowW - lastWheel < 220;
-    lastWheel = nowW;
-    if (sameGesture || e.ctrlKey || !human.neutral) return;
+    seeGesture(performance.now());
+    if (e.ctrlKey) spent = true;
+    if (spent || !isHeroVisible()) return;
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1;
     const dy = e.deltaY * unit, dx = e.deltaX * unit;
     if (Math.abs(dy) + Math.abs(dx) < 4) return;
+    spent = true;
     const up = Math.min(46, Math.abs(dy) * 0.16 + 6);
     const towardCentre = ctx ? Math.sign(level.width / 2 - ctx.PlayerRigidbody.position.x) : 1;
     throwCharacter(dx * 0.12 + towardCentre * up * 0.3, up);
@@ -219,9 +234,13 @@ function bindScroll() {
     const dy = window.scrollY - lastY;
     lastY = window.scrollY;
     lastT = now;
-    if (!level) return;
+    seeGesture(now);
+    if (!isHeroVisible()) return;
+    // The character is on a canvas fixed to the window, so a sleeping loop has to redraw it.
+    wake();
     const pxPerS = Math.abs(dy) / (dt / 1000);
-    if (pxPerS < 240) { wake(); return; }
+    if (spent || pxPerS < 240) return;
+    spent = true;
     const up = Math.min(46, (pxPerS / level.ppu) * 0.3);
     const towardCentre = ctx ? Math.sign(level.width / 2 - ctx.PlayerRigidbody.position.x) : 1;
     throwCharacter(towardCentre * up * 0.3, up);
@@ -232,21 +251,47 @@ function bindScroll() {
 
 let worker = null, planSeq = 0, planPending = false;
 
-function askPlanner(msg) {
-  if (!worker) {
-    worker = new Worker(new URL('./planner-worker.js', import.meta.url), { type: 'module' });
-    worker.onerror = () => { planPending = false; page.revealAll(); };
+// A search nobody wants would hold up the next one for its whole budget, so it goes with its
+// worker. The promise of a cancelled plan never settles.
+function cancelPlan() {
+  if (planPending && worker) {
+    worker.terminate();
+    worker = null;
   }
+  planSeq++;
+  planPending = false;
+  plan = null;
+  frames = null;
+  replanWhenGrounded = false;
+}
+
+// Settles with the planner's answer, which is null when it found no route. A worker that fails
+// to load or throws counts as no route.
+function askPlanner(msg) {
   const id = ++planSeq;
   planPending = true;
   return new Promise((resolve) => {
-    const listener = (e) => {
-      if (e.data.id !== id) return;
-      worker.removeEventListener('message', listener);
-      if (id === planSeq) planPending = false;
-      resolve(id === planSeq ? e.data.result : undefined);
+    const settle = (result) => {
+      if (id !== planSeq) return;
+      planPending = false;
+      resolve(result);
     };
-    worker.addEventListener('message', listener);
+    const fail = () => {
+      if (worker) worker.terminate();
+      worker = null;
+      note('plannerError');
+      console.warn('The planner worker failed; opening everything and dropping the character.');
+      page.revealAll();
+      settle(null);
+    };
+    try {
+      if (!worker) worker = new Worker(new URL('./planner-worker.js', import.meta.url), { type: 'module' });
+    } catch {
+      fail();
+      return;
+    }
+    worker.onerror = fail;
+    worker.onmessage = (e) => { if (e.data.id === id) settle(e.data.result); };
     worker.postMessage({ id, level: level.toJSON(), collider: COLLIDER, ...msg });
   });
 }
@@ -254,14 +299,11 @@ function askPlanner(msg) {
 function startPlan() {
   mode = 'planning';
   if (isPhoneLayout()) {
-    plan = null;
-    wordsLeft = [];
-    page.revealAll();
+    abandonRun();
     note('phone');
     return;
   }
   askPlanner({ kind: 'first' }).then((result) => {
-    if (result === undefined) return;
     plan = result;
     note('planned', plan ? { ms: plan.ms, sims: plan.sims, ticks: plan.ticks, seconds: plan.seconds, miss: plan.miss, impacts: plan.impacts, on: plan.landedOn } : { failed: true });
     if (!plan) console.warn('Planner found no full route for this layout; dropping the character without a route.');
@@ -270,8 +312,9 @@ function startPlan() {
 
 function startReplan() {
   mode = 'replanning';
+  const askedAt = performance.now();
   askPlanner({ kind: 'here', pos: ctx.PlayerRigidbody.position, words: wordsLeft, tickCount: ctx.TickCount }).then((result) => {
-    if (result === undefined || mode !== 'replanning') return;
+    if (mode !== 'replanning') return;
     if (result) {
       frames = result.frames;
       frameBase = ctx.TickCount;
@@ -279,9 +322,9 @@ function startReplan() {
       note('replanned', { ms: result.ms, sims: result.sims });
     } else {
       mode = 'done';
-      wordsLeft = [];
-      page.revealAll();
-      note('replanFailed');
+      abandonRun();
+      const { x, y } = ctx.PlayerRigidbody.position;
+      note('replanFailed', { x: +x.toFixed(2), y: +y.toFixed(2), on: ctx.PhysicsHandler.GroundRect?.word, ms: Math.round(performance.now() - askedAt) });
     }
     wake();
   });
@@ -289,37 +332,77 @@ function startReplan() {
 }
 
 function spawnIfReady() {
-  if (mode !== 'planning' || planPending || sinceLoad() < SPAWN_AT) return;
+  if (ctx || planPending || sinceLoad() < SPAWN_AT) return;
+  if (mode !== 'planning' && mode !== 'done') return;
   const spawn = plan ? plan.spawn : level.spawns[0] || { x: (level.left + level.width) / 2, y: level.top - 1 };
   ctx = makeController(new ScriptInput(), spawn);
   frames = plan ? plan.frames : null;
   frameBase = 0;
   mode = plan ? 'bot' : 'done';
-  if (!plan) {
-    wordsLeft = [];
-    page.revealAll();
-  }
+  if (!plan) abandonRun();
   note('spawn', { x: +spawn.x.toFixed(2), y: +spawn.y.toFixed(2) });
 }
 
 // --- Frame loop ---
 
 function wake() {
-  if (asleep && !REDUCED) {
-    asleep = false;
-    lastNow = performance.now();
-    requestAnimationFrame(frame);
-  }
+  quietSince = performance.now();
+  if (!asleep || REDUCED || !heroVisible) return;
+  asleep = false;
+  lastNow = quietSince;
+  requestAnimationFrame(frame);
+}
+
+function isHeroVisible() {
+  return heroVisible;
+}
+
+// Off screen nothing ticks and the loop sleeps, so the run waits exactly where it was.
+function watchHero() {
+  new IntersectionObserver((entries) => {
+    heroVisible = entries.at(-1).isIntersecting;
+    note('heroVisible', { visible: heroVisible });
+    if (heroVisible) {
+      wake();
+    } else {
+      acc = 0;
+      view.clearActor();
+    }
+  }).observe(page.hero);
+}
+
+function canSleep(now) {
+  if (!ctx) return false;
+  const rest = atRest({
+    mode,
+    wordsLeft: wordsLeft.length,
+    grounded: ctx.CurrentState instanceof GroundedState,
+    paused: ctx.IsPaused,
+    settled: page.settled,
+    neutral: human.neutral,
+    speed: Math.hypot(ctx.Velocity.x, ctx.Velocity.y),
+  });
+  if (!rest) quietSince = now;
+  // Only with the eyes open, because the last frame drawn stays on screen.
+  return rest && now - quietSince >= SLEEP_AFTER_MS && view.blinkT < 0;
 }
 
 function frame(now) {
+  if (!heroVisible) {
+    acc = 0;
+    asleep = true;
+    return;
+  }
   document.documentElement.classList.toggle('playing', isPlaying());
+  // A frame woken between two vsyncs can carry a timestamp from just before the wake.
+  const elapsed = Math.max(0, now - lastNow);
   const t0 = performance.now();
-  const dt = Math.min(0.1, (now - lastNow) / 1000);
-  perf.frames.push(now - lastNow);
+  const dt = Math.min(0.1, elapsed / 1000);
+  perf.frames.push(elapsed);
   lastNow = now;
 
   spawnIfReady();
+  syncSkip();
 
   if (ctx) {
     acc += dt;
@@ -337,6 +420,11 @@ function frame(now) {
   perf.work.push(performance.now() - t0);
   if (perf.frames.length > 4000) { perf.frames.splice(0, 2000); perf.work.splice(0, 2000); }
 
+  if (canSleep(now)) {
+    asleep = true;
+    note('sleep');
+    return;
+  }
   requestAnimationFrame(frame);
 }
 
@@ -366,46 +454,40 @@ function render(dt) {
   view.draw(currentRenderState(dt), dt);
 }
 
-// --- The long exposure: the same run, run to the end without drawing a frame ---
+// --- Reduced motion: the last frame, on the first frame. No run, so no planning to wait for. ---
 
-async function runStill() {
-  const result = isPhoneLayout() ? null : await askPlanner({ kind: 'first' });
-  if (result === undefined) return;
-  plan = result;
-  note('stillPlanned', plan ? { ms: plan.ms, sims: plan.sims, ticks: plan.ticks, miss: plan.miss, impacts: plan.impacts } : { failed: true });
-  page.revealAll();
-  if (!plan) { wordsLeft = []; return; }
-
-  ctx = makeController(new ScriptInput(), plan.spawn);
-  view.clearTrail();
-  page.clearReactions();
-  wordsLeft = ['oro', 'goka', 'kiss'];
-  for (const f of plan.frames) {
-    ctx.Input.apply(f);
-    ctx.Tick();
-    stampTick(ctx);
-    handleEvents(ctx, { quiet: true });
-  }
-  prevPos = { ...ctx.PlayerRigidbody.position };
-  acc = 0;
-  mode = 'done';
-  view.landAge = 1;
+function drawStill() {
   page.update(0, false);
   view.draw(currentRenderState(0), 0);
-  note('stillDone', { on: ctx.PhysicsHandler.GroundRect?.word });
+}
+
+function showLastFrame() {
+  mode = 'done';
+  wordsLeft = [];
+  page.revealAll();
+  const cv = page.contact.querySelector('.cv').getBoundingClientRect();
+  // Below everything: the clamp stands it on the floor.
+  const spot = clampToLevel({ x: (cv.left + cv.width / 2) / level.ppu, y: -Infinity }, level, COLLIDER);
+  ctx = makeController(new ScriptInput(), spot);
+  for (let i = 0; i < 50 && !(ctx.CurrentState instanceof GroundedState); i++) ctx.Tick();
+  ctx.Events.length = 0;
+  prevPos = { ...ctx.PlayerRigidbody.position };
+  acc = 0;
+  view.landAge = 1;
+  drawStill();
+  note('lastFrame', { on: ctx.PhysicsHandler.GroundRect?.word });
 }
 
 // --- Resize: rebuild the level from the new letter rectangles. Nothing is keyframed. ---
 
 let resizeTimer = 0;
-let lastW = 0, lastH = 0;
+let lastW = 0, lastH = 0, lastPhone = false;
 function onResize() {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
-    const w = document.documentElement.clientWidth, h = window.innerHeight;
-    // A phone's collapsing URL bar changes only the height by a little: not a new level.
-    if (w === lastW && Math.abs(h - lastH) < 120) return;
-    lastW = w; lastH = h;
+    const w = document.documentElement.clientWidth, h = window.innerHeight, phone = isPhoneLayout();
+    if (!resizeNeedsRelevel({ w, h, phone, lastW, lastH, lastPhone })) return;
+    lastW = w; lastH = h; lastPhone = phone;
     relevel();
   }, 140);
 }
@@ -413,35 +495,65 @@ function onResize() {
 function relevel() {
   const old = level;
   const oldCtx = ctx;
-  const wasMode = mode;
   page.clearReactions();
   buildAll();
   note('relevel', { w: lastW, h: lastH, rects: level.rects.length, nodes: level.nodes.length, spawns: level.spawns.length });
 
-  if (REDUCED || wasMode === 'done') {
-    runStill();
+  if (REDUCED) {
+    showLastFrame();
     return;
   }
   view.clearTrail();
-  if (!oldCtx) { startPlan(); wake(); return; }
+  const phone = isPhoneLayout();
+  const running = mode === 'bot' || mode === 'replanning';
+  // Any answer still on its way is about the old level.
+  cancelPlan();
+  if (phone) {
+    // The stacked layout has no run. Coming back to the desktop layout does not bring one back:
+    // what opened stays open and the mode stays done.
+    wordsLeft = [];
+    page.revealAll();
+    if (running) mode = 'done';
+    note('phone');
+  }
+  if (!oldCtx) {
+    // Still waiting to spawn. With no words left, spawnIfReady drops the character with no plan.
+    if (mode === 'planning' && wordsLeft.length) startPlan();
+    wake();
+    return;
+  }
 
-  // Mid-run: keep the character, at its proportional place, and carry on through the new level.
+  // Keep the character, at its proportional place, and carry on through the new level.
   const px = oldCtx.PlayerRigidbody.position;
-  const sx = level.width / old.width;
-  const pos = { x: Math.min(level.width - 0.5, Math.max(0.5, px.x * sx)), y: (px.y * old.ppu) / level.ppu };
-  const vel = { ...oldCtx.Velocity };
-  const c = new PlayerController(PlayerStatsSO, level, wasMode === 'human' ? human : new ScriptInput(), COLLIDER);
+  const pos = clampToLevel({ x: px.x * (level.width / old.width), y: (px.y * old.ppu) / level.ppu }, level, COLLIDER);
+  const vel = oldCtx.IsPaused ? { ...oldCtx._velocityCache } : { ...oldCtx.Velocity };
+  const c = new PlayerController(PlayerStatsSO, level, mode === 'human' ? human : new ScriptInput(), COLLIDER);
   c.PlayerRigidbody.position = pos;
   c.TickCount = oldCtx.TickCount;
   c.TransitionToState(new AirborneState(c, vel));
   ctx = c;
   prevPos = { ...pos };
-  frames = null;
-  if (wasMode !== 'human') {
+  if (running && !phone) {
     mode = 'bot';
     replanWhenGrounded = true;
   }
   wake();
+}
+
+const loadedFaces = () => [...document.fonts].filter((f) => f.status === 'loaded').length;
+let measuredFaces = 0;
+
+// A font that arrives after the level was measured moves every letter under the character. The
+// browser can deliver this event long after the load it reports, so only a new face counts: a
+// font that came in during the wait at boot was already measured.
+function onLateFont() {
+  const faces = loadedFaces();
+  if (faces === measuredFaces) return;
+  measuredFaces = faces;
+  note('lateFont', { anton: document.fonts.check('100px Anton') });
+  clearGlyphCache();
+  page.remeasure();
+  relevel();
 }
 
 // --- Boot ---
@@ -459,36 +571,50 @@ async function boot() {
   note('fontsReady', { anton: document.fonts.check('100px Anton') });
 
   page = new Page();
+  skipButton = document.querySelector('.skip');
   view = new View(isPhoneLayout);
   page.onDay = () => view.syncColors();
   lastW = document.documentElement.clientWidth;
   lastH = window.innerHeight;
+  lastPhone = isPhoneLayout();
+  measuredFaces = loadedFaces();
   buildAll();
-
-  human = new InputHandler({
-    onEngage: takeControl,
-    isPlaying,
-    isHeroVisible: () => page.hero.getBoundingClientRect().bottom > 0,
-    screenToWorld: (x, y) => ({ x: x / level.ppu, y: -(y + window.scrollY) / level.ppu }),
-  });
-  bindScroll();
+  document.fonts.addEventListener('loadingdone', onLateFont);
   window.addEventListener('resize', onResize);
-  window.addEventListener('scroll', () => { if (asleep && ctx && !REDUCED) { view.draw(currentRenderState(0), 0); } }, { passive: true });
 
   if (DEBUG) {
     window.__site = {
       get ctx() { return ctx; }, get level() { return level; }, get plan() { return plan; }, get mode() { return mode; },
-      get wordsLeft() { return wordsLeft; },
-      log, perf, page, view, relevel, skipRun,
+      get wordsLeft() { return wordsLeft; }, get asleep() { return asleep; },
+      log, perf, page, view, relevel, skipRun, isHeroVisible,
     };
   }
 
   if (REDUCED) {
-    runStill();
+    // The character is on a canvas fixed to the window, so it has to follow the page by hand.
+    window.addEventListener('scroll', drawStill, { passive: true });
+    showLastFrame();
     return;
   }
+
+  human = new InputHandler({
+    onEngage: takeControl,
+    isPlaying,
+    isHeroVisible,
+    screenToWorld: (x, y) => ({ x: x / level.ppu, y: -(y + window.scrollY) / level.ppu }),
+  });
+  bindScroll();
+  window.addEventListener('pointermove', wake, { passive: true });
+  window.addEventListener('keydown', wake);
+  skipButton.addEventListener('click', skipRun);
+  watchHero();
+
   startPlan();
   wake();
 }
 
-boot();
+// A boot that breaks halfway must not leave the work hidden: the page falls back to its plain form.
+boot().catch((err) => {
+  console.error(err);
+  document.documentElement.classList.remove('js');
+});

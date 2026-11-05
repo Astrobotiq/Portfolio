@@ -141,6 +141,23 @@ html:not(.js) .ghost { display: none; }
 /* Without JS there is nothing to swing, so the invitation would be untrue. */
 html:not(.js) .source b { display: none; }
 .source a { font-weight: 700; text-underline-offset: .16em; cursor: pointer; }
+/* The padding is the press target, and the margins keep it from growing the line. */
+.skip {
+  display: inline-block;
+  padding: .4em .5em;
+  margin: -.4em 0 -.4em .5em;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: .16em;
+  cursor: pointer;
+}
+/* It keeps its place while hidden, so that the floor above it stays put when a run ends. */
+.skip[hidden] { display: inline-block; visibility: hidden; }
+html:not(.js) .skip { display: none; }
 .contact {
   padding-right: var(--edge);
   display: flex;
@@ -154,7 +171,7 @@ html:not(.js) .source b { display: none; }
 .cv, .mail { display: inline-flex; align-items: center; min-height: 44px; cursor: pointer; }
 .cv { background: var(--fg); color: var(--surface); padding: 0 1em; text-decoration: none; white-space: nowrap; }
 .mail { text-underline-offset: .16em; }
-.title:focus-visible, .contact a:focus-visible, .source a:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+.title:focus-visible, .contact a:focus-visible, .source a:focus-visible, .skip:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
 
 /* A short laptop window: the band needs the height more than the name needs the width. */
 @media (max-height: 719px) and (orientation: landscape) {
@@ -198,6 +215,15 @@ html:not(.js) .source b { display: none; }
   /* No run here, so the first paint is already the last frame: colours and footage are open. */
   html.js .panel:not(.open) { visibility: visible; }
   html.js .game { background: var(--col); }
+  .skip, .skip[hidden] { display: none; }
+}
+
+/* No motion: the first paint is already the last frame. There is no run and no game to press,
+   so the page behaves like a plain page and does not invite anyone to swing. */
+@media (prefers-reduced-motion: reduce) {
+  html.js .panel:not(.open), .col { visibility: visible; }
+  html.js .hero { user-select: auto; cursor: auto; }
+  #trail, .source b, .skip, .skip[hidden] { display: none; }
 }
 
 /* Only once JS has split the type. */

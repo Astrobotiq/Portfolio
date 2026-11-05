@@ -171,6 +171,30 @@ test('the level script is a module, and the page still reads whole without it', 
   assert.match(html, /<h1 class="name"><span class="w">Eren<\/span> <span class="w">Köselerli<\/span><\/h1>/);
 });
 
+test('Skip starts hidden, inside the source line, and is a real button', () => {
+  const source = between('<p class="source">', '</p>');
+  const skip = tags('button', source)[0];
+  assert.ok(skip, 'missing the button');
+  assert.ok(hasClass(skip, 'skip'));
+  assert.ok(hasAttr(skip, 'hidden'));
+  assert.equal(attr(skip, 'type'), 'button');
+  assert.match(source, /<button[^>]*>Skip<\/button>/);
+});
+
+test('hidden Skip keeps its place, and shows a focus ring', () => {
+  const css = readFileSync(new URL('css/site.css', root), 'utf8');
+  assert.match(css, /\.skip\[hidden\] { display: inline-block; visibility: hidden; }/);
+  assert.match(css, /\.skip:focus-visible[^{]*{ outline: 3px solid/);
+});
+
+test('reduced motion: the last frame comes first, with no trail and no colour transition', () => {
+  const css = readFileSync(new URL('css/site.css', root), 'utf8');
+  const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
+  assert.match(reduced, /html\.js \.panel:not\(\.open\), \.col { visibility: visible; }/);
+  assert.match(reduced, /#trail, [^{]*{ display: none; }/);
+  assert.deepEqual(css.match(/transition:[^;]*/g), ['transition: opacity 1.2s ease'], 'only the trail fades, and it is gone here');
+});
+
 test('the page layer leaves colours to the stylesheet and writes no second copy of a word', () => {
   const page = readFileSync(new URL('js/level/Page.js', root), 'utf8');
   assert.doesNotMatch(page, /#[0-9a-f]{6}\b/i);

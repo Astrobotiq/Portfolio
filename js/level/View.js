@@ -1,9 +1,9 @@
 // Draws the character and the trail. Everything here reads simulation state; nothing feeds back.
 //
-// Silhouette: Slingshot's character (round head, crown, cloak) as one solid ink shape, no outline.
+// Silhouette: Slingshot's character (round head, crown, cloak) as one solid shape in --fg, outlined
+// in --surface so that it reads on the paper, on black type and on the footage.
 // Squash comes only from velocity: stretch along the velocity vector while moving, and a landing
 // squash scaled by the speed lost at the contact, played through CurvePresetsUtility.GetSpring.
-const INK = '12,12,13';
 const VISUAL_SCALE = 2.5;
 const PHONE_VISUAL_SCALE = 1.6;
 
@@ -68,7 +68,6 @@ export class View {
     this.blinkAt = 2;
     this.blinkT = -1;
     this.clock = 0;
-    this.facing = 1;
     this.originX = 0;
   }
 
@@ -104,6 +103,12 @@ export class View {
     this.tctx.clearRect(0, 0, this.trail.width, this.trail.height);
     this.tctx.restore();
     this.prevStamp = null;
+  }
+
+  // The actor canvas is fixed to the window, so with the hero off screen nothing may stay on it.
+  clearActor() {
+    this.actx.setTransform(1, 0, 0, 1, 0, 0);
+    this.actx.clearRect(0, 0, this.actor.width, this.actor.height);
   }
 
   // Stretch from velocity. Returns the matrix pieces shared by stamps and the live character.
