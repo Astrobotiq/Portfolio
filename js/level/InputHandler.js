@@ -59,10 +59,13 @@ export class InputHandler {
     window.addEventListener('blur', () => { this.keys.clear(); this._release(); });
 
     const titleOf = (t) => t.closest && t.closest('a.title');
+    const inHero = (t) => t.closest && t.closest('#hero');
 
     window.addEventListener('pointerdown', (e) => {
       if (!e.isPrimary || e.button !== 0) return;
       this._swallowClick = false;
+      // The game is the first screen. Below it, a press belongs to the page.
+      if (!inHero(e.target)) return;
       const title = titleOf(e.target);
       if (isLink(e.target) && (!title || e.ctrlKey || e.metaKey || e.shiftKey)) return;
       const playing = this.isPlaying();

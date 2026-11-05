@@ -75,3 +75,52 @@ test('InputHandler decides a title press the way the rule table says', async () 
   still._decideTitle(0);
   assert.equal(still._titlePress !== null, true, 'a short still press stays a link');
 });
+
+test('InputHandler only takes a press that starts inside the hero', async () => {
+  const on = {};
+  const onDocument = {};
+  globalThis.window = { addEventListener(type, fn) { on[type] = fn; } };
+  globalThis.document = { addEventListener(type, fn) { onDocument[type] = fn; } };
+  const { InputHandler } = await import('../js/level/InputHandler.js');
+  const make = () => {
+    let engaged = 0;
+    const handler = new InputHandler({ onEngage() { engaged += 1; }, screenToWorld: () => ({ x: 0, y: 0 }), isPlaying: () => false });
+    return { handler, engagedCount: () => engaged };
+  };
+  const press = (inHero, pointerType) => on.pointerdown({
+    isPrimary: true, button: 0, clientX: 5, clientY: 5, pointerType,
+    target: { closest: (selector) => (selector === '#hero' && inHero ? {} : null) },
+  });
+  const blocked = (listener) => {
+    let prevented = false;
+    listener({ preventDefault() { prevented = true; } });
+    return prevented;
+  };
+
+  const outsideMouse = make();
+  press(false, 'mouse');
+  assert.equal(outsideMouse.handler.pointerHeld, false);
+  assert.equal(outsideMouse.handler.engaged, false);
+  assert.equal(outsideMouse.handler.pointer, null);
+  assert.equal(outsideMouse.engagedCount(), 0);
+
+  const outsideTouch = make();
+  press(false, 'touch');
+  assert.equal(outsideTouch.handler._pendingTouch, null, 'no hold timer');
+  assert.equal(outsideTouch.engagedCount(), 0);
+  assert.equal(blocked(onDocument.touchmove), false, 'scrolling stays with the page');
+  assert.equal(blocked(on.contextmenu), false, 'the menu stays with the page');
+
+  const insideMouse = make();
+  press(true, 'mouse');
+  assert.equal(insideMouse.handler.pointerHeld, true);
+  assert.equal(insideMouse.handler.engaged, true);
+  assert.equal(insideMouse.engagedCount(), 1);
+  assert.equal(blocked(onDocument.touchmove), true);
+  assert.equal(blocked(on.contextmenu), true);
+
+  const insideTouch = make();
+  press(true, 'touch');
+  assert.notEqual(insideTouch.handler._pendingTouch, null);
+  clearTimeout(insideTouch.handler._pendingTouch);
+});

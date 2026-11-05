@@ -241,6 +241,21 @@ test('the work copy is verbatim from the spec', () => {
   for (const line of WORK_COPY) assert.ok(section('work').includes(line), `missing: ${line}`);
 });
 
+test('the projects without spec copy have a title and one sentence, from the old site\'s facts', () => {
+  const sentences = {
+    Dungeon: '3D tactical game inspired by Into The Breach with a Viking-era theme and a Utility AI system that calculates optimal attack positions while avoiding hazardous zones.',
+    'Dance Battle': 'Turn-based card game with a vibrant disco aesthetic and a flexible card effect system built with ScriptableObjects.',
+    'CRT filter': 'A highly customizable CRT TV effect shader I originally created for my active project, Slingshot, then packaged and published as an open-source Unity Package.',
+    'Shh Do Not Wake The Baby': 'Unique tower defense where players defeat enemies without waking a sleeping baby, with obstacle placement on a grid and a Runtime NavMesh.',
+  };
+  for (const [name, sentence] of Object.entries(sentences)) {
+    const text = project(name).match(/<\/h2>\s*<p>([^<]*)<\/p>/)?.[1];
+    assert.equal(text, sentence, name);
+    assert.equal(text.match(/[.!?](\s|$)/g).length, 1, `${name} is one sentence`);
+  }
+  assert.ok(!html.includes('—'));
+});
+
 test('every project links where it should', () => {
   const links = {
     Slingshot: ['slingshot.html', 'https://github.com/Astrobotiq/RockTheGame'],
@@ -301,7 +316,7 @@ test('the Slingshot video waits for the play button', () => {
   assert.ok(!hasAttr(video, 'autoplay'));
   assert.match(attr(video, 'width') ?? '', /^\d+$/);
   assert.match(attr(video, 'height') ?? '', /^\d+$/);
-  assert.ok((attr(video, 'aria-label') ?? '').length > 10, 'the video needs a name');
+  assert.match(attr(video, 'aria-label') ?? '', /^Slingshot gameplay: .*grappling hook/, 'the video is named for what it shows');
   assert.ok(project('Slingshot').includes(video), 'the video belongs to Slingshot');
 });
 
