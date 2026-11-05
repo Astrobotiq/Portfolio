@@ -33,22 +33,9 @@ nav {
   padding: var(--s1) var(--edge);
   background: url("../assets/img/sky.svg") 0 0 / 720px 480px;
 }
-.nav-logo { font: 400 1.5rem/1 var(--display); text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; }
 .nav-back { display: inline-flex; align-items: center; gap: .4em; min-height: 44px; font-weight: 600; text-underline-offset: .16em; }
 .nav-back::before { content: "\2190"; }
 .nav-back:hover { text-decoration-thickness: .14em; }
-.nav-controls { margin-left: auto; }
-.toggle-btn {
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0 .7em;
-  border: 2px solid var(--muted);
-  background: none;
-  color: var(--fg);
-  font: 600 var(--note-size)/1 var(--body);
-  cursor: pointer;
-}
-.toggle-btn:hover { background: var(--fg); border-color: var(--fg); color: var(--ink); }
 
 /* ── The first screen: the home page's order, with the game's name in place of the owner's ── */
 .game-hero { position: relative; isolation: isolate; background: var(--surface); }
@@ -62,8 +49,6 @@ nav {
     linear-gradient(180deg, transparent 12%, rgba(58, 42, 88, .9) 46%, rgba(123, 66, 119, .85) 76%),
     url("../assets/img/sky.svg") 0 0 / 720px 480px;
 }
-.hero-breadcrumb { padding: var(--s1) var(--edge) 0; font-size: var(--note-size); color: var(--muted); }
-.hero-breadcrumb span { color: var(--accent); }
 .game-title-wrap { padding: var(--s1) var(--edge) var(--s2); }
 /* The signature, as on the home page: the name fills the width. --title-fit is measured per name. */
 .game-title-main { font: 400 calc(var(--title-fit) * var(--span))/1.02 var(--display); letter-spacing: -.005em; white-space: nowrap; color: var(--fg); }
@@ -154,7 +139,6 @@ code { font-family: var(--code); font-size: .86em; padding: .05em .3em; backgrou
 .tl-tag.arch { color: var(--lilac); }
 .tl-tag.design { color: #f5c518; }
 .tl-tag.perf { color: var(--coral); }
-/* Every title here is free of the Turkish letters that Gasoek One does not have. */
 .tl-title { font: 400 max(1.5rem, calc(2.5 * var(--cw)))/1.08 var(--display); }
 .tl-summary { margin-top: .6em; max-width: 58ch; color: var(--cream); }
 .tl-toggle {
@@ -176,6 +160,9 @@ code { font-family: var(--code); font-size: .86em; padding: .05em .3em; backgrou
 .tl-body.open { grid-template-rows: 1fr; visibility: visible; }
 .tl-body-inner { min-height: 0; overflow: hidden; }
 .tl-content { padding: 0 var(--s3) var(--s3); }
+/* Without a script nothing can open the entry, so it starts open and the button goes. */
+html:not(.js) .tl-body { grid-template-rows: 1fr; visibility: visible; }
+html:not(.js) .tl-toggle { display: none; }
 .tl-insight { margin: 1.4em 0; padding: 1em 1.2em; background: var(--ground); border-top: 3px solid var(--teal); }
 .tl-insight-label { margin-bottom: .4em; font-weight: 600; color: var(--teal); font-size: var(--note-size); }
 .tl-coming-label { color: var(--muted); font-weight: 600; }

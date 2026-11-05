@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+<script>document.documentElement.classList.add('js');</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tetris Reflex — Eren Köselerli</title>
@@ -15,26 +16,19 @@
 <body data-game="tetris">
 
   <nav>
-    <a href="index.html" class="nav-logo">EK://</a>
-    <a href="index.html#work" class="nav-back" data-i18n="nav_back">Work</a>
-    <div class="nav-controls">
-      <button type="button" class="toggle-btn" id="langToggle" onclick="toggleLang()" title="Switch language / Dil değiştir">EN / TR</button>
-    </div>
+    <a href="index.html#work" class="nav-back">Work</a>
   </nav>
 
   <header class="game-hero">
-    <div class="hero-breadcrumb">EK:// <span>/</span> work <span>/</span> tetris_reflex</div>
     <div class="game-title-wrap">
       <h1 class="game-title-main">TETRIS REFLEX</h1>
     </div>
     <div class="hero-intro">
     <div class="game-hero-status">
-      <div class="status-badge wip" data-i18n="hero_status">▶ IN DEVELOPMENT</div>
-      <div class="genre-tag" data-i18n="hero_genre">TACTICAL PUZZLE</div>
+      <div class="status-badge wip">In development</div>
+      <div class="genre-tag">Tactical puzzle</div>
     </div>
-    <div class="game-tagline" data-i18n="hero_tagline">
-      C++17/20 · RAII · ECS ARCHITECTURE // CUSTOM 2D ENGINE
-    </div>
+    <div class="game-tagline">Custom 2D engine in C++17, with RAII and ECS.</div>
     </div>
     <svg class="game-band" viewBox="0 0 34 8" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
       <defs><pattern id="cell" width="1" height="1" patternUnits="userSpaceOnUse"><path class="band-grid" d="M1 0H0V1"/></pattern></defs>
@@ -73,14 +67,14 @@
       </g>
     </svg>
     <dl class="hero-meta">
-      <div class="meta-chip"><dt class="chip-label" data-i18n="meta_engine">ENGINE</dt><dd class="chip-val">SimpleEngine2D</dd></div>
-      <div class="meta-chip"><dt class="chip-label" data-i18n="meta_lang">LANG</dt><dd class="chip-val">C++</dd>
+      <div class="meta-chip"><dt class="chip-label">Engine</dt><dd class="chip-val">SimpleEngine2D</dd></div>
+      <div class="meta-chip"><dt class="chip-label">Language</dt><dd class="chip-val">C++</dd>
       </div>
-      <div class="meta-chip"><dt class="chip-label" data-i18n="meta_genre">GENRE</dt><dd class="chip-val"
-          data-i18n="meta_genre_val">Puzzle</dd></div>
-      <div class="meta-chip"><dt class="chip-label" data-i18n="meta_inspired">INSPIRED BY</dt><dd class="chip-val">Tetris</dd></div>
-      <div class="meta-chip"><dt class="chip-label" data-i18n="meta_status">STATUS</dt><dd class="chip-val"
-          data-i18n="meta_status_val">WIP</dd></div>
+      <div class="meta-chip"><dt class="chip-label">Genre</dt><dd class="chip-val"
+         >Puzzle</dd></div>
+      <div class="meta-chip"><dt class="chip-label">Inspired by</dt><dd class="chip-val">Tetris</dd></div>
+      <div class="meta-chip"><dt class="chip-label">Status</dt><dd class="chip-val"
+         >WIP</dd></div>
     </dl>
   </header>
 
@@ -90,46 +84,42 @@
       <aside class="sidebar">
 
         <div class="sidebar-section">
-          <h2 class="sidebar-label" data-i18n="sb_about">// ABOUT</h2>
-          <p class="sidebar-intro" data-i18n="sb_about_text">
-            A tactical reimagining of Tetris powered by a custom-built C++ game engine
-            (<strong>SimpleEngine2D</strong>). Instead of real-time falling blocks, players strategically place pieces
-            via a drag-and-drop deck management system.
-          </p>
+          <h2 class="sidebar-label">About</h2>
+          <p class="sidebar-intro">A tactical Tetris running on my own C++ engine, <strong>SimpleEngine2D</strong>. Instead of guiding falling blocks, you drag pieces from a deck of three and place them on the board.</p>
         </div>
 
         <div class="sidebar-section">
-          <h2 class="sidebar-label" data-i18n="sb_philosophy">// ENGINE PHILOSOPHY</h2>
+          <h2 class="sidebar-label">Engine philosophy</h2>
           <div class="philo-list">
             <div class="philo-item">
               <div class="philo-dot"></div>
               <div class="philo-text">
-                <strong data-i18n="philo1_title">Manual Memory (RAII)</strong>
-                <span data-i18n="philo1_text">No garbage collector. Deterministic resource lifecycles using Smart
+                <strong>Manual Memory (RAII)</strong>
+                <span>No garbage collector. Deterministic resource lifecycles using Smart
                   Pointers and Value Semantics.</span>
               </div>
             </div>
             <div class="philo-item">
               <div class="philo-dot"></div>
               <div class="philo-text">
-                <strong data-i18n="philo2_title">Cache Locality</strong>
-                <span data-i18n="philo2_text">Data-oriented design. Contiguous memory allocation using std::array for
+                <strong>Cache Locality</strong>
+                <span>Data-oriented design. Contiguous memory allocation using std::array for
                   the game board.</span>
               </div>
             </div>
             <div class="philo-item">
               <div class="philo-dot"></div>
               <div class="philo-text">
-                <strong data-i18n="philo3_title">ECS Architecture</strong>
-                <span data-i18n="philo3_text">Strict separation of data (Components) and logic (Systems) for an
+                <strong>ECS Architecture</strong>
+                <span>Strict separation of data (Components) and logic (Systems) for an
                   extensible foundation.</span>
               </div>
             </div>
             <div class="philo-item">
               <div class="philo-dot"></div>
               <div class="philo-text">
-                <strong data-i18n="philo4_title">Decoupled Systems</strong>
-                <span data-i18n="philo4_text">Type-safe EventBus architecture to broadcast line clears and state changes
+                <strong>Decoupled Systems</strong>
+                <span>Type-safe EventBus architecture to broadcast line clears and state changes
                   across the engine.</span>
               </div>
             </div>
@@ -137,31 +127,31 @@
         </div>
 
         <div class="sidebar-section">
-          <h2 class="sidebar-label" data-i18n="sb_mechanics">// CORE MECHANICS</h2>
+          <h2 class="sidebar-label">Core mechanics</h2>
           <div class="mechanic-list">
             <div class="mechanic-item">
-              <div class="mechanic-name" data-i18n="mech1_name">Drag & Drop</div>
-              <div class="mechanic-sub" data-i18n="mech1_sub">Tactical placement instead of falling blocks</div>
+              <div class="mechanic-name">Drag & Drop</div>
+              <div class="mechanic-sub">Tactical placement instead of falling blocks</div>
             </div>
             <div class="mechanic-item">
-              <div class="mechanic-name" data-i18n="mech2_name">Deck Management</div>
-              <div class="mechanic-sub" data-i18n="mech2_sub">Manage 3 available pieces strategically</div>
+              <div class="mechanic-name">Deck Management</div>
+              <div class="mechanic-sub">Manage 3 available pieces strategically</div>
             </div>
             <div class="mechanic-item">
-              <div class="mechanic-name" data-i18n="mech3_name">AABB Collision</div>
-              <div class="mechanic-sub" data-i18n="mech3_sub">Custom bounding box checks for placement</div>
+              <div class="mechanic-name">AABB Collision</div>
+              <div class="mechanic-sub">Custom bounding box checks for placement</div>
             </div>
             <div class="mechanic-item">
-              <div class="mechanic-name" data-i18n="mech4_name">Grid Alignment</div>
-              <div class="mechanic-sub" data-i18n="mech4_sub">Pixel-perfect snapping to a 10x18 board</div>
+              <div class="mechanic-name">Grid Alignment</div>
+              <div class="mechanic-sub">Pixel-perfect snapping to a 10x18 board</div>
             </div>
           </div>
         </div>
 
         <div class="sidebar-section">
-          <h2 class="sidebar-label" data-i18n="sb_tech">// TECH STACK</h2>
+          <h2 class="sidebar-label">Tech stack</h2>
           <div class="tech-grid">
-            <div class="tech-chip">C++17/20</div>
+            <div class="tech-chip">C++17</div>
             <div class="tech-chip">SimpleEngine2D</div>
             <div class="tech-chip">ECS</div>
             <div class="tech-chip">RAII</div>
@@ -178,18 +168,20 @@
 
         <div class="intro-article">
           <div class="content-sep">
-            <h2 class="content-sep-label" data-i18n="sep_intro">// INTRODUCTION</h2>
+            <h2 class="content-sep-label">Introduction</h2>
             <div class="content-sep-line"></div>
           </div>
           <div class="article-body" id="intro-body">
-          </div>
+      <p>I started this project to build a fast game engine, <strong>SimpleEngine2D</strong>, in modern C++ without giving up memory safety. Tetris is the game running on it. There's no Garbage Collector: I manage resource lifecycles entirely through <strong>RAII (Resource Acquisition Is Initialization)</strong>.</p>
+      <p>Without a commercial engine's "magic", I can see what actually happens in memory. The project combines modern C++17 features with Data-Oriented Design.</p>
+      </div>
         </div>
 
         <div class="devlog-section">
           <div class="content-sep">
-            <h2 class="content-sep-label" data-i18n="sep_devlog">// DEVLOG — ENGINE DIARY</h2>
+            <h2 class="content-sep-label">Devlog: engine diary</h2>
             <div class="content-sep-line"></div>
-            <div class="devlog-count" data-i18n="devlog_count"><span id="entry-count">1</span> ENTRIES</div>
+            <div class="devlog-count">1 entry</div>
           </div>
 
           <div class="timeline" id="timeline">
@@ -201,7 +193,7 @@
                   <div>
                     <div class="tl-meta">
                       <div class="tl-date">2026 — W01</div>
-                      <div class="tl-week" data-i18n="entry01_week">WEEK 01</div>
+                      <div class="tl-week">Week 01</div>
                       <div class="tl-tags">
                         <span class="tl-tag cpp">C++</span>
                         <span class="tl-tag arch">Architecture</span>
@@ -209,16 +201,37 @@
                         <span class="tl-tag design">Design</span>
                       </div>
                     </div>
-                    <h3 class="tl-title" data-i18n="entry01_title">Reimagining Tetris with C++</h3>
-                    <div class="tl-summary" data-i18n="entry01_summary">Building the SimpleEngine2D foundation, RAII
+                    <h3 class="tl-title">Reimagining Tetris with C++</h3>
+                    <div class="tl-summary">Building the SimpleEngine2D foundation, RAII
                       memory management, and moving from real-time to tactical drag-and-drop gameplay.</div>
                   </div>
-                  <button type="button" class="tl-toggle" id="entry-01-toggle" aria-expanded="false" aria-controls="entry-01-body" data-i18n="btn_read">▶ READ</button>
+                  <button type="button" class="tl-toggle" id="entry-01-toggle" aria-expanded="false" aria-controls="entry-01-body">▶ Read</button>
                 </div>
                 <div class="tl-body" id="entry-01-body">
                   <div class="tl-body-inner">
                     <div class="tl-content" id="entry01-content">
-                    </div>
+      <h4>1. Design: drag-and-drop mechanic</h4>
+      <p>In classic Tetris, pieces fall while you guide them. Here you drag 3 different pieces from the bottom bar and place them on the board, closer to a <strong>mathematical deck management</strong> game. That moves the genre from "real-time reflex" to "tactical placement."</p>
+
+      <h4>2. Memory management and object lifecycle</h4>
+      <p>Modern C++ is strict about object <strong>ownership</strong>. Here is how I handled it:</p>
+      <ul>
+        <li><strong>Value semantics:</strong> I defined <code>Tetromino</code> pieces as <code>struct</code>s and kept them on the <strong>stack</strong>, instead of treating everything as a "reference" like in C#.</li>
+        <li><strong>Smart pointers:</strong> Core engine systems live in <code>std::unique_ptr</code>, so each has one owner and its memory is released when the engine shuts down.</li>
+        <li><strong>Decoupling:</strong> A type-safe <strong>EventBus</strong> tells the engine when a piece is dropped or a line is cleared.</li>
+      </ul>
+
+      <h4>3. Technical architecture: ECS</h4>
+      <p>SimpleEngine2D is built on an <strong>Entity-Component-System (ECS)</strong> architecture. A Tetris block is just an <code>Entity</code> (an ID). Its position lives in a <code>TransformComponent</code> and its visual in a <code>SpriteComponent</code>.</p>
+
+      <div class="tl-insight">
+        <div class="tl-insight-label">Engineering insight</div>
+        <p>Why <code>std::array</code> over <code>std::vector</code> for the board? The 10x18 grid never changes size, so <code>std::array</code> keeps it in one contiguous block with no separate heap allocation, which is good for CPU cache locality.</p>
+      </div>
+
+      <h4>4. Modern C++ touches</h4>
+      <p>C++17's <code>std::optional</code> and <code>std::variant</code> improved my error handling. To check whether the mouse is holding a piece, I use <code>std::optional&lt;Piece&gt;</code> instead of a raw null pointer, which is cleaner and safer.</p>
+                </div>
                   </div>
                 </div>
               </div>
@@ -226,7 +239,7 @@
             <div class="tl-entry tl-entry-next">
               <div class="tl-dot"></div>
               <div class="tl-coming">
-                <div class="tl-coming-label" data-i18n="coming_soon">NEXT ENTRY LOADING<span>█</span></div>
+                <div class="tl-coming-label">Next entry loading<span>█</span></div>
               </div>
             </div>
 
@@ -238,193 +251,21 @@
   </main>
 
   <footer>
-    <div class="footer-copy" data-i18n="footer_copy">© 2026 Eren Köselerli — C++ Engine Developer</div>
-    <a href="index.html#work" class="footer-back" data-i18n="footer_back">← BACK TO PORTFOLIO</a>
+    <div class="footer-copy">© 2026 Eren Köselerli, Unity developer</div>
+    <a href="index.html#work" class="footer-back">← BACK TO PORTFOLIO</a>
   </footer>
 
   <script>
-    window.TRANSLATIONS = {
-      en: {
-        nav_back: 'Work',
-        hero_status: '▶ IN DEVELOPMENT',
-        hero_genre: 'TACTICAL PUZZLE',
-        hero_tagline: 'C++17/20 · RAII · ECS ARCHITECTURE // CUSTOM 2D ENGINE',
-        meta_engine: 'ENGINE',
-        meta_lang: 'LANG',
-        meta_genre: 'GENRE',
-        meta_genre_val: 'Puzzle',
-        meta_inspired: 'INSPIRED BY',
-        meta_status: 'STATUS',
-        meta_status_val: 'WIP',
-        sb_about: '// ABOUT',
-        sb_about_text: 'A tactical reimagining of Tetris powered by a custom-built C++ game engine (<strong>SimpleEngine2D</strong>). Instead of real-time falling blocks, players strategically place pieces via a drag-and-drop deck management system.',
-        sb_philosophy: '// ENGINE PHILOSOPHY',
-        philo1_title: 'Manual Memory (RAII)',
-        philo1_text: 'No garbage collector. Deterministic resource lifecycles using Smart Pointers and Value Semantics.',
-        philo2_title: 'Cache Locality',
-        philo2_text: 'Data-oriented design. Contiguous memory allocation using std::array for the game board.',
-        philo3_title: 'ECS Architecture',
-        philo3_text: 'Strict separation of data (Components) and logic (Systems) for an extensible foundation.',
-        philo4_title: 'Decoupled Systems',
-        philo4_text: 'Type-safe EventBus architecture to broadcast line clears and state changes across the engine.',
-        sb_mechanics: '// CORE MECHANICS',
-        mech1_name: 'Drag & Drop',
-        mech1_sub: 'Tactical placement instead of falling blocks',
-        mech2_name: 'Deck Management',
-        mech2_sub: 'Manage 3 available pieces strategically',
-        mech3_name: 'AABB Collision',
-        mech3_sub: 'Custom bounding box checks for placement',
-        mech4_name: 'Grid Alignment',
-        mech4_sub: 'Pixel-perfect snapping to a 10x18 board',
-        sb_tech: '// TECH STACK',
-        sep_intro: '// INTRODUCTION',
-        sep_devlog: '// DEVLOG — ENGINE DIARY',
-        devlog_count: '<span id="entry-count">1</span> ENTRIES',
-        btn_read: '▶ READ',
-        entry01_week: 'WEEK 01',
-        entry01_title: 'Reimagining Tetris with C++',
-        entry01_summary: 'Building the SimpleEngine2D foundation, RAII memory management, and moving from real-time to tactical drag-and-drop gameplay.',
-        coming_soon: 'NEXT ENTRY LOADING<span>█</span>',
-        footer_copy: '© 2026 Eren Köselerli — C++ Engine Developer',
-        footer_back: '← BACK TO PORTFOLIO',
-      },
-      tr: {
-        nav_back: 'Work',
-        hero_status: '▶ GELİŞTİRİLİYOR',
-        hero_genre: 'TAKTİKSEL BULMACA',
-        hero_tagline: 'C++17/20 · RAII · ECS MİMARİSİ // ÖZEL 2D MOTOR',
-        meta_engine: 'MOTOR',
-        meta_lang: 'DİL',
-        meta_genre: 'TÜR',
-        meta_genre_val: 'Bulmaca',
-        meta_inspired: 'İLHAM',
-        meta_status: 'DURUM',
-        meta_status_val: 'GELİŞTİRİLİYOR',
-        sb_about: '// HAKKINDA',
-        sb_about_text: 'Özel geliştirilmiş bir C++ oyun motoru (<strong>SimpleEngine2D</strong>) ile güçlendirilmiş taktiksel bir Tetris yorumu. Gerçek zamanlı düşen bloklar yerine, oyuncular sürükle-bırak deste yönetim sistemiyle parçaları stratejik olarak yerleştirir.',
-        sb_philosophy: '// MOTOR FELSEFESİ',
-        philo1_title: 'Manuel Bellek (RAII)',
-        philo1_text: 'Çöp toplayıcı (GC) yok. Akıllı İşaretçiler ve Değer Semantiği kullanılarak deterministik kaynak yönetimi.',
-        philo2_title: 'Cache Locality',
-        philo2_text: 'Veri odaklı tasarım. Oyun tahtası için std::array kullanılarak bellekte bitişik tahsisat.',
-        philo3_title: 'ECS Mimarisi',
-        philo3_text: 'Genişletilebilir bir temel için veri (Component) ve mantığın (System) kesin ayrımı.',
-        philo4_title: 'Gevşek Bağlılık',
-        philo4_text: 'Satır silinmelerini ve durum değişikliklerini motora yayınlamak için tip-güvenli EventBus mimarisi.',
-        sb_mechanics: '// TEMEL MEKANİKLER',
-        mech1_name: 'Sürükle & Bırak',
-        mech1_sub: 'Düşen bloklar yerine taktiksel yerleştirme',
-        mech2_name: 'Deste Yönetimi',
-        mech2_sub: 'Mevcut 3 parçayı stratejik olarak yönetme',
-        mech3_name: 'AABB Çarpışma',
-        mech3_sub: 'Yerleştirme için özel sınır kutusu testleri',
-        mech4_name: 'Grid Hizalama',
-        mech4_sub: '10x18 tahtaya piksel hassasiyetinde tutunma',
-        sb_tech: '// TEKNOLOJİ',
-        sep_intro: '// GİRİŞ',
-        sep_devlog: '// DEVLOG — MOTOR GÜNLÜĞÜ',
-        devlog_count: '<span id="entry-count">1</span> GİRİŞ',
-        btn_read: '▶ OKU',
-        entry01_week: 'HAFTA 01',
-        entry01_title: 'C++ ile Tetris\'i Yeniden Hayal Etmek',
-        entry01_summary: 'SimpleEngine2D temelinin atılması, RAII bellek yönetimi ve gerçek zamanlıdan taktiksel sürükle-bırak mekaniğine geçiş.',
-        coming_soon: 'SONRAKİ GİRİŞ YÜKLÜYOR<span>█</span>',
-        footer_copy: '© 2026 Eren Köselerli — C++ Motor Geliştirici',
-        footer_back: '← PORTFOLYOYA DÖN',
-      }
-    };
-    window.ENTRY_CONTENT = {
-      intro: {
-        en: `
-      <p>When starting this project, my goal wasn't just to make a Tetris clone; it was to build a performant game engine architecture (<strong>SimpleEngine2D</strong>) using modern C++ without compromising memory safety. Unlike many developers relying on an automatic Garbage Collector (GC), I chose to manage resource lifecycles entirely through the <strong>RAII (Resource Acquisition Is Initialization)</strong> principle.</p>
-      <p>This approach allows us to strip away the "magic" of commercial engines and understand what actually happens in the memory layer. The result is a highly educational laboratory that marries modern C++17/20 features with Data-Oriented Design principles.</p>
-    `,
-        tr: `
-      <p>Bu projeye başlarken amacım sadece bir Tetris klonu yapmak değildi; modern C++'ın sunduğu imkanlarla, bellek güvenliğinden ödün vermeden performanslı bir oyun motoru mimarisi (<strong>SimpleEngine2D</strong>) inşa etmekti. Birçok geliştiricinin aksine, bu projede otomatik bir çöp toplayıcıya (GC) güvenmek yerine, kaynakların yaşam döngüsünü <strong>RAII (Resource Acquisition Is Initialization)</strong> prensibiyle yönetmeyi seçtim.</p>
-      <p>Bu yaklaşım, ticari motorların "sihrini" bir kenara bırakıp bellek katmanında gerçekte neler olup bittiğini anlamamızı sağlıyor. Ortaya çıkan sonuç ise modern C++17/20 özelliklerini Veri Odaklı Tasarım (Data-Oriented Design) prensipleriyle harmanlayan son derece eğitici bir laboratuvar.</p>
-    `
-      },
-      entry01: {
-        en: `
-      <h4>1. Design: Drag and Drop Mechanic</h4>
-      <p>In classic Tetris, pieces fall from top to bottom while we guide them. In our version, the game winks at a <strong>Mathematical Deck Management</strong> style. We manually drag and place 3 different pieces sitting on our bottom bar onto the board. This completely shifted the genre from "real-time reflex" to "tactical placement."</p>
-
-      <h4>2. Memory Management and Object Lifecycle</h4>
-      <p>Modern C++ (17/20) has very strict rules regarding object <strong>ownership</strong>. I structured the lifecycle of pieces as follows:</p>
-      <ul>
-        <li><strong>Value Semantics:</strong> I defined <code>Tetromino</code> pieces as <code>struct</code>s. Instead of treating everything as a "reference" like in C#, I kept pieces on the <strong>stack</strong>, significantly speeding up memory access.</li>
-        <li><strong>Smart Pointers:</strong> Core engine systems are stored using <code>std::unique_ptr</code>. This guarantees a single owner, ensuring memory is automatically and cleanly released when the engine shuts down.</li>
-        <li><strong>Decoupling:</strong> I implemented a type-safe <strong>EventBus</strong> architecture to notify the entire engine seamlessly when a piece is dropped or a line is cleared.</li>
-      </ul>
-
-      <h4>3. Technical Architecture: ECS</h4>
-      <p>The heart of SimpleEngine2D is the <strong>Entity-Component-System (ECS)</strong> architecture. A Tetris block is simply an <code>Entity</code> (an ID), while its position is stored in a <code>TransformComponent</code> and its visual representation in a <code>SpriteComponent</code>.</p>
-      
-      <div class="tl-insight">
-        <div class="tl-insight-label">▶ MENTOR INSIGHT (C++ GEM)</div>
-        <p>Why <code>std::array</code> over <code>std::vector</code> for the board? The 10x18 grid is a fixed-size structure. Using <code>std::array</code> ensures the data is stored contiguously in memory. This greatly maximizes CPU Cache Locality, a cornerstone of high-performance engine development compared to typical Unity/C# heap allocations.</p>
-      </div>
-
-      <h4>4. Modern C++ Touches</h4>
-      <p>Tools introduced in C++17, like <code>std::optional</code> and <code>std::variant</code>, elevated our error handling. For instance, when checking if a piece is currently held by the mouse, I used <code>std::optional&lt;Piece&gt;</code> instead of checking a raw null pointer. It keeps the codebase much cleaner and memory-safe.</p>
-    `,
-        tr: `
-      <h4>1. Tasarım: Sürükle-Bırak Mekaniği</h4>
-      <p>Klasik Tetris'te parça yukarıdan aşağıya inerken biz onu yönlendiririz. Bizim versiyonumuzda ise oyun, bir <strong>Mathematical Deck Management</strong> oyununa göz kırpıyor. Alt barımızda duran 3 farklı parçayı fareyle tahtaya biz yerleştiriyoruz. Bu durum, oyunun "gerçek zamanlı refleks" türünden "taktiksel yerleştirme" türüne evrilmesini sağladı.</p>
-
-      <h4>2. Bellek Yönetimi ve Nesne Yaşam Döngüsü</h4>
-      <p>Modern C++ (C++17/20), nesnelerin sahipliği (<strong>ownership</strong>) konusunda çok net kurallara sahiptir. Projede parçaların yaşam döngüsünü şu şekilde kurguladım:</p>
-      <ul>
-        <li><strong>Değer Semantiği (Value Semantics):</strong> <code>Tetromino</code> parçalarını <code>struct</code> olarak tanımladım. C#'taki gibi her şeyi "referans" olarak düşünmek yerine, parçaları yığında (<strong>stack</strong>) tutarak bellek erişimini hızlandırdım.</li>
-        <li><strong>Akıllı İşaretçiler (Smart Pointers):</strong> Oyun sistemlerini (System) motorun kalbinde <code>std::unique_ptr</code> ile saklıyorum. Bu, sistemin tek bir sahibi olduğunu ve motor kapandığında belleğin otomatik olarak temizleneceğini garanti eder.</li>
-        <li><strong>Gevşek Bağlılık (Decoupling):</strong> Parça tahtaya bırakıldığında veya bir satır silindiğinde, tüm motoru haberdar etmek için tip-güvenli bir <strong>EventBus</strong> mimarisi kullandım.</li>
-      </ul>
-
-      <h4>3. Teknik Mimari: ECS (Entity-Component-System)</h4>
-      <p>SimpleEngine2D'nin kalbinde <strong>ECS</strong> mimarisi yatıyor. Tetris bloğu sadece bir <code>Entity</code> (ID) iken, onun konumu bir <code>TransformComponent</code>, görüntüsü ise <code>SpriteComponent</code> içinde saklanıyor.</p>
-      
-      <div class="tl-insight">
-        <div class="tl-insight-label">▶ MENTOR NOTU (C++ GEM)</div>
-        <p>Oyun tahtası için neden <code>std::vector</code> yerine <code>std::array</code> kullanıldı? 10x18'lik grid sabit boyutlu bir yapıdır. <code>std::array</code> kullanmak, verilerin bellekte bitişik (contiguous) durmasını garanti eder. Unity/C# tabanlı geleneksel heap tahsisatlarına kıyasla bu, işlemci önbelleğini (CPU Cache Locality) maksimize ederek performanslı motor geliştirmenin temel taşıdır.</p>
-      </div>
-
-      <h4>4. Modern C++ Dokunuşları</h4>
-      <p>C++17'nin sunduğu <code>std::optional</code> ve <code>std::variant</code> gibi araçlar, hata yönetimini bir üst seviyeye taşıdı. Örneğin, fareyle tutulan bir parçanın olup olmadığını kontrol ederken ham işaretçi (null check) yerine <code>std::optional&lt;Piece&gt;</code> kullanarak daha temiz ve güvenli kodlar yazdım.</p>
-    `
-      }
-    };
-    window.onLanguageChanged = function (lang) {
-      const introEl = document.getElementById('intro-body');
-      if (introEl) introEl.innerHTML = window.ENTRY_CONTENT.intro[lang];
-      const e01 = document.getElementById('entry01-content');
-      if (e01) e01.innerHTML = window.ENTRY_CONTENT.entry01[lang];
-      const countEl = document.getElementById('entry-count');
-      if (countEl) countEl.textContent = '1';
-
-      const toggle = document.getElementById('entry-01-toggle');
-      if (toggle) {
-        const isOpen = document.getElementById('entry-01-body').classList.contains('open');
-        toggle.textContent = isOpen
-          ? (lang === 'tr' ? '▲ KAPAT' : '▲ CLOSE')
-          : (lang === 'tr' ? '▶ OKU' : '▶ READ');
-      }
-    };
-
-    window.toggleEntry = function (id) {
-      const body = document.getElementById(id + '-body');
-      const toggle = document.getElementById(id + '-toggle');
-      const isOpen = body.classList.contains('open');
-      body.classList.toggle('open', !isOpen);
-      toggle.classList.toggle('open', !isOpen);
+  function toggleEntry(id) {
+    const body = document.getElementById(id + '-body');
+    const toggle = document.getElementById(id + '-toggle');
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    toggle.classList.toggle('open', !isOpen);
     toggle.setAttribute('aria-expanded', String(!isOpen));
-
-      const lang = document.documentElement.lang || 'en';
-      toggle.textContent = isOpen
-        ? (lang === 'tr' ? '▶ OKU' : '▶ READ')
-        : (lang === 'tr' ? '▲ KAPAT' : '▲ CLOSE');
-    };
-  </script>
-  <script src="js/ui/lang.js"></script>
+    toggle.textContent = isOpen ? '▶ Read' : '▲ Close';
+  }
+</script>
 </body>
 
 </html>

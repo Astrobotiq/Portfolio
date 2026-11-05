@@ -168,12 +168,12 @@ Diğer linkler (CV, e-posta, GitHub) her zaman linktir ve oyun girdisi sayılmaz
 
 1. **Slingshot:** Kişisel oyun; site karakterinin de kaynağı. Bölüm, afişin kompozisyonudur: şerit ve ipler ekranın arkasından çıkar. Oynanış videosu `muted loop playsinline`, denetimsizdir: en az yarısı görününce başlar, görünmezken durur, basınca durur veya başlar, klavyeyle düğme olarak ulaşılır. Görünene kadar mp4 indirilmez. Azaltılmış hareket, `saveData` ve telefonda kendiliğinden başlamaz: poster görünür, basınca oynar. Kısa teknik açıklama, GitHub linki.
 2. **Diğer işler:** Alice in Blastland, kendi lila sütununda; Tetris Reflex, mevcut sitedeki Dungeon, Dance Battle, Shh Do Not Wake The Baby ve CRT filter. Her biri başlık, tek cümle ve link. Metinler Bölüm 12'de.
-3. **Deneyim:** Tarihli iş listesi, eğitim (not ortalaması olmadan), beceriler düz liste halinde (yüzde çubuğu olmadan). Masaüstünde rol, şirket ve tarih sayfa ızgarasının üç sütunundadır, telefonda alt alta. Liste gerçek bir sıradır, bu yüzden bir ipe asılıdır: her iş için bir turkuaz çubuk.
+3. **Deneyim:** Tarihli iş listesi, eğitim (not ortalaması olmadan), beceriler önce temel, sonra "Also" olmak üzere iki kademede (yüzde çubuğu olmadan). Masaüstünde rol, şirket ve tarih sayfa ızgarasının üç sütunundadır, telefonda alt alta. Liste gerçek bir sıradır, bu yüzden bir ipe asılıdır: her iş için bir turkuaz çubuk.
 4. **Kapanış bandı:** Sayfa tam genişlikte `--coral` bir bantla biter: sayfa genişliğinde Gasoek One ile e-posta linki, LinkedIn, GitHub ve Download CV. Telefonda e-posta taşmadan genişliğe sığar.
 
 Deneyim listesi:
 
-- QA, Ankara, August-October 2026 (şirket adı Bölüm 12'de bekliyor)
+- QA, Midas Games, August-October 2026
 - Game Developer, Blay Games, July 2025-March 2026
 - Game Developer Intern, Blay Games, October 2024-March 2025
 - Software Test and QA Intern, Testinium, July-August 2024
@@ -286,7 +286,6 @@ Bu maddeler gelmeden yayın yapılmaz; varsayılan davranış yanlarında yazıl
 |---|---|
 | Güncel CV PDF'i (QA işi eklenmiş) | "Download CV" yayına çıkmaz |
 | Aşağıdaki metinlerin onayı | Prototipteki metinler kullanılır, yayın öncesi onay şart |
-| QA işinin şirket adı | Listede "QA, Ankara" yazar |
 
 Renkler onaylandı (Bölüm 4). Türkiye'de çalışma izni var; sitede "Based in Ankara, available now and open to relocating" yazar, vize sponsorluğundan söz edilmez.
 
@@ -297,20 +296,20 @@ Kaynak: `Eren-Köselerli-CV.pdf`, eski site ve mağaza sayfaları. Sitede yalnı
 | Yer | Metin |
 |---|---|
 | Rol | Unity developer |
-| Tanıtım | I build and ship games in Unity and C#: gameplay, multiplayer and performance. Two on Steam, a third coming soon, and a mobile match-3 with 100K+ downloads. Based in Ankara, available now and open to relocating. |
-| OROBOROS | I ported it to Steam alone and removed GC spikes from 10+ core controllers. |
-| GOKA Street | On the programming team, I worked on core mechanics and the Steam release. |
+| Tanıtım | I program gameplay in Unity and C#, and I ship it: two games on Steam, a third coming soon, and a mobile match-3 with 100K+ downloads. Based in Ankara, available now and open to relocating. |
+| OROBOROS | I ported it alone from mobile to Steam and removed GC spikes from 10+ core controllers. |
+| GOKA Street | I worked on the programming team and the Steam release. |
 | Kiss Cargo | Coming soon. I built multiplayer sync under 100 ms and halved new-enemy build time. |
 | Oynama daveti | Try it: hold to swing, let go to fly. |
 | Kaynak notu | This is the movement code from Slingshot, my Unity platformer, ported to the web. |
 | Kod linki | Read the C# on GitHub |
 | Alice in Blastland | A mobile match-3 with 100K+ downloads. I fixed live bugs across updates and added anti-cheat. |
 | Tetris Reflex | My own 2D engine in C++17 and SFML, built from scratch with ECS, and a tactical Tetris running on it at a locked 60 FPS. |
-| Slingshot | A precision platformer built around a grappling hook, with my own kinematic physics solver and a state-machine player controller in Unity and C#. |
+| Slingshot | A precision platformer where you grapple onto enemies to keep your momentum. I wrote the kinematic physics solver and the state-machine player controller in Unity and C#. |
 | Dungeon | A Viking tactics game inspired by Into The Breach, with a Utility AI I built to pick attack positions and avoid hazards. |
 | Dance Battle | A turn-based disco card game, with a card effect system I built on ScriptableObjects. |
 | CRT filter | A CRT shader I made for Slingshot and published as an open-source Unity package. |
-| Shh Do Not Wake The Baby | A tower defense where you beat enemies without waking the baby, with grid obstacle placement and a runtime NavMesh. |
+| Shh Do Not Wake The Baby | A tower defense where you beat enemies without waking the baby, with a grid obstacle placement system I wrote on Unity's Grid, plus Unity's NavMesh at runtime. |
 
 Kullanılmayanlar: "15+ months of live-ops" (ana CV'de yok, staj tarihleriyle çelişiyor), "0%" hile raporu, "100% deterministic", proje özetlerindeki doldurulmamış veya örnek yüzdeler.
 

@@ -7,14 +7,6 @@ const read = (name) => readFileSync(new URL(name, root), 'utf8');
 const pages = ['slingshot.html', 'tetris-reflex.html'];
 const css = () => read('css/subpage.css');
 
-// The two tables a page keeps its words in, evaluated the way the browser would.
-const tables = (source) => {
-  const script = source.match(/<script>([\s\S]*?)<\/script>/)[1];
-  const window = {};
-  new Function('window', 'document', script)(window, {});
-  return window;
-};
-
 for (const name of pages) {
   test(`${name} loads the home page's tokens and its own sheet, in that order`, () => {
     const source = read(name);
@@ -43,18 +35,21 @@ for (const name of pages) {
     assert.equal(links.length, 2);
   });
 
-  test(`${name} keeps the language switch, and every word exists in both languages`, () => {
+  test(`${name} is in English only, with every word in the markup`, () => {
     const source = read(name);
-    assert.ok(source.includes('id="langToggle"'));
-    assert.ok(source.includes('src="js/ui/lang.js"'));
-    const { TRANSLATIONS: t, ENTRY_CONTENT: entries } = tables(source);
-    assert.deepEqual(Object.keys(t.tr).sort(), Object.keys(t.en).sort());
-    const keys = [...source.matchAll(/data-i18n="([^"]+)"/g)].map((m) => m[1]);
-    assert.ok(keys.length > 20);
-    for (const key of keys) assert.ok(key in t.en, `no text for ${key}`);
-    for (const entry of Object.values(entries)) {
-      assert.ok(entry.en.trim() && entry.tr.trim());
+    for (const gone of ['langToggle', 'toggleLang', 'data-i18n', 'TRANSLATIONS', 'ENTRY_CONTENT', 'js/ui/']) {
+      assert.ok(!source.includes(gone), `found ${gone}`);
     }
+    assert.ok(!/[şŞğĞİı]/.test(source), 'Turkish letters are left');
+    assert.match(source, /id="intro-body">\s*<p>/);
+    assert.match(source, /id="entry01-content">\s*<(p|h4)>/);
+  });
+
+  test(`${name} carries no leftovers of the old terminal look`, () => {
+    const source = read(name);
+    assert.ok(!source.includes('EK://'));
+    assert.ok(!source.includes('nav-logo'));
+    assert.ok(!source.includes('hero-breadcrumb'));
   });
 
   test(`${name} has one night and no theme switch`, () => {
@@ -70,14 +65,13 @@ for (const name of pages) {
     assert.match(source, /setAttribute\('aria-expanded', String\(!isOpen\)\)/);
   });
 
-  test(`${name} sets Gasoek One only on words it has the letters for`, () => {
-    const { TRANSLATIONS: t } = tables(read(name));
-    for (const lang of ['en', 'tr']) {
-      assert.ok(!/[şŞğĞİ]/.test(t[lang].entry01_title), `${lang}: ${t[lang].entry01_title}`);
-      assert.ok(!/[şŞğĞİ]/.test(t[lang].footer_back), `${lang}: ${t[lang].footer_back}`);
-    }
-  });
 }
+
+test('the Tetris page names the same C++ version as the home page', () => {
+  assert.ok(read('index.html').includes('C++17 and SFML'));
+  assert.ok(read('tetris-reflex.html').includes('<div class="tech-chip">C++17</div>'));
+  assert.ok(!read('tetris-reflex.html').includes('17/20'));
+});
 
 test('the Tetris page names the same library as the home page', () => {
   assert.ok(read('index.html').includes('C++17 and SFML'));
@@ -112,6 +106,7 @@ test('an open entry is as tall as its text, so nothing is cut off on a phone', (
   const sheet = css();
   assert.ok(!/\.tl-body[^{]*{[^}]*max-height/.test(sheet));
   assert.match(sheet, /\.tl-body\.open { grid-template-rows: 1fr;/);
+  assert.match(sheet, /html:not\(\.js\) \.tl-body { grid-template-rows: 1fr; visibility: visible; }/);
 });
 
 test('motion stays out of the way', () => {

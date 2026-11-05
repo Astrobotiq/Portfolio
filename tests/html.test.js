@@ -8,9 +8,9 @@ const html = readFileSync(new URL('index.html', root), 'utf8');
 // Spec section 12, first screen. Copied verbatim: a reworded line is a failure.
 const FIRST_SCREEN_COPY = [
   'Unity developer',
-  'I build and ship games in Unity and C#: gameplay, multiplayer and performance. Two on Steam, a third coming soon, and a mobile match-3 with 100K+ downloads. Based in Ankara, available now and open to relocating.',
-  'I ported it to Steam alone and removed GC spikes from 10+ core controllers.',
-  'On the programming team, I worked on core mechanics and the Steam release.',
+  'I program gameplay in Unity and C#, and I ship it: two games on Steam, a third coming soon, and a mobile match-3 with 100K+ downloads. Based in Ankara, available now and open to relocating.',
+  'I ported it alone from mobile to Steam and removed GC spikes from 10+ core controllers.',
+  'I worked on the programming team and the Steam release.',
   'Coming soon. I built multiplayer sync under 100 ms and halved new-enemy build time.',
   'Try it: hold to swing, let go to fly.',
   'This is the movement code from Slingshot, my Unity platformer, ported to the web.',
@@ -222,12 +222,12 @@ test('the page layer leaves colours to the stylesheet and writes no second copy 
 
 // Spec sections 12 and 6, below the first screen. Also verbatim.
 const WORK_COPY = [
-  'A precision platformer built around a grappling hook, with my own kinematic physics solver and a state-machine player controller in Unity and C#.',
+  'A precision platformer where you grapple onto enemies to keep your momentum. I wrote the kinematic physics solver and the state-machine player controller in Unity and C#.',
   'A mobile match-3 with 100K+ downloads. I fixed live bugs across updates and added anti-cheat.',
   'My own 2D engine in C++17 and SFML, built from scratch with ECS, and a tactical Tetris running on it at a locked 60 FPS.',
 ];
 const EXPERIENCE = [
-  ['QA', 'Ankara', 'August-October 2026'],
+  ['QA', 'Midas Games', 'August-October 2026'],
   ['Game Developer', 'Blay Games', 'July 2025-March 2026'],
   ['Game Developer Intern', 'Blay Games', 'October 2024-March 2025'],
   ['Software Test and QA Intern', 'Testinium', 'July-August 2024'],
@@ -262,7 +262,7 @@ test('the four smaller projects have a title and their one agreed sentence', () 
     Dungeon: 'A Viking tactics game inspired by Into The Breach, with a Utility AI I built to pick attack positions and avoid hazards.',
     'Dance Battle': 'A turn-based disco card game, with a card effect system I built on ScriptableObjects.',
     'CRT filter': 'A CRT shader I made for Slingshot and published as an open-source Unity package.',
-    'Shh Do Not Wake The Baby': 'A tower defense where you beat enemies without waking the baby, with grid obstacle placement and a runtime NavMesh.',
+    'Shh Do Not Wake The Baby': 'A tower defense where you beat enemies without waking the baby, with a grid obstacle placement system I wrote on Unity\'s Grid, plus Unity\'s NavMesh at runtime.',
   };
   for (const [name, sentence] of Object.entries(sentences)) {
     const text = project(name).match(/<\/h2>\s*<p>([^<]*)<\/p>/)?.[1];
