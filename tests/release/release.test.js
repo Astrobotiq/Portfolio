@@ -22,8 +22,7 @@ test('docs/superpowers is not shipped', () => {
 });
 
 test('the QA experience line names a company', () => {
-  const items = [...html.matchAll(/<li>([^<]*)<\/li>/g)].map((m) => m[1].trim());
-  const line = items.find((text) => /^QA\b/.test(text));
-  assert.ok(line, 'no QA experience line found');
-  assert.notEqual(line, 'QA, Ankara, August-October 2026', 'QA line has no company name');
+  const company = html.match(/<li><span>QA<\/span>\s*<span>([^<]*)<\/span>/)?.[1];
+  assert.ok(company, 'no QA experience line found');
+  assert.notEqual(company, 'Ankara', 'QA line has no company name');
 });

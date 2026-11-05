@@ -106,13 +106,14 @@ html.js .hero { -webkit-user-select: none; user-select: none; -webkit-touch-call
 
 .intro { align-items: center; padding-block: var(--s1) var(--s3); }
 .role { font-size: var(--role-size); line-height: 1; white-space: nowrap; }
-.line { grid-column: 2 / 4; }
+.line { grid-column: 2 / 4; max-width: 60ch; text-wrap: pretty; }
 
 .games { min-height: 0; grid-template-rows: auto auto minmax(0, 1fr); }
 .game { display: contents; --col: var(--surface); }
-[data-word="oro"] { --col: #8f7bff; }
-[data-word="goka"] { --col: #ff6fae; }
-[data-word="kiss"] { --col: #f5c518; }
+/* --crop keeps each game's subject in the band, which shows a little over half of the image's height. */
+[data-word="oro"] { --col: #8f7bff; --crop: 50% 44%; }
+[data-word="goka"] { --col: #ff6fae; --crop: 50% 80%; }
+[data-word="kiss"] { --col: #f5c518; --crop: 50% 45%; }
 .game:nth-child(1) > * { grid-column: 1; }
 .game:nth-child(2) > * { grid-column: 2; }
 .game:nth-child(3) > * { grid-column: 3; }
@@ -127,9 +128,12 @@ html:not(.playing) .title:hover, html:not(.playing) .title:hover .l { text-decor
 
 /* The slots touch, so the three make one unbroken band. */
 .slot { grid-row: 3; position: relative; min-height: 0; overflow: hidden; background: var(--col); pointer-events: none; }
-.panel, .ghost { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+.panel, .ghost { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: var(--crop, center); }
 .panel { z-index: 2; }
-html.js .panel:not(.open) { visibility: hidden; }
+/* Unopened, but still read out: opacity keeps the alt text in the accessibility tree. */
+html.js .panel:not(.open) { opacity: 0; pointer-events: none; }
+/* These two are darker in full colour than in their tint, which would make a hit look like a loss. */
+.panel.open[data-word="oro"], .panel.open[data-word="goka"] { filter: brightness(1.2) saturate(1.15); }
 /* Before a hit the work is already there, in its column's colour. A hit gives it its real colours. */
 .ghost { opacity: .9; filter: grayscale(1) brightness(1.25) contrast(1.05); mix-blend-mode: luminosity; }
 html:not(.js) .ghost { display: none; }
@@ -176,6 +180,8 @@ html:not(.js) .skip { display: none; }
 .cv, .mail { display: inline-flex; align-items: center; min-height: 44px; cursor: pointer; }
 .cv { background: var(--fg); color: var(--surface); padding: 0 1em; text-decoration: none; white-space: nowrap; }
 .mail { text-underline-offset: .16em; }
+.cv:hover, .get:hover { background: color-mix(in srgb, var(--fg) 85%, var(--surface)); }
+.mail:hover, .source a:hover, .go:hover { text-decoration-thickness: .14em; }
 .title:focus-visible, .contact a:focus-visible, .source a:focus-visible, .skip:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
 
 /* A short laptop window: the band needs the height more than the name needs the width. */
@@ -199,11 +205,18 @@ html:not(.js) .skip { display: none; }
 .sling-text .links { flex-direction: column; align-items: flex-start; margin-top: auto; padding-top: var(--s2); }
 /* The ratio is the footage's. Left to itself the box takes the poster's ratio and jumps on play. */
 .sling video { grid-column: 2 / 4; display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; background: var(--fg); }
-.sling video:focus-visible { outline: 3px solid var(--surface); outline-offset: -3px; }
+/* JS wraps the video in this button. Without JS there is the poster, and nothing to press. */
+.reel { grid-column: 2 / 4; display: block; position: relative; width: 100%; border: 0; background: var(--fg); cursor: pointer; }
+/* Two tones, because the footage under the ring can be any colour. */
+.reel:focus-visible { outline: 4px solid var(--fg); outline-offset: -4px; }
+.reel:focus-visible::after { content: ""; position: absolute; inset: 4px; border: 3px solid var(--surface); }
+.reel-mark { position: absolute; left: var(--s2); bottom: var(--s2); width: 44px; height: 44px; background: var(--fg); }
+.reel-mark::before { content: ""; position: absolute; inset: 12px; background: var(--surface); clip-path: polygon(10% 0, 100% 50%, 10% 100%); }
+.reel.moving .reel-mark { display: none; }
 
 .others { grid-template-rows: repeat(3, auto); row-gap: var(--gap); padding-top: var(--gap); }
 .others article { padding-left: var(--edge); padding-right: var(--gut); }
-.others h2 { margin-bottom: var(--s1); }
+.others h2 { margin-bottom: var(--s1); font-size: max(1.5rem, calc(3 * var(--w))); }
 .others .links { margin-top: var(--s1); }
 .alice { grid-row: 1 / span 3; }
 /* The longest name gets one unbroken line, which also ends level with the Alice image. */
@@ -217,9 +230,20 @@ html:not(.js) .skip { display: none; }
 .row > h2, .row > ul, .row > p { padding-left: var(--edge); padding-right: var(--gut); }
 /* The top padding drops the first line of text to the top of the title's letters. */
 .row > ul, .row > p { grid-column: 2 / 4; padding-top: .35em; }
-#experience li + li { margin-top: .35em; }
-#experience { padding-top: var(--gap); }
-#contact { padding-bottom: var(--gap); }
+#experience { padding-block: var(--gap); }
+/* Role, company, dates: the page's three columns, with the heading above them. */
+.jobs > h2 { grid-column: 1 / 4; }
+.row.jobs > ul { grid-column: 1 / 4; padding: var(--s2) 0 0; }
+.jobs li { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.jobs li + li { margin-top: .35em; }
+.jobs li span { padding-left: var(--edge); padding-right: var(--gut); }
+
+/* The end of the page: Kiss Cargo's yellow, edge to edge, and the one thing to do next. */
+.closing { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; padding-block: var(--gap); background: #f5c518; }
+.closing h2 { grid-column: 1 / 3; padding-left: var(--edge); padding-right: var(--gut); overflow-wrap: anywhere; }
+.closing h2 .go { font-weight: 400; }
+.closing .links { grid-column: 3; max-width: none; padding-left: var(--edge); padding-right: var(--edge); align-items: center; }
+.get { background: var(--fg); color: var(--surface); padding: 0 1em; text-decoration: none; white-space: nowrap; }
 
 /* A small window, or 200% zoom: the page grows instead of cutting anything off. */
 @media (max-height: 560px), (max-width: 760px) {
@@ -254,9 +278,6 @@ html:not(.js) .skip { display: none; }
   .slot { margin-bottom: var(--s3); aspect-ratio: 2 / 1; }
   .base { display: flex; flex-direction: column; align-items: stretch; gap: var(--s2); padding-block: 0 var(--s2); }
   #trail { display: none; } /* Stacked games leave text inside the band, and text stays clean. */
-  /* No run here, so the first paint is already the last frame: colours and footage are open. */
-  html.js .panel:not(.open) { visibility: visible; }
-  html.js .game { background: var(--col); }
   .skip, .skip[hidden] { display: none; }
 }
 
@@ -266,12 +287,21 @@ html:not(.js) .skip { display: none; }
   .sling-text .links { margin-top: 0; }
   .others article + article { margin-top: var(--gap); }
   .row > ul, .row > p { padding-top: var(--s1); }
+  .row.jobs > ul { padding: var(--s1) var(--gut) 0 var(--edge); }
+  .jobs li { display: block; }
+  .jobs li + li { margin-top: var(--s2); }
+  .jobs li span { display: block; padding: 0; }
+  .jobs li span:first-child { font-weight: 700; }
+  .closing { display: block; }
+  .closing .links { margin-top: var(--s2); padding-right: var(--gut); }
 }
 
 /* No motion: the first paint is already the last frame. There is no run and no game to press,
    so the page behaves like a plain page and does not invite anyone to swing. */
 @media (prefers-reduced-motion: reduce) {
-  html.js .panel:not(.open), .col { visibility: visible; }
+  html.js .panel:not(.open) { opacity: 1; }
+  html.js .panel[data-word="oro"], html.js .panel[data-word="goka"] { filter: brightness(1.2) saturate(1.15); }
+  .col { visibility: visible; }
   html.js .hero { -webkit-user-select: auto; user-select: auto; -webkit-touch-callout: default; cursor: auto; }
   #trail, .source b, .skip, .skip[hidden] { display: none; }
 }

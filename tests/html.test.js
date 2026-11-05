@@ -190,7 +190,8 @@ test('hidden Skip keeps its place, and shows a focus ring', () => {
 test('reduced motion: the last frame comes first, with no trail and no colour transition', () => {
   const css = readFileSync(new URL('css/site.css', root), 'utf8');
   const reduced = css.slice(css.indexOf('@media (prefers-reduced-motion: reduce)'));
-  assert.match(reduced, /html\.js \.panel:not\(\.open\), \.col { visibility: visible; }/);
+  assert.match(reduced, /html\.js \.panel:not\(\.open\) { opacity: 1; }/);
+  assert.match(reduced, /\.col { visibility: visible; }/);
   assert.match(reduced, /#trail, [^{]*{ display: none; }/);
   assert.deepEqual(css.match(/transition:[^;]*/g), ['transition: opacity 1.2s ease'], 'only the trail fades, and it is gone here');
 });
@@ -211,11 +212,11 @@ const WORK_COPY = [
   'My own 2D engine in C++17 and SFML, built from scratch with ECS, and a tactical Tetris running on it at a locked 60 FPS.',
 ];
 const EXPERIENCE = [
-  'QA, Ankara, August-October 2026',
-  'Game Developer, Blay Games, July 2025-March 2026',
-  'Game Developer Intern, Blay Games, October 2024-March 2025',
-  'Software Test and QA Intern, Testinium, July-August 2024',
-  'BSc Software Engineering, Izmir University of Economics, 2020-2025',
+  ['QA', 'Ankara', 'August-October 2026'],
+  ['Game Developer', 'Blay Games', 'July 2025-March 2026'],
+  ['Game Developer Intern', 'Blay Games', 'October 2024-March 2025'],
+  ['Software Test and QA Intern', 'Testinium', 'July-August 2024'],
+  ['BSc Software Engineering', 'Izmir University of Economics', '2020-2025'],
 ];
 const hrefs = (source) => tags('a', source).map((tag) => attr(tag, 'href'));
 const section = (id) => between(`<section id="${id}"`, '</section>');
@@ -241,12 +242,12 @@ test('the work copy is verbatim from the spec', () => {
   for (const line of WORK_COPY) assert.ok(section('work').includes(line), `missing: ${line}`);
 });
 
-test('the projects without spec copy have a title and one sentence, from the old site\'s facts', () => {
+test('the four smaller projects have a title and their one agreed sentence', () => {
   const sentences = {
-    Dungeon: '3D tactical game inspired by Into The Breach with a Viking-era theme and a Utility AI system that calculates optimal attack positions while avoiding hazardous zones.',
-    'Dance Battle': 'Turn-based card game with a vibrant disco aesthetic and a flexible card effect system built with ScriptableObjects.',
-    'CRT filter': 'A highly customizable CRT TV effect shader I originally created for my active project, Slingshot, then packaged and published as an open-source Unity Package.',
-    'Shh Do Not Wake The Baby': 'Unique tower defense where players defeat enemies without waking a sleeping baby, with obstacle placement on a grid and a Runtime NavMesh.',
+    Dungeon: 'A Viking tactics game inspired by Into The Breach, with a Utility AI I built to pick attack positions and avoid hazards.',
+    'Dance Battle': 'A turn-based disco card game, with a card effect system I built on ScriptableObjects.',
+    'CRT filter': 'A CRT shader I made for Slingshot and published as an open-source Unity package.',
+    'Shh Do Not Wake The Baby': 'A tower defense where you beat enemies without waking the baby, with grid obstacle placement and a runtime NavMesh.',
   };
   for (const [name, sentence] of Object.entries(sentences)) {
     const text = project(name).match(/<\/h2>\s*<p>([^<]*)<\/p>/)?.[1];
@@ -283,9 +284,13 @@ test('old copy stays out: no old name, course pages, tags or the old Slingshot c
   }
 });
 
-test('the experience list is the five dated lines, in order', () => {
-  const items = section('experience').match(/<li>[^<]*<\/li>/g)?.map((item) => item.slice(4, -5));
-  assert.deepEqual(items?.slice(0, 5), EXPERIENCE);
+test('the experience list is the five dated lines, in order and in three columns', () => {
+  const items = section('experience').match(/<li>[\s\S]*?<\/li>/g)
+    ?.map((item) => [...item.matchAll(/<span>([^<]*)<\/span>/g)].map((m) => m[1]));
+  assert.deepEqual(items, EXPERIENCE);
+  const css = siteCss();
+  assert.match(css, /\.jobs li { display: grid; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); }/);
+  assert.match(css, /\.jobs li span { display: block;/, 'stacked on the phone');
 });
 
 test('there is no grade and no percentage bar', () => {
@@ -296,23 +301,75 @@ test('there is no grade and no percentage bar', () => {
   assert.match(section('experience'), /<h2>Skills<\/h2>[\s\S]*Unity/);
 });
 
-test('contact has email, LinkedIn and GitHub', () => {
+test('the page ends on a yellow band with the email, LinkedIn, GitHub and the CV', () => {
   assert.deepEqual(hrefs(section('contact')), [
     'mailto:koselerlie@gmail.com',
     'https://www.linkedin.com/in/eren-k%C3%B6selerli/',
     'https://github.com/Astrobotiq',
+    'assets/Eren-Koselerli-CV.pdf',
   ]);
+  assert.ok(html.indexOf('</section>', html.indexOf('<section id="contact"')) < html.indexOf('</main>'));
+  assert.match(html.slice(html.indexOf('</section>', html.indexOf('<section id="contact"'))), /^<\/section>\s*<\/main>/);
+  assert.match(section('contact'), /<h2>\s*<a class="go" href="mailto:/, 'the email is the title');
+  assert.ok(hasAttr(tags('a', section('contact')).at(-1), 'download'));
+  assert.ok(!section('experience').includes('mailto:'));
+  assert.match(siteCss(), /\.closing {[^}]*background: #f5c518/);
+  assert.equal(html.match(/<h2>Contact<\/h2>/), null, 'the band says it by itself');
 });
 
-test('the Slingshot video waits for the play button', () => {
+test('hover: the CV button mixes toward the paper, text links thicken, Skip adds nothing', () => {
+  const css = siteCss();
+  assert.match(css, /\.cv:hover[^{]*{ background: color-mix\(in srgb, var\(--fg\) 85%, var\(--surface\)\); }/);
+  assert.match(css, /\.go:hover[^{]*{ text-decoration-thickness:/);
+  assert.doesNotMatch(css, /\.skip:hover/);
+});
+
+test('secondary project titles drop a size, and section headings stay at title size', () => {
+  const css = siteCss();
+  assert.match(css, /\.others h2 {[^}]*font-size: max\(1\.5rem, calc\(3 \* var\(--w\)\)\)/);
+  assert.match(css, /\.below h2 { font: 400 var\(--title-size\)/);
+});
+
+test('the hero bio keeps a reading measure', () => {
+  assert.match(siteCss(), /^\.line {[^}]*max-width: 60ch;[^}]*text-wrap: pretty/m);
+});
+
+test('only OROBOROS and GOKA get the brighter reveal', () => {
+  const css = siteCss();
+  assert.match(css, /\.panel\.open\[data-word="oro"\], \.panel\.open\[data-word="goka"\] { filter: brightness\(1\.2\) saturate\(1\.15\); }/);
+  assert.ok(!/\.panel\.open\[data-word="kiss"\]/.test(css));
+});
+
+test('tint and footage share one crop, set per image', () => {
+  const css = siteCss();
+  assert.match(css, /\.panel, \.ghost {[^}]*object-position: var\(--crop, center\)/);
+  for (const word of WORDS) assert.match(css, new RegExp(`\\[data-word="${word}"\\] {[^}]*--crop:`), word);
+});
+
+test('unrevealed panels stay in the accessibility tree', () => {
+  const css = siteCss();
+  assert.match(css, /html\.js \.panel:not\(\.open\) { opacity: 0; pointer-events: none; }/);
+  assert.doesNotMatch(css, /\.panel:not\(\.open\) { visibility/);
+});
+
+test('the phone layout starts tinted and opens each game as it comes into view', () => {
+  const css = siteCss();
+  const phone = css.slice(css.indexOf('@media (max-aspect-ratio: 1/1) {'), css.indexOf('/* The sections stack'));
+  assert.doesNotMatch(phone, /\.panel/, 'no panel is open from the start');
+  assert.doesNotMatch(phone, /\.game { background/, 'the colour comes from the column');
+  const main = readFileSync(new URL('js/level/main.js', root), 'utf8');
+  assert.match(main, /page\.revealFromTitle\(/);
+});
+
+test('the Slingshot video moves by itself, muted, with no controls of its own', () => {
   const videos = tags('video');
   assert.equal(videos.length, 1);
   const video = videos[0];
-  assert.equal(attr(video, 'preload'), 'none');
-  assert.ok(hasAttr(video, 'controls'));
+  assert.equal(attr(video, 'preload'), 'none', 'nothing is fetched before it is in view');
+  for (const name of ['muted', 'loop', 'playsinline']) assert.ok(hasAttr(video, name), name);
+  assert.ok(!hasAttr(video, 'controls'));
   assert.equal(attr(video, 'poster'), 'assets/img/slingshot-poster.jpg');
   assert.equal(attr(video, 'src'), 'assets/video/slingshot-swing.mp4');
-  assert.ok(hasAttr(video, 'playsinline'));
   assert.ok(!hasAttr(video, 'autoplay'));
   assert.match(attr(video, 'width') ?? '', /^\d+$/);
   assert.match(attr(video, 'height') ?? '', /^\d+$/);
@@ -350,6 +407,15 @@ test('the Slingshot colour is a token, reaches 4.5:1 and says so on a line of it
   assert.ok(ratio >= 4.5, `only ${ratio}`);
   assert.match(css, new RegExp(`^\\s*/\\*[^\\n]*${ratio.toFixed(2)}:1[^\\n]*\\*/\\s*$`, 'm'), 'the comment states the ratio');
   assert.match(css, /background: var\(--slingshot\)/);
+});
+
+test('the video becomes a button with a ring that shows on any footage', () => {
+  const css = siteCss();
+  assert.match(css, /\.reel:focus-visible { outline: 4px solid var\(--fg\); outline-offset: -4px; }/);
+  assert.match(css, /\.reel:focus-visible::after {[^}]*border: 3px solid var\(--surface\)/);
+  assert.doesNotMatch(css, /video:focus-visible/);
+  const main = readFileSync(new URL('js/level/main.js', root), 'utf8');
+  assert.match(main, /startReel\(/);
 });
 
 test('the sections stay out of the level: none of its class names are reused below the hero', () => {

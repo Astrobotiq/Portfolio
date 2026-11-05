@@ -210,6 +210,14 @@ export class Page {
     }
   }
 
+  // The phone layout has no hit to open from, so the circle starts at the game's own title.
+  revealFromTitle(id) {
+    const word = this.words.find((w) => w.id === id);
+    if (!word) return;
+    const r = word.el.getBoundingClientRect();
+    this.reveal(id, r.left + r.width / 2, r.top + r.height / 2 + window.scrollY);
+  }
+
   revealAll() {
     for (const p of Object.values(this.panels)) p.classList.add('open');
     for (const c of Object.values(this.cols)) c.classList.add('open');
@@ -223,9 +231,11 @@ export class Page {
     for (const word of this.words) {
       const col = this.cols[word.id];
       if (!col) continue;
-      const slot = this.panels[word.id].parentElement.getBoundingClientRect();
+      const slotEl = this.panels[word.id].parentElement;
+      const slot = slotEl.getBoundingClientRect();
       const top = word.el.getBoundingClientRect().top - hero.top;
-      const bottom = slot.bottom - hero.top;
+      // Stacked games have a margin under the footage, and the colour runs on to the next game.
+      const bottom = slot.bottom + parseFloat(getComputedStyle(slotEl).marginBottom) - hero.top;
       col.style.left = `${slot.left - hero.left}px`;
       col.style.width = `${slot.width}px`;
       col.style.top = `${top}px`;

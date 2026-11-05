@@ -7,6 +7,7 @@ import { GroundedState } from './States/GroundedState.js';
 import { ScriptInput, ZERO_FRAME } from './BotInput.js';
 import { InputHandler } from './InputHandler.js';
 import { Page } from './Page.js';
+import { startReel } from './Reel.js';
 import { View } from './View.js';
 import { buildLevel, clearGlyphCache } from './LevelBuilder.js';
 import { isPlaying as playingRule, lastActiveAt, RESUME_IDLE_MS } from './titlePress.js';
@@ -20,6 +21,7 @@ const GESTURE_GAP_MS = 220;
 const LOG_LIMIT = 500;
 
 // Spec section 3: the stacked phone layout has no run, the character only falls and can be played.
+// Each game opens as it comes into view instead.
 const phoneQuery = matchMedia('(max-aspect-ratio: 1/1)');
 const isPhoneLayout = () => phoneQuery.matches;
 
@@ -150,10 +152,28 @@ function finishRun() {
 }
 
 // No run is going to finish: everything opens, and whatever is in the air comes down by itself.
+// The phone layout opens by what is in view, not by a run.
 function abandonRun() {
   cancelPlan();
   wordsLeft = [];
-  page.revealAll();
+  if (!isPhoneLayout()) page.revealAll();
+}
+
+function watchGamesOnPhone() {
+  const games = document.querySelectorAll('.game');
+  let opened = 0;
+  const seen = new Set();
+  const observer = new IntersectionObserver((entries) => {
+    if (!isPhoneLayout()) return;
+    for (const entry of entries) {
+      const id = entry.target.dataset.word;
+      if (entry.intersectionRatio < 0.5 || seen.has(id)) continue;
+      seen.add(id);
+      page.revealFromTitle(id);
+      page.setDay(++opened);
+    }
+  }, { threshold: 0.5 });
+  games.forEach((game) => observer.observe(game));
 }
 
 function syncSkip() {
@@ -538,9 +558,11 @@ function relevel() {
     // The stacked layout has no run. Coming back to the desktop layout does not bring one back:
     // what opened stays open and the mode stays done.
     wordsLeft = [];
-    page.revealAll();
     if (running) mode = 'done';
     note('phone');
+  } else if (!wordsLeft.length) {
+    // Back from the stacked layout with games it never scrolled to.
+    page.revealAll();
   }
   if (!oldCtx) {
     // Still waiting to spawn. With no words left, spawnIfReady drops the character with no plan.
@@ -589,6 +611,7 @@ async function boot() {
   if (!document.documentElement.classList.contains('js')) return;
   window.__booted = true;
   note('boot');
+  startReel({ video: document.querySelector('.sling video'), reduced: REDUCED, isPhoneLayout });
   // Measure only once Anton is really in, and never wait long for it.
   try {
     await Promise.race([
@@ -637,6 +660,7 @@ async function boot() {
   window.addEventListener('keydown', wake);
   skipButton.addEventListener('click', skipRun);
   watchHero();
+  watchGamesOnPhone();
 
   startPlan();
   wake();
