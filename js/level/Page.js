@@ -233,7 +233,8 @@ export class Page {
       if (!col) continue;
       const slotEl = this.panels[word.id].parentElement;
       const slot = slotEl.getBoundingClientRect();
-      const top = word.el.getBoundingClientRect().top - hero.top;
+      // From the heading's box, so that the space above the title is coloured too.
+      const top = word.el.closest('h2').getBoundingClientRect().top - hero.top;
       // Stacked games have a margin under the footage, and the colour runs on to the next game.
       const bottom = slot.bottom + parseFloat(getComputedStyle(slotEl).marginBottom) - hero.top;
       col.style.left = `${slot.left - hero.left}px`;

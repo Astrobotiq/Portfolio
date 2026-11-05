@@ -1,42 +1,48 @@
-/* Self-hosted type. Archivo is a variable font, so one file serves both weights. */
+/* Self-hosted type. Gasoek One is the game's logo voice, heavy enough to stand on. Newsreader does
+   all the talking, in the one voice that could never be mistaken for the logo. */
 @font-face {
-  font-family: "Anton";
+  font-family: "Gasoek One";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("../assets/fonts/anton-latin-ext.woff2") format("woff2");
+  src: url("../assets/fonts/gasoek-one-latin-ext.woff2") format("woff2");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
-  font-family: "Anton";
+  font-family: "Gasoek One";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("../assets/fonts/anton-latin.woff2") format("woff2");
+  src: url("../assets/fonts/gasoek-one-latin.woff2") format("woff2");
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: "Archivo";
+  font-family: "Newsreader";
   font-style: normal;
-  font-weight: 500 700;
+  font-weight: 500;
   font-display: swap;
-  src: url("../assets/fonts/archivo-latin-ext.woff2") format("woff2");
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  src: url("../assets/fonts/newsreader-500-latin.woff2") format("woff2");
 }
 @font-face {
-  font-family: "Archivo";
+  font-family: "Newsreader";
   font-style: normal;
-  font-weight: 500 700;
+  font-weight: 600;
   font-display: swap;
-  src: url("../assets/fonts/archivo-latin.woff2") format("woff2");
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  src: url("../assets/fonts/newsreader-600-latin.woff2") format("woff2");
 }
 
 :root {
-  --surface: #f1efea;
-  --fg: #0c0c0d;
-  /* Slingshot's colour, the teal rods in the Time Solid still. With --fg it reaches 8.16:1. */
-  --slingshot: #01babd;
+  /* Everything comes from Slingshot's own screen: the void, the ribbon, the rods, the strings. */
+  --surface: #1a1826;
+  --fg: #f6ede4;
+  --ground: #100e19;
+  --dusk: #24203a;
+  --ink: #1a1826;
+  --muted: #bdb3c4;
+  /* The ribbon's colour. With --ink it reaches 6.31:1. */
+  --coral: #ff6b6f;
+  --teal: #01babd;
+  --lilac: #c4b0ff;
   /* --cw is 1% of the page without a classic scrollbar, which 1vw would include. */
   --cw: 1vw;
   --w: min(var(--cw), 1.9vh);
@@ -46,16 +52,16 @@
   --s1: calc(.6 * var(--u));
   --s2: calc(1.2 * var(--u));
   --s3: calc(2 * var(--u));
-  /* Spacing between blocks below the first screen, where space is the only divider. */
+  /* Spacing between blocks below the first screen. */
   --gap: calc(3 * var(--s3));
-  --display: "Anton", "Arial Narrow", Impact, sans-serif;
-  --body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --display: "Gasoek One", "Arial Black", Impact, sans-serif;
+  --body: "Newsreader", Georgia, "Times New Roman", serif;
   /* Floors in rem follow the reader's font setting. The ceilings are the design's values. */
-  --name-size: min(calc(17.58 * var(--cw)), 36vh); /* The signature: it fills the width as far as the height allows. */
-  --title-size: clamp(1.75rem, calc(5.4 * var(--cw)), calc(5.4 * var(--w)));
-  --role-size: clamp(1.25rem, calc(3.5 * var(--cw)), calc(3.5 * var(--w)));
-  --text-size: clamp(.9375rem, calc(1.3 * var(--cw)), calc(1.3 * var(--u)));
-  --note-size: clamp(.9375rem, calc(1.1 * var(--cw)), calc(1.1 * var(--u)));
+  --name-size: min(calc(12.6 * var(--cw)), 36vh); /* The signature: it fills the width as far as the height allows. */
+  --title-size: clamp(1.75rem, calc(4.25 * var(--cw)), calc(4.25 * var(--w)));
+  --role-size: clamp(1.5rem, calc(3.9 * var(--cw)), calc(3.9 * var(--w)));
+  --text-size: clamp(1.0625rem, calc(1.42 * var(--cw)), calc(1.42 * var(--u)));
+  --note-size: clamp(1rem, calc(1.2 * var(--cw)), calc(1.2 * var(--u)));
 }
 
 @supports (width: 1cqw) {
@@ -65,8 +71,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { background: var(--surface); color: var(--fg); -webkit-text-size-adjust: 100%; }
-body { font: 500 var(--text-size)/1.32 var(--body); }
-a { color: inherit; }
+body { font: 500 var(--text-size)/1.36 var(--body); font-optical-sizing: auto; }
+a { color: inherit; text-decoration-color: var(--coral); }
 ul { list-style: none; }
 
 .hero {
@@ -85,11 +91,25 @@ ul { list-style: none; }
 /* Pressing the page is the game, so only a running page claims the press. */
 html.js .hero { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; cursor: crosshair; }
 
+/* The night, and the morning it turns into: each game that is hit brings the light up a step. */
+.hero::before, .hero::after { content: ""; position: absolute; inset: 0; z-index: -2; pointer-events: none; }
+.hero::before { background: url("../assets/img/sky.svg") 0 0 / 720px 480px; }
+.hero::after {
+  background:
+    radial-gradient(90% 34% at 62% 58%, rgba(255, 107, 111, .34), transparent 72%),
+    linear-gradient(180deg, transparent 5%, #3a2a58 28%, #7b4277 58%);
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+html[data-day="1"] .hero::after { opacity: .42; }
+html[data-day="2"] .hero::after { opacity: .72; }
+html[data-day="3"] .hero::after, html:not(.js) .hero::after { opacity: 1; }
+
 #trail { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; transition: opacity 1.2s ease; }
 #trail.gone { opacity: 0; }
 
 .name, .title { font-family: var(--display); font-weight: 400; line-height: 1; white-space: nowrap; text-decoration: none; }
-.name { font-size: var(--name-size); line-height: 1.04; }
+.name { font-size: var(--name-size); line-height: 1.02; letter-spacing: -.005em; color: var(--fg); }
 .name .w { display: inline-block; }
 
 /* One grid: three columns that start at the page's edges, with text inset by --edge in each. */
@@ -105,11 +125,20 @@ html.js .hero { -webkit-user-select: none; user-select: none; -webkit-touch-call
 }
 
 .intro { align-items: center; padding-block: var(--s1) var(--s3); }
-.role { font-size: var(--role-size); line-height: 1; white-space: nowrap; }
+.role { font-size: var(--role-size); font-weight: 500; line-height: 1; letter-spacing: -.02em; white-space: nowrap; color: var(--coral); }
 .line { grid-column: 2 / 4; text-wrap: pretty; }
 .nb { white-space: nowrap; }
 
-.games { min-height: 0; grid-template-rows: auto auto minmax(0, 1fr); }
+/* The rope only reaches so far, so a band taller than this cannot be crossed in time. In a squarer
+   window the spare height goes above the titles, where the sky has room for it. */
+.games {
+  --band-cap: calc(24.6 * var(--cw));
+  align-self: end;
+  height: 100%;
+  max-height: calc(var(--band-cap) + var(--title-size) + 1.1 * var(--u) + var(--s2) + 2.72 * var(--text-size));
+  min-height: 0;
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
 .game { display: contents; --col: var(--surface); }
 /* --crop keeps each game's subject in the band, which shows a little over half of the image's height. */
 [data-word="oro"] { --col: #8f7bff; --crop: 50% 44%; }
@@ -118,17 +147,20 @@ html.js .hero { -webkit-user-select: none; user-select: none; -webkit-touch-call
 .game:nth-child(1) > * { grid-column: 1; }
 .game:nth-child(2) > * { grid-column: 2; }
 .game:nth-child(3) > * { grid-column: 3; }
-.game h2 { grid-row: 1; font: 400 var(--title-size)/1 var(--display); }
-.cap { grid-row: 2; padding-block: calc(.5 * var(--u)) var(--s2); }
+.game h2 { grid-row: 1; padding-top: calc(.6 * var(--u)); font: 400 var(--title-size)/1 var(--display); }
+.cap { grid-row: 2; padding-block: calc(.5 * var(--u)) var(--s2); text-wrap: pretty; }
+/* Pale on the night, dark on the colour that a hit pours behind them. It turns as the circle passes. */
+.game h2, .cap { color: var(--fg); transition: color .16s linear .05s; }
+.game.hit h2, .game.hit .cap { color: var(--ink); }
 
 /* Crosshair means swing, a hand means Steam. */
 .title { display: inline-block; font-size: var(--title-size); cursor: pointer; }
 html.playing .title { cursor: crosshair; }
 /* The split letters are inline-blocks, which an underline on the link does not reach. */
-html:not(.playing) .title:hover, html:not(.playing) .title:hover .l { text-decoration: underline; text-decoration-thickness: .05em; text-underline-offset: .1em; }
+html:not(.playing) .title:hover, html:not(.playing) .title:hover .l { text-decoration: underline; text-decoration-color: currentColor; text-decoration-thickness: .05em; text-underline-offset: .1em; }
 
-/* The slots touch, so the three make one unbroken band. */
-.slot { grid-row: 3; position: relative; min-height: 0; overflow: hidden; background: var(--col); pointer-events: none; }
+/* The slots touch, so the three make one unbroken band. Before a hit it is the same night, tinted. */
+.slot { grid-row: 3; position: relative; min-height: 0; overflow: hidden; background: color-mix(in srgb, var(--col) 58%, var(--surface)); pointer-events: none; }
 .panel, .ghost { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: var(--crop, center); }
 .panel { z-index: 2; }
 /* Unopened, but still read out: opacity keeps the alt text in the accessibility tree. */
@@ -136,20 +168,21 @@ html.js .panel:not(.open) { opacity: 0; pointer-events: none; }
 /* These two are darker in full colour than in their tint, which would make a hit look like a loss. */
 .panel.open[data-word="oro"], .panel.open[data-word="goka"] { filter: brightness(1.2) saturate(1.15); }
 /* Before a hit the work is already there, in its column's colour. A hit gives it its real colours. */
-.ghost { opacity: .9; filter: grayscale(1) brightness(1.25) contrast(1.05); mix-blend-mode: luminosity; }
+.ghost { opacity: .85; filter: grayscale(1) brightness(1.1) contrast(1.1); mix-blend-mode: luminosity; }
 html:not(.js) .ghost { display: none; }
 /* Only a broken image renders these. They cover the browser's icon and keep the alt text readable. */
 .panel::before, .ghost::before { content: ""; position: absolute; inset: 0; background: var(--col); }
-.panel::after { content: attr(alt); position: absolute; inset: auto 0 0; padding: var(--s2) var(--gut) var(--s2) var(--edge); color: var(--fg); }
+.panel::after { content: attr(alt); position: absolute; inset: auto 0 0; padding: var(--s2) var(--gut) var(--s2) var(--edge); color: var(--ink); }
 .col { position: absolute; z-index: -1; background: var(--col); pointer-events: none; visibility: hidden; }
 .col.open { visibility: visible; }
 
-.base { padding-block: var(--s2); align-items: center; background: var(--surface); }
-.source { grid-column: 1 / 3; font-size: var(--note-size); }
-.source b { font-weight: 700; display: block; font-size: var(--text-size); }
+/* The ground the character lands on, darker than the sky, with the ribbon along its edge. */
+.base { padding-block: var(--s2); align-items: center; background: var(--ground); border-top: 3px solid var(--coral); }
+.source { grid-column: 1 / 3; font-size: var(--note-size); color: var(--muted); }
+.source b { font-weight: 600; display: block; font-size: var(--text-size); color: var(--fg); }
 /* Without JS there is nothing to swing, so the invitation would be untrue. */
 html:not(.js) .source b { display: none; }
-.source a { font-weight: 700; text-underline-offset: .16em; cursor: pointer; }
+.source a { font-weight: 600; color: var(--fg); text-underline-offset: .16em; cursor: pointer; }
 /* The padding is the press target, and the margins keep it from growing the line. */
 .skip {
   display: inline-block;
@@ -157,10 +190,11 @@ html:not(.js) .source b { display: none; }
   margin: -.4em 0 -.4em .5em;
   border: 0;
   background: none;
-  color: inherit;
+  color: var(--fg);
   font: inherit;
-  font-weight: 700;
+  font-weight: 600;
   text-decoration: underline;
+  text-decoration-color: var(--coral);
   text-underline-offset: .16em;
   cursor: pointer;
 }
@@ -174,84 +208,112 @@ html:not(.js) .skip { display: none; }
   align-items: center;
   justify-content: space-between;
   gap: 0 var(--u);
-  font: 700 var(--text-size)/1 var(--body);
+  font: 600 var(--text-size)/1 var(--body);
   -webkit-user-select: text;
   user-select: text;
 }
 .cv, .mail { display: inline-flex; align-items: center; min-height: 44px; cursor: pointer; }
-.cv { background: var(--fg); color: var(--surface); padding: 0 1em; text-decoration: none; white-space: nowrap; }
+.cv { background: var(--coral); color: var(--ink); padding: 0 1em; text-decoration: none; white-space: nowrap; }
 .mail { text-underline-offset: .16em; }
-.cv:hover, .get:hover { background: color-mix(in srgb, var(--fg) 85%, var(--surface)); }
+.cv:hover, .get:hover { background: color-mix(in srgb, var(--coral) 80%, var(--fg)); }
 .mail:hover, .source a:hover, .go:hover { text-decoration-thickness: .14em; }
-.title:focus-visible, .contact a:focus-visible, .source a:focus-visible, .skip:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+.title:focus-visible, .contact a:focus-visible, .source a:focus-visible, .skip:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 
 /* A short laptop window: the band needs the height more than the name needs the width. */
 @media (max-height: 719px) and (orientation: landscape) {
-  :root { --name-size: min(calc(17.58 * var(--cw)), 30vh); --s3: var(--s2); }
+  :root { --name-size: min(calc(12.6 * var(--cw)), 30vh); --s3: var(--s2); }
   .base { padding-block: var(--s1); }
 }
 
 /* Below the first screen: the same three columns from the page's edges, text inset by --edge. */
 .sling, .others, .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.below h2 { font: 400 var(--title-size)/1.05 var(--display); }
-.below p { max-width: 60ch; }
-.go { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; text-underline-offset: .16em; }
-.go:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+.below h2 { font: 400 var(--title-size)/1.02 var(--display); }
+.below p { max-width: 58ch; }
+.go { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; text-underline-offset: .16em; }
+.go:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
 .links { display: flex; flex-wrap: wrap; gap: 0 var(--s3); }
 
-/* The page's one loud block: its own colour, and footage that touches the right edge. */
-.sling { background: var(--slingshot); }
-.sling-text { display: flex; flex-direction: column; padding: var(--s3) var(--gut) var(--s2) var(--edge); }
-.sling-text h2 { margin-bottom: var(--s2); }
+/* Slingshot's poster, as the room its footage plays in: the ribbon runs out from behind the screen. */
+.sling { position: relative; isolation: isolate; align-items: center; padding-block: var(--gap); background: var(--ground); overflow: hidden; }
+.sling::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    url("../assets/img/strings.svg") 50% 100% / cover no-repeat,
+    radial-gradient(70% 90% at 68% 50%, rgba(255, 107, 111, .22), transparent 70%);
+  opacity: .9;
+}
+.sling-text { display: flex; flex-direction: column; align-self: stretch; padding: 0 var(--gut) 0 var(--edge); }
+.sling-text h2 { margin-bottom: var(--s2); color: var(--coral); }
+.sling-text p { text-shadow: 0 0 .6em var(--ground), 0 0 .2em var(--ground); }
 .sling-text .links { flex-direction: column; align-items: flex-start; margin-top: auto; padding-top: var(--s2); }
 /* The ratio is the footage's. Left to itself the box takes the poster's ratio and jumps on play. */
-.sling video { grid-column: 2 / 4; display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; background: var(--fg); }
+.sling video { grid-column: 2 / 4; display: block; width: calc(100% - var(--edge)); height: auto; aspect-ratio: 16 / 9; object-fit: cover; background: #000; }
 /* JS wraps the video in this button. Without JS there is the poster, and nothing to press. */
-.reel { grid-column: 2 / 4; display: block; position: relative; width: 100%; border: 0; background: var(--fg); cursor: pointer; }
+.reel { grid-column: 2 / 4; display: block; position: relative; width: calc(100% - var(--edge)); border: 0; background: #000; cursor: pointer; }
+.reel video { width: 100%; }
 /* Two tones, because the footage under the ring can be any colour. */
 .reel:focus-visible { outline: 4px solid var(--fg); outline-offset: -4px; }
 .reel:focus-visible::after { content: ""; position: absolute; inset: 4px; border: 3px solid var(--surface); }
-.reel-mark { position: absolute; left: var(--s2); bottom: var(--s2); width: 44px; height: 44px; background: var(--fg); }
-.reel-mark::before { content: ""; position: absolute; inset: 12px; background: var(--surface); clip-path: polygon(10% 0, 100% 50%, 10% 100%); }
+.reel-mark { position: absolute; left: var(--s2); bottom: var(--s2); width: 44px; height: 44px; background: var(--coral); }
+.reel-mark::before { content: ""; position: absolute; inset: 12px; background: var(--ink); clip-path: polygon(10% 0, 100% 50%, 10% 100%); }
 .reel.moving .reel-mark { display: none; }
 
-.others { grid-template-rows: repeat(3, auto); row-gap: var(--gap); padding-top: var(--gap); }
+/* Alice is a live game and the one thing here with a picture, so it gets a whole column of colour. */
+.others { grid-template-rows: repeat(3, auto); row-gap: var(--gap); padding-bottom: var(--gap); background: var(--dusk); }
 .others article { padding-left: var(--edge); padding-right: var(--gut); }
 .others h2 { margin-bottom: var(--s1); font-size: max(1.5rem, calc(3 * var(--w))); }
 .others .links { margin-top: var(--s1); }
-.alice { grid-row: 1 / span 3; }
+.others article:nth-child(2), .others article:nth-child(3) { margin-top: var(--gap); }
+.others article:nth-child(2) h2 { color: #f5c518; }
+.others article:nth-child(3) h2 { color: var(--teal); }
+.others article:nth-child(4) h2 { color: #ff6fae; }
+.others article:nth-child(5) h2 { color: var(--coral); }
+.others article:nth-child(6) h2 { color: var(--lilac); }
+.alice { grid-row: 1 / span 3; margin-bottom: calc(-1 * var(--gap)); display: flex; flex-direction: column; background: var(--lilac); color: var(--ink); overflow: hidden; }
+.alice a { text-decoration-color: currentColor; }
 /* The longest name gets one unbroken line, which also ends level with the Alice image. */
 .wide { grid-column: 2 / 4; }
 /* The store image is tall and ends in marketing text. Its top is the game, and 4:5 stops above the text. */
-.others .alice { padding: 0; }
+.others .alice { padding: var(--gap) 0 0; }
 .alice h2, .alice p { padding-left: var(--edge); padding-right: var(--gut); }
-.alice img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; object-position: top; margin-top: var(--s2); }
+.alice img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; object-position: top; margin-top: auto; padding-top: var(--s2); }
 
 .row { padding-top: var(--gap); }
 .row > h2, .row > ul, .row > p { padding-left: var(--edge); padding-right: var(--gut); }
 /* The top padding drops the first line of text to the top of the title's letters. */
 .row > ul, .row > p { grid-column: 2 / 4; padding-top: .35em; }
-#experience { padding-block: var(--gap); }
-/* Role, company, dates: the page's three columns, with the heading above them. */
+#experience { padding-block: 0 var(--gap); background: var(--surface); }
+.row > p { font-size: max(1.125rem, calc(1.7 * var(--w))); line-height: 1.32; color: var(--fg); max-width: 50ch; }
+/* Role, company, dates: the page's three columns, with the heading above them. A real sequence, so
+   it hangs on a rope, newest at the top, with a rod for each job. */
 .jobs > h2 { grid-column: 1 / 4; }
-.row.jobs > ul { grid-column: 1 / 4; padding: var(--s2) 0 0; }
-.jobs li { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.jobs li + li { margin-top: .35em; }
+.row.jobs > ul { grid-column: 1 / 4; position: relative; padding: var(--s2) 0 0; }
+.row.jobs > ul::before { content: ""; position: absolute; left: var(--edge); top: var(--s2); bottom: .7em; width: 3px; background: var(--coral); }
+.jobs li { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); position: relative; padding-block: .45em; align-items: baseline; }
+.jobs li::before { content: ""; position: absolute; left: calc(var(--edge) - .55em + 1.5px); top: 1.05em; width: 1.1em; height: 4px; background: var(--teal); }
 .jobs li span { padding-left: var(--edge); padding-right: var(--gut); }
+.jobs li span:first-child { padding-left: calc(var(--edge) + 1.5rem); font-weight: 600; font-size: max(1.125rem, calc(1.7 * var(--w))); line-height: 1.2; }
+.jobs li span:last-child { color: var(--muted); }
 
-/* The end of the page: Kiss Cargo's yellow, edge to edge, and the one thing to do next. */
-.closing { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; padding-block: var(--gap); background: #f5c518; }
-.closing h2 { grid-column: 1 / 3; padding-left: var(--edge); padding-right: var(--gut); overflow-wrap: anywhere; }
-.closing h2 .go { font-weight: 400; }
-.closing .links { grid-column: 3; max-width: none; padding-left: var(--edge); padding-right: var(--edge); align-items: center; }
-.get { background: var(--fg); color: var(--surface); padding: 0 1em; text-decoration: none; white-space: nowrap; }
+/* The end of the page: the ribbon's colour, edge to edge, and the one thing to do next. */
+.closing { padding-block: var(--gap) var(--s3); padding-inline: var(--edge); background: var(--coral); color: var(--ink); }
+.closing h2 { font-size: calc(7.8 * var(--cw)); line-height: 1; white-space: nowrap; }
+.closing h2 .go { font-weight: 400; text-decoration: none; display: inline-block; min-height: 44px; }
+.closing h2 .go:hover { text-decoration: underline; text-decoration-color: currentColor; text-decoration-thickness: .05em; text-underline-offset: .08em; }
+.closing .links { max-width: none; align-items: center; margin-top: var(--s2); font-size: max(1.0625rem, calc(1.7 * var(--w))); }
+.closing a { text-decoration-color: currentColor; }
+.get { background: var(--ink); color: var(--fg); padding: 0 1em; text-decoration: none; white-space: nowrap; }
+.closing .get:hover { background: color-mix(in srgb, var(--ink) 80%, var(--fg)); }
 
 /* A small window, or 200% zoom: the page grows instead of cutting anything off. */
 @media (max-height: 560px), (max-width: 760px) {
   /* The page scrolls here, so height no longer caps the scale and the band still reaches both edges. */
-  :root { --w: var(--cw); --u: var(--cw); --name-size: calc(17.58 * var(--cw)); }
+  :root { --w: var(--cw); --u: var(--cw); --name-size: calc(12.6 * var(--cw)); }
   .hero { height: auto; min-height: 0; overflow: visible; }
-  .games { grid-template-rows: auto auto auto; }
+  .games { align-self: stretch; height: auto; max-height: none; grid-template-rows: auto auto auto; }
   .slot { aspect-ratio: 16 / 9; }
 }
 
@@ -260,24 +322,28 @@ html:not(.js) .skip { display: none; }
   :root {
     --w: var(--cw);
     --u: var(--cw);
-    --edge: calc(3.2 * var(--cw));
-    --gut: calc(2 * var(--cw));
+    --edge: calc(4.2 * var(--cw));
+    --gut: calc(4.2 * var(--cw));
     --s1: calc(1.6 * var(--cw));
     --s2: calc(3.2 * var(--cw));
     --s3: calc(4.8 * var(--cw));
-    --name-size: calc(17 * var(--cw));
-    --title-size: calc(9 * var(--cw));
-    --role-size: calc(7 * var(--cw));
-    --text-size: clamp(.9375rem, calc(3.7 * var(--cw)), 1.25rem);
+    --name-size: calc(12 * var(--cw));
+    --title-size: calc(10.5 * var(--cw));
+    --role-size: calc(8 * var(--cw));
+    --text-size: clamp(1.0625rem, calc(4.2 * var(--cw)), 1.375rem);
     --note-size: var(--text-size);
   }
   .hero { display: block; height: auto; min-height: 100svh; overflow: visible; }
   .intro, .games, .game { display: block; }
+  .games { height: auto; max-height: none; }
   .line { margin-top: var(--s1); }
   .title { line-height: 1.05; }
+  .game h2 { padding-top: var(--s2); }
+  /* Here the morning has to end inside the sky, because the games below it scroll. */
+  .hero::after { height: calc(92 * var(--cw)); background: linear-gradient(180deg, transparent 2%, #3a2a58 34%, #7b4277 58%, transparent 100%); }
   .cap { padding-block: var(--s1); }
-  .slot { margin-bottom: var(--s3); aspect-ratio: 2 / 1; }
-  .base { display: flex; flex-direction: column; align-items: stretch; gap: var(--s2); padding-block: 0 var(--s2); }
+  .slot { aspect-ratio: 2 / 1; }
+  .base { display: flex; flex-direction: column; align-items: stretch; gap: var(--s2); padding-block: var(--s3); }
   #trail { display: none; } /* Stacked games leave text inside the band, and text stays clean. */
   .skip, .skip[hidden] { display: none; }
 }
@@ -285,16 +351,21 @@ html:not(.js) .skip { display: none; }
 /* The sections stack on a phone and in any window too narrow for three text columns. */
 @media (max-aspect-ratio: 1/1), (max-width: 760px) {
   .sling, .others, .row { display: block; }
-  .sling-text .links { margin-top: 0; }
+  .sling { padding-block: var(--gap); }
+  /* The ribbon needs the width to read as one. Stacked, the poster itself shows it. */
+  .sling::before { background: radial-gradient(90% 60% at 60% 70%, rgba(255, 107, 111, .22), transparent 70%); }
+  .sling-text .links { margin-top: 0; padding-block: var(--s1) var(--s3); }
+  .sling video, .reel { width: 100%; }
   .others article + article { margin-top: var(--gap); }
+  .others article:nth-child(2), .others article:nth-child(3) { margin-top: var(--gap); }
+  .alice { margin-bottom: 0; }
   .row > ul, .row > p { padding-top: var(--s1); }
-  .row.jobs > ul { padding: var(--s1) var(--gut) 0 var(--edge); }
-  .jobs li { display: block; }
-  .jobs li + li { margin-top: var(--s2); }
-  .jobs li span { display: block; padding: 0; }
-  .jobs li span:first-child { font-weight: 700; }
-  .closing { display: block; }
-  .closing .links { margin-top: var(--s2); padding-right: var(--gut); }
+  .row.jobs > ul { padding: var(--s2) var(--gut) 0 0; }
+  .row.jobs > ul::before { top: var(--s2); bottom: 1.2em; }
+  .jobs li { display: block; padding-block: 0 var(--s3); }
+  .jobs li::before { top: .55em; }
+  .jobs li span { display: block; padding: 0 0 0 calc(var(--edge) + 1.5rem); }
+  .closing h2 { font-size: calc(7.4 * var(--cw)); }
 }
 
 /* No motion: the first paint is already the last frame. There is no run and no game to press,
@@ -304,6 +375,8 @@ html:not(.js) .skip { display: none; }
   html.js .panel[data-word="oro"], html.js .panel[data-word="goka"] { filter: brightness(1.2) saturate(1.15); }
   .col { visibility: visible; }
   html.js .hero { -webkit-user-select: auto; user-select: auto; -webkit-touch-callout: default; cursor: auto; }
+  html.js .hero::after { opacity: 1; transition: none; }
+  .game h2, .cap { transition: none; }
   #trail, .source b, .skip, .skip[hidden] { display: none; }
 }
 

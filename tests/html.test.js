@@ -150,7 +150,7 @@ test('fonts are self-hosted with swap, and the tokens are the agreed ones', () =
     assert.ok(existsSync(new URL(url, new URL('css/', root))), `missing: ${url}`);
   }
   assert.ok(!/https?:/.test(css), 'css must not reach another host');
-  for (const token of ['--surface: #f1efea', '--fg: #0c0c0d', '#8f7bff', '#ff6fae', '#f5c518']) {
+  for (const token of ['--surface: #1a1826', '--fg: #f6ede4', '--coral: #ff6b6f', '--teal: #01babd', '#8f7bff', '#ff6fae', '#f5c518']) {
     assert.ok(css.includes(token), `missing: ${token}`);
   }
 });
@@ -165,13 +165,13 @@ test('the hero spans the window and the hint needs JS', () => {
 
 test('the name has its own cap, independent of --w', () => {
   const css = readFileSync(new URL('css/site.css', root), 'utf8');
-  assert.ok(css.includes('--name-size: min(calc(17.58 * var(--cw)), 36vh);'));
+  assert.ok(css.includes('--name-size: min(calc(12.6 * var(--cw)), 36vh);'));
 });
 
 test('short landscape windows give the band more room', () => {
   const css = readFileSync(new URL('css/site.css', root), 'utf8');
   const short = css.match(/@media \(max-height: 719px\) and \(orientation: landscape\) {[^}]*}/)?.[0] ?? '';
-  assert.ok(short.includes('--name-size: min(calc(17.58 * var(--cw)), 30vh);'));
+  assert.ok(short.includes('--name-size: min(calc(12.6 * var(--cw)), 30vh);'));
   assert.ok(short.includes('--s3: var(--s2);'));
 });
 
@@ -202,7 +202,13 @@ test('reduced motion: the last frame comes first, with no trail and no colour tr
   assert.match(reduced, /html\.js \.panel:not\(\.open\) { opacity: 1; }/);
   assert.match(reduced, /\.col { visibility: visible; }/);
   assert.match(reduced, /#trail, [^{]*{ display: none; }/);
-  assert.deepEqual(css.match(/transition:[^;]*/g), ['transition: opacity 1.2s ease'], 'only the trail fades, and it is gone here');
+  assert.match(reduced, /\.hero::after {[^}]*transition: none/);
+  assert.match(reduced, /\.game h2, \.cap { transition: none; }/);
+  assert.deepEqual(
+    css.slice(0, css.indexOf('@media (prefers-reduced-motion: reduce)')).match(/transition:[^;]*/g),
+    ['transition: opacity 1.4s ease', 'transition: opacity 1.2s ease', 'transition: color .16s linear .05s'],
+    'only the morning, the trail and the turning text move by themselves',
+  );
 });
 
 test('the page layer leaves colours to the stylesheet and writes no second copy of a word', () => {
@@ -298,7 +304,7 @@ test('the experience list is the five dated lines, in order and in three columns
     ?.map((item) => [...item.matchAll(/<span>([^<]*)<\/span>/g)].map((m) => m[1]));
   assert.deepEqual(items, EXPERIENCE);
   const css = siteCss();
-  assert.match(css, /\.jobs li { display: grid; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); }/);
+  assert.match(css, /\.jobs li { display: grid; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\);/);
   assert.match(css, /\.jobs li span { display: block;/, 'stacked on the phone');
 });
 
@@ -310,7 +316,7 @@ test('there is no grade and no percentage bar', () => {
   assert.match(section('experience'), /<h2>Skills<\/h2>[\s\S]*Unity/);
 });
 
-test('the page ends on a yellow band with the email, LinkedIn, GitHub and the CV', () => {
+test('the page ends on a coral band with the email, LinkedIn, GitHub and the CV', () => {
   assert.deepEqual(hrefs(section('contact')), [
     'mailto:koselerlie@gmail.com',
     'https://www.linkedin.com/in/eren-k%C3%B6selerli/',
@@ -322,13 +328,13 @@ test('the page ends on a yellow band with the email, LinkedIn, GitHub and the CV
   assert.match(section('contact'), /<h2>\s*<a class="go" href="mailto:/, 'the email is the title');
   assert.ok(hasAttr(tags('a', section('contact')).at(-1), 'download'));
   assert.ok(!section('experience').includes('mailto:'));
-  assert.match(siteCss(), /\.closing {[^}]*background: #f5c518/);
+  assert.match(siteCss(), /\.closing {[^}]*background: var\(--coral\)/);
   assert.equal(html.match(/<h2>Contact<\/h2>/), null, 'the band says it by itself');
 });
 
-test('hover: the CV button mixes toward the paper, text links thicken, Skip adds nothing', () => {
+test('hover: the CV button mixes toward the pale, text links thicken, Skip adds nothing', () => {
   const css = siteCss();
-  assert.match(css, /\.cv:hover[^{]*{ background: color-mix\(in srgb, var\(--fg\) 85%, var\(--surface\)\); }/);
+  assert.match(css, /\.cv:hover[^{]*{ background: color-mix\(in srgb, var\(--coral\) 80%, var\(--fg\)\); }/);
   assert.match(css, /\.go:hover[^{]*{ text-decoration-thickness:/);
   assert.doesNotMatch(css, /\.skip:hover/);
 });
@@ -405,19 +411,63 @@ test('the files the sections use exist', () => {
   }
 });
 
-test('the Slingshot colour is a token, reaches 4.5:1 and says so on a line of its own', () => {
+const luminance = (value) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16) / 255)
+    .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const contrast = (a, b) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+const token = (name) => siteCss().match(new RegExp(`--${name}: (#[0-9a-f]{6});`))?.[1];
+
+test('the coral is a token, reaches 4.5:1 with the ink and says so on a line of its own', () => {
   const css = siteCss();
-  const hex = css.match(/--slingshot: (#[0-9a-f]{6});/)?.[1];
-  assert.ok(hex, 'missing the --slingshot token');
-  const luminance = (value) => {
-    const [r, g, b] = [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16) / 255)
-      .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  };
-  const ratio = (luminance(hex) + 0.05) / (luminance('#0c0c0d') + 0.05);
+  const ratio = contrast(token('coral'), token('ink'));
   assert.ok(ratio >= 4.5, `only ${ratio}`);
-  assert.match(css, new RegExp(`^\\s*/\\*[^\\n]*${ratio.toFixed(2)}:1[^\\n]*\\*/\\s*$`, 'm'), 'the comment states the ratio');
-  assert.match(css, /background: var\(--slingshot\)/);
+  const comment = css.split('\n').find((line) => line.includes(`${ratio.toFixed(2)}:1`));
+  assert.match(comment ?? '', /^\s*\/\*.*\*\/\s*$/, 'the comment states the ratio');
+  assert.match(css, /background: var\(--coral\)/);
+});
+
+test('text stays readable on the night, on the ground and on every column', () => {
+  for (const back of ['surface', 'ground', 'dusk']) {
+    assert.ok(contrast(token('fg'), token(back)) >= 7, `fg on ${back}`);
+    assert.ok(contrast(token('muted'), token(back)) >= 4.5, `muted on ${back}`);
+    assert.ok(contrast(token('coral'), token(back)) >= 4.5, `coral on ${back}`);
+  }
+  // The brightest the morning gets behind the bio, and it has to carry the pale text.
+  assert.ok(contrast(token('fg'), '#7b4277') >= 4.5, 'fg on the morning');
+  for (const column of ['#8f7bff', '#ff6fae', '#f5c518', token('lilac')]) {
+    assert.ok(contrast(token('ink'), column) >= 4.5, `ink on ${column}`);
+  }
+});
+
+test('each game that is hit brings the morning up a step, and the text turns with its column', () => {
+  const css = siteCss();
+  const steps = ['1', '2', '3'].map((day) => {
+    const rule = css.split('\n').find((line) => line.startsWith(`html[data-day="${day}"] .hero::after`));
+    assert.ok(rule, `no step for day ${day}`);
+    return Number(rule.match(/opacity: ([.\d]+);/)[1]);
+  });
+  assert.deepEqual(steps, [...steps].sort((a, b) => a - b));
+  assert.equal(new Set(steps).size, 3);
+  assert.match(css, /html:not\(\.js\) \.hero::after { opacity: 1; }/, 'without JS it is already morning');
+  assert.match(css, /\.game\.hit h2, \.game\.hit \.cap { color: var\(--ink\); }/);
+});
+
+test('the old typefaces are gone from the page, and the new one is what the level waits for', () => {
+  const main = readFileSync(new URL('js/level/main.js', root), 'utf8');
+  assert.ok(!/Anton|Archivo/.test(siteCss() + html + main));
+  assert.match(main, /document\.fonts\.load\('100px "Gasoek One"'/);
+  assert.ok(html.includes('href="assets/fonts/gasoek-one-latin.woff2"'), 'the display face is preloaded');
+});
+
+test('the character and the trail read their colours from the stylesheet', () => {
+  const view = readFileSync(new URL('js/level/View.js', root), 'utf8');
+  for (const name of ['--surface', '--fg', '--coral', '--teal']) assert.ok(view.includes(`'${name}'`), name);
+  assert.doesNotMatch(view, /#[0-9a-f]{6}/i);
 });
 
 test('the video becomes a button with a ring that shows on any footage', () => {

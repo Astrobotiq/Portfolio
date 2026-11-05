@@ -602,7 +602,7 @@ function onLateFont() {
   const faces = loadedFaces();
   if (faces === measuredFaces) return;
   measuredFaces = faces;
-  note('lateFont', { anton: document.fonts.check('100px Anton') });
+  note('lateFont', { display: document.fonts.check('100px "Gasoek One"') });
   clearGlyphCache();
   page.remeasure();
   relevel();
@@ -616,14 +616,14 @@ async function boot() {
   window.__booted = true;
   note('boot');
   startReel({ video: document.querySelector('.sling video'), reduced: REDUCED, isPhoneLayout });
-  // Measure only once Anton is really in, and never wait long for it.
+  // Measure only once the display face is really in, and never wait long for it.
   try {
     await Promise.race([
-      Promise.all([document.fonts.load('100px Anton', 'Eren Köselerli'), document.fonts.ready]),
+      Promise.all([document.fonts.load('100px "Gasoek One"', 'Eren Köselerli'), document.fonts.ready]),
       new Promise((res) => setTimeout(res, 1200)),
     ]);
   } catch { /* The fallback font still makes a playable level. */ }
-  note('fontsReady', { anton: document.fonts.check('100px Anton') });
+  note('fontsReady', { display: document.fonts.check('100px "Gasoek One"') });
 
   page = new Page();
   skipButton = document.querySelector('.skip');

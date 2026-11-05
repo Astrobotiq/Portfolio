@@ -21,7 +21,7 @@ Eren Köselerli'nin Unity geliştirici portfolyosu (`https://astrobotiq.github.i
 
 ### Bu spec'te neyin kaynağı ne
 
-- **Sahibinin onayladıkları:** Konsept, ilk ekran düzeni (Bölüm 3), Triptych renk yönü (Bölüm 4).
+- **Sahibinin onayladıkları:** Konsept, ilk ekran düzeni (Bölüm 3), gece yönü, renkler ve fontlar (Bölüm 4). Gece yönü, aynı gün sahibinin "çok sade, heryer beyaz" geri bildirimiyle ilk açık zeminli Triptych'in yerini aldı.
 - **Spec'te önerilenler, inceleme bekliyor:** Tıklama kuralları prototipte test edildi ama sahibi gerçek fareyle onaylamadı (Bölüm 5). Alt bölümler (Bölüm 6) ve teknik yapı (Bölüm 7) ilk kez burada öneriliyor.
 
 ## 2. Konsept
@@ -53,16 +53,16 @@ Tek ekran, kaydırma olmadan görünür. Üç eşit sütunlu tek ızgara.
 
 | Öğe | Değer (`--w`: genişliğin %1'i, en fazla `1.9vh`) |
 |---|---|
-| Ad | Anton, `17.58 * --w`, kenarlara tam oturur |
-| Rol | Archivo 500, `3.5 * --w` |
-| Oyun başlığı | Anton, `5.4 * --w` |
-| Gövde metni | Archivo 500, en az 15px |
+| Ad | Gasoek One, `12.6 * --cw`, kenarlara tam oturur |
+| Rol | Newsreader 500, `3.9 * --w`, mercan |
+| Oyun başlığı | Gasoek One, `4.25 * --w` |
+| Gövde metni | Newsreader 500, en az 17px |
 | Sayfa kenarı | `1.75 * --w` |
-| Görsel bandı | Ara boşluksuz, sayfa kenarını aşar, kalan yüksekliği doldurur |
+| Görsel bandı | Ara boşluksuz, sayfa kenarını aşar, kalan yüksekliği doldurur, en fazla `24.6 * --cw`. Kare pencerede artan yükseklik başlıkların üstüne gider, çünkü daha uzun bant süresinde geçilemiyor |
 
 Kurallar:
 
-- Bant ile alt satır arasında çizgi yoktur; bandın altı karakterin zeminidir.
+- Bandın altı karakterin zeminidir ve mercan bir şeritle işaretlenir: alt satır gökyüzünden koyu bir zemindir.
 - Sağdaki sütunun zemini koşunun bitiş noktasıdır. Karakter CV düğmesinin üstünde durur.
 - Spacing tek ölçekten gelir: `--s1 0.6u`, `--s2 1.2u`, `--s3 2u`.
 
@@ -72,35 +72,47 @@ Sayfa kaydırılır. Sıra: ad, rol, tanıtım, sonra her oyun için başlık, a
 
 Başlıklar alt alta geldiği için karakter onlara alttan ulaşamaz. Bu yüzden telefonda **koşu yoktur**: iz çizilmez, karakter düşüp zeminde durur ve oynanabilir. Her oyun, en az yarısı görünene kadar tonunda kalır; sonra sütunu dolar ve görseli `Page.reveal` ile açılır. Azaltılmış harekette her şey baştan açıktır, JavaScript yoksa görseller tam renklidir.
 
-## 4. Görsel dil: Triptych
+## 4. Görsel dil: Slingshot'ın gecesi
+
+Bütün palet Slingshot'ın kendi ekranından gelir: boşluk, şerit, çubuklar, ipler. Üç oyunun renkleri sütunlarda kalır, ama artık kağıda değil geceye dökülür.
 
 | Token | Değer | Kullanım |
 |---|---|---|
-| `--surface` | `#f1efea` | Sayfa zemini |
-| `--fg` | `#0c0c0d` | Yazı, karakter, ip |
-| OROBOROS | `#8f7bff` | Sütun rengi (siyah yazıyla 6.0:1) |
-| GOKA Street | `#ff6fae` | Sütun rengi (7.6:1) |
-| Kiss Cargo | `#f5c518` | Sütun rengi (12.0:1) |
+| `--surface`, `--ink` | `#1a1826` | Gökyüzü; renkli blokların üstündeki yazı |
+| `--fg` | `#f6ede4` | Ad, gece üstündeki yazı, ip |
+| `--ground` | `#100e19` | Alt satır ve Slingshot bölümü |
+| `--dusk` | `#24203a` | Diğer işler zemini |
+| `--coral` | `#ff6b6f` | Şerit: rol, karakter, CV düğmesi, kapanış bandı (`--ink` ile 6.31:1) |
+| `--teal` | `#01babd` | Çubuklar: ipin kancası, deneyim listesindeki işler |
+| OROBOROS | `#8f7bff` | Sütun rengi |
+| GOKA Street | `#ff6fae` | Sütun rengi |
+| Kiss Cargo | `#f5c518` | Sütun rengi |
 
-Kontrast değerleri renk incelemesinden gelir ve uygulama testinde yeniden ölçülür.
+Fontlar: başlıklarda Gasoek One, geri kalan her şeyde Newsreader 500 ve 600. İkisi de OFL, kendi sunucumuzdan.
+
+Kontrast değerleri `tests/html.test.js` içinde ölçülür.
+
+**Şafak:** Her vuruş gökyüzünü bir adım aydınlatır (`data-day` 1, 2, 3; `.hero::after`, 1.4 sn). Sayfanın tek kendiliğinden hareketi koşunun kendisidir, ayrı bir giriş animasyonu yoktur.
+
+**Yıldızlar ve iplik:** `assets/img/sky.svg` gökyüzü dokusudur. `assets/img/strings.svg` afişteki şerit ve ipleri Slingshot bölümünün arkasına çizer; dar düzende kalkar, orada afişin kendisi gösterir.
 
 ### Durumlar
 
-1. **Vuruştan önce:** Görseller baştan görünür. Gri tona çevrilip `mix-blend-mode: luminosity` ile oyunun rengine boyanır. Boş çerçeve yoktur.
-2. **Vuruş anı:** Çarpma noktasından yayılan daire iki şeyi birlikte açar: başlıktan görselin altına kadar sütun rengi ve görselin gerçek renkleri. Süre 620 ms, `cubic-bezier(.16,1,.3,1)`.
-3. **Son kare:** Üç renkli sütun, üç tam renkli görsel. İz silinmiştir (1.2 sn solma), karakter CV'nin üstünde durur.
+1. **Vuruştan önce:** Görseller baştan görünür. Gri tona çevrilip `mix-blend-mode: luminosity` ile oyunun renginin geceyle karışımına boyanır. Boş çerçeve yoktur. Başlık ve açıklama geceye göre açık renktedir.
+2. **Vuruş anı:** Çarpma noktasından yayılan daire iki şeyi birlikte açar: başlıktan görselin altına kadar sütun rengi ve görselin gerçek renkleri. Süre 620 ms, `cubic-bezier(.16,1,.3,1)`. Daire geçerken başlık ve açıklama koyu renge döner.
+3. **Son kare:** Üç renkli sütun, üç tam renkli görsel, aydınlanmış gökyüzü. İz silinmiştir (1.2 sn solma), karakter CV'nin üstünde durur.
 
 ### Karakter
 
 - Slingshot'ın karakteri: taç, baş, pelerin, hareket eden gözler.
 - Çarpışma kutusu `0.6 x 0.78` birim; çizim ayaklar sabit kalarak 3 kat büyük. Telefonda 1.6 kat.
-- Dolgu `--fg`, kenar `--surface`; böylece kağıtta, siyah yazıda ve görselde okunur. İp aynı şekilde kenarlıklı.
+- Dolgu `--coral`, kenar `--surface`, gözler `--fg`; böylece gecede, açık renkli yazıda ve görselde okunur. İp `--fg`, kenarı `--surface`.
 - Hız kaynaklı esneme ve iniş sıkışması kullanılır.
 
 ### İz
 
 - Yalnızca görsel bandının üzerinde çizilir, yazıların üstünden geçmez.
-- İnce çizgi ve ipin süpürdüğü soluk fan. Dururken çizim yapılmaz.
+- Afişin resmi canlı çizilir: mercan şerit ve ondan turkuaz kancaya uzanan ipler. Dururken çizim yapılmaz.
 - Renkli görselin altında kalır, yani her vuruş kendi izini siler.
 
 ### Kaçınılacaklar
@@ -154,10 +166,10 @@ Diğer linkler (CV, e-posta, GitHub) her zaman linktir ve oyun girdisi sayılmaz
 
 İlk ekranın altına, aynı ızgara ve aynı renklerle:
 
-1. **Slingshot:** Kişisel oyun; site karakterinin de kaynağı. Oynanış videosu `muted loop playsinline`, denetimsizdir: en az yarısı görününce başlar, görünmezken durur, basınca durur veya başlar, klavyeyle düğme olarak ulaşılır. Görünene kadar mp4 indirilmez. Azaltılmış hareket, `saveData` ve telefonda kendiliğinden başlamaz: poster görünür, basınca oynar. Kısa teknik açıklama, GitHub linki. Rengi oyunun görüntüsünden seçilir, siyah yazıyla en az 4.5:1 sağlar ve sahibi onaylar.
-2. **Diğer işler:** Alice in Blastland, Tetris Reflex, mevcut sitedeki Dungeon, Dance Battle, Shh Do Not Wake The Baby ve CRT filter. Her biri başlık, tek cümle ve link. Metinler Bölüm 12'de.
-3. **Deneyim:** Tarihli iş listesi, eğitim (not ortalaması olmadan), beceriler düz liste halinde (yüzde çubuğu olmadan). Masaüstünde rol, şirket ve tarih sayfa ızgarasının üç sütunundadır, telefonda alt alta.
-4. **Kapanış bandı:** Sayfa tam genişlikte `#f5c518` bir bantla biter: başlık boyunda Anton ile e-posta linki, LinkedIn, GitHub ve Download CV. Telefonda e-posta taşmadan genişliğe sığar.
+1. **Slingshot:** Kişisel oyun; site karakterinin de kaynağı. Bölüm, afişin kompozisyonudur: şerit ve ipler ekranın arkasından çıkar. Oynanış videosu `muted loop playsinline`, denetimsizdir: en az yarısı görününce başlar, görünmezken durur, basınca durur veya başlar, klavyeyle düğme olarak ulaşılır. Görünene kadar mp4 indirilmez. Azaltılmış hareket, `saveData` ve telefonda kendiliğinden başlamaz: poster görünür, basınca oynar. Kısa teknik açıklama, GitHub linki.
+2. **Diğer işler:** Alice in Blastland, kendi lila sütununda; Tetris Reflex, mevcut sitedeki Dungeon, Dance Battle, Shh Do Not Wake The Baby ve CRT filter. Her biri başlık, tek cümle ve link. Metinler Bölüm 12'de.
+3. **Deneyim:** Tarihli iş listesi, eğitim (not ortalaması olmadan), beceriler düz liste halinde (yüzde çubuğu olmadan). Masaüstünde rol, şirket ve tarih sayfa ızgarasının üç sütunundadır, telefonda alt alta. Liste gerçek bir sıradır, bu yüzden bir ipe asılıdır: her iş için bir turkuaz çubuk.
+4. **Kapanış bandı:** Sayfa tam genişlikte `--coral` bir bantla biter: sayfa genişliğinde Gasoek One ile e-posta linki, LinkedIn, GitHub ve Download CV. Telefonda e-posta taşmadan genişliğe sığar.
 
 Deneyim listesi:
 

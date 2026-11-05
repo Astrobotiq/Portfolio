@@ -1,7 +1,7 @@
 // Draws the character and the trail. Everything here reads simulation state; nothing feeds back.
 //
-// Silhouette: Slingshot's character (round head, crown, cloak) as one solid shape in --fg, outlined
-// in --surface so that it reads on the paper, on black type and on the footage.
+// Silhouette: Slingshot's character (round head, crown, cloak) as one solid shape in --coral, outlined
+// in --surface so that it reads on the night, on the pale type and on the footage.
 // Squash comes only from velocity: stretch along the velocity vector while moving, and a landing
 // squash scaled by the speed lost at the contact, played through CurvePresetsUtility.GetSpring.
 export const VISUAL_SCALE = 3;
@@ -96,6 +96,8 @@ export class View {
     const cs = getComputedStyle(document.documentElement);
     this.surface = cs.getPropertyValue('--surface').trim();
     this.fg = cs.getPropertyValue('--fg').trim();
+    this.coral = cs.getPropertyValue('--coral').trim();
+    this.teal = cs.getPropertyValue('--teal').trim();
   }
 
   clearTrail() {
@@ -139,8 +141,8 @@ export class View {
     return ctx;
   }
 
-  // A thin line and the rope's sweep. Nothing is drawn while standing
-  // still, so time spent in one place can no longer pile up into a black blob.
+  // The poster's picture, drawn live: a coral ribbon, and strings from it up to the teal hook.
+  // Nothing is drawn while standing still, so time in one place cannot pile up into a blob.
   stamp(x, y, vx, vy, anchors) {
     const ctx = this.tctx;
     const px = x * this.ppu - this.originX, py = -y * this.ppu;
@@ -148,19 +150,24 @@ export class View {
     if (speed < 0.5) { this.prevStamp = { px, py }; return; }
     if (anchors && anchors.length) {
       ctx.lineWidth = 1;
-      ctx.strokeStyle = this.fg;
-      ctx.globalAlpha = 0.07;
-      ctx.beginPath();
+      ctx.globalAlpha = 0.28;
       for (const a of anchors) {
+        const ax = a.x * this.ppu - this.originX, ay = -a.y * this.ppu;
+        const string = ctx.createLinearGradient(px, py, ax, ay);
+        string.addColorStop(0, this.fg);
+        string.addColorStop(1, this.teal);
+        ctx.strokeStyle = string;
+        ctx.beginPath();
         ctx.moveTo(px, py);
-        ctx.lineTo(a.x * this.ppu - this.originX, -a.y * this.ppu);
+        ctx.lineTo(ax, ay);
+        ctx.stroke();
       }
-      ctx.stroke();
     }
     if (this.prevStamp) {
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = this.fg;
-      ctx.globalAlpha = 0.7;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = this.coral;
+      ctx.globalAlpha = 0.95;
       ctx.beginPath();
       ctx.moveTo(this.prevStamp.px, this.prevStamp.py);
       ctx.lineTo(px, py);
@@ -216,7 +223,7 @@ export class View {
     ctx.lineWidth = 0.09;
     ctx.strokeStyle = this.surface;
     ctx.stroke(this.sil);
-    ctx.fillStyle = this.fg;
+    ctx.fillStyle = this.coral;
     ctx.fill(this.sil);
     this._eyes(ctx, state, dt);
     ctx.restore();
@@ -242,12 +249,12 @@ export class View {
       if (this.blinkT > 0.4) { this.blinkT = -1; open = 1; }
     }
     for (const ex of [-0.1, 0.1]) {
-      ctx.fillStyle = this.surface;
+      ctx.fillStyle = this.fg;
       ctx.beginPath();
       ctx.ellipse(ex, -0.13, 0.085, 0.105 * Math.max(0.08, open), 0, 0, Math.PI * 2);
       ctx.fill();
       if (open > 0.4) {
-        ctx.fillStyle = this.fg;
+        ctx.fillStyle = this.surface;
         ctx.beginPath();
         ctx.arc(ex + this.pupil.x * 0.45, -0.13 + this.pupil.y * 0.45, 0.042, 0, Math.PI * 2);
         ctx.fill();
