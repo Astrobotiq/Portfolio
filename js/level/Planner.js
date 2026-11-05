@@ -2,8 +2,9 @@
 // Nothing here is keyframed: every candidate is a list of per-tick inputs, tried on a clone of the
 // real state machine. The result is the frames that the live bot then feeds through IInputReader.
 //
-// One planned miss: for the second game, the planner looks for a launch aimed at the word that
-// really does fall short in simulation and has a real recovery, and prefers that over a clean hit.
+// A recruiter may only stay a few seconds, so the first choice is three clean hits on a tight budget.
+// Where that does not fit the layout, the fallbacks allow one planned miss: for the second game, a
+// launch aimed at the word that really does fall short in simulation and has a real recovery.
 import { PlayerController } from './PlayerController.js';
 import { ScriptInput, ZERO_FRAME } from './BotInput.js';
 import { AirborneState } from './States/AirborneState.js';
@@ -15,9 +16,12 @@ export const IMPACT_GAP_TICKS = 80; // One flooded word at a time: 1.6 s between
 const TICKS_PER_S = 1 / FIXED_DT;
 const JUMP_HELD = Object.freeze({ ...ZERO_FRAME, jh: true });
 
-// Widening searches. A run that misses and recovers within budget is what we want first; each
-// later tier gives up a little. The last tier can run past 12 s, and the result says so.
-const TIERS = [
+// Widening searches. Three hits as early as they can come is what we want first; each later tier
+// gives up a little. The spawn waits for the answer, so the tight tiers get little of the deadline.
+// The last tier can run past 12 s, and the result says so.
+export const TIERS = [
+  { miss: false, maxTick: 420, top: 14, hits: 6, share: 0.08 },
+  { miss: false, maxTick: 440, top: 14, hits: 6, share: 0.3 },
   { miss: true, maxTick: 530, top: 10, hits: 4, share: 0.5 },
   { miss: true, maxTick: 560, top: 14, hits: 6, share: 0.7 },
   { miss: false, maxTick: 560, top: 14, hits: 6, share: 0.85 },
