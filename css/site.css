@@ -35,6 +35,8 @@
 :root {
   --surface: #f1efea;
   --fg: #0c0c0d;
+  /* Slingshot's colour, the teal rods in the Time Solid still. With --fg it reaches 8.16:1. */
+  --slingshot: #01babd;
   /* --cw is 1% of the page without a classic scrollbar, which 1vw would include. */
   --cw: 1vw;
   --w: min(var(--cw), 1.9vh);
@@ -44,6 +46,8 @@
   --s1: calc(.6 * var(--u));
   --s2: calc(1.2 * var(--u));
   --s3: calc(2 * var(--u));
+  /* Spacing between blocks below the first screen, where space is the only divider. */
+  --gap: calc(3 * var(--s3));
   --display: "Anton", "Arial Narrow", Impact, sans-serif;
   --body: "Archivo", "Helvetica Neue", Arial, sans-serif;
   /* Floors in rem follow the reader's font setting. The ceilings are the design's values. */
@@ -179,6 +183,43 @@ html:not(.js) .skip { display: none; }
   .base { padding-block: var(--s1); }
 }
 
+/* Below the first screen: the same three columns from the page's edges, text inset by --edge. */
+.sling, .others, .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.below h2 { font: 400 var(--title-size)/1.05 var(--display); }
+.below p { max-width: 60ch; }
+.go { display: inline-flex; align-items: center; min-height: 44px; font-weight: 700; text-underline-offset: .16em; }
+.go:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+.links { display: flex; flex-wrap: wrap; gap: 0 var(--s3); }
+
+/* The page's one loud block: its own colour, and footage that touches the right edge. */
+.sling { background: var(--slingshot); }
+.sling-text { display: flex; flex-direction: column; padding: var(--s3) var(--gut) var(--s2) var(--edge); }
+.sling-text h2 { margin-bottom: var(--s2); }
+.sling-text .links { flex-direction: column; align-items: flex-start; margin-top: auto; padding-top: var(--s2); }
+/* The ratio is the footage's. Left to itself the box takes the poster's ratio and jumps on play. */
+.sling video { grid-column: 2 / 4; display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; background: var(--fg); }
+.sling video:focus-visible { outline: 3px solid var(--surface); outline-offset: -3px; }
+
+.others { grid-template-rows: repeat(3, auto); row-gap: var(--gap); padding-top: var(--gap); }
+.others article { padding-left: var(--edge); padding-right: var(--gut); }
+.others h2 { margin-bottom: var(--s1); }
+.others .links { margin-top: var(--s1); }
+.alice { grid-row: 1 / span 3; }
+/* The longest name gets one unbroken line, which also ends level with the Alice image. */
+.wide { grid-column: 2 / 4; }
+/* The store image is tall and ends in marketing text. Its top is the game, and 4:5 stops above the text. */
+.others .alice { padding: 0; }
+.alice h2, .alice p { padding-left: var(--edge); padding-right: var(--gut); }
+.alice img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 5; object-fit: cover; object-position: top; margin-top: var(--s2); }
+
+.row { padding-top: var(--gap); }
+.row > h2, .row > ul, .row > p { padding-left: var(--edge); padding-right: var(--gut); }
+/* The top padding drops the first line of text to the top of the title's letters. */
+.row > ul, .row > p { grid-column: 2 / 4; padding-top: .35em; }
+#experience li + li { margin-top: .35em; }
+#experience { padding-top: var(--gap); }
+#contact { padding-bottom: var(--gap); }
+
 /* A small window, or 200% zoom: the page grows instead of cutting anything off. */
 @media (max-height: 560px), (max-width: 760px) {
   /* The page scrolls here, so height no longer caps the scale and the band still reaches both edges. */
@@ -216,6 +257,14 @@ html:not(.js) .skip { display: none; }
   html.js .panel:not(.open) { visibility: visible; }
   html.js .game { background: var(--col); }
   .skip, .skip[hidden] { display: none; }
+}
+
+/* The sections stack on a phone and in any window too narrow for three text columns. */
+@media (max-aspect-ratio: 1/1), (max-width: 760px) {
+  .sling, .others, .row { display: block; }
+  .sling-text .links { margin-top: 0; }
+  .others article + article { margin-top: var(--gap); }
+  .row > ul, .row > p { padding-top: var(--s1); }
 }
 
 /* No motion: the first paint is already the last frame. There is no run and no game to press,

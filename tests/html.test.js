@@ -203,3 +203,167 @@ test('the page layer leaves colours to the stylesheet and writes no second copy 
   const css = readFileSync(new URL('css/site.css', root), 'utf8');
   assert.match(css, /\.col {[^}]*background: var\(--col\)/);
 });
+
+// Spec sections 12 and 6, below the first screen. Also verbatim.
+const WORK_COPY = [
+  'A precision platformer built around a grappling hook, with my own kinematic physics solver and a state-machine player controller in Unity and C#.',
+  'A mobile match-3 with 100K+ downloads. I fixed live bugs across updates and added anti-cheat.',
+  'My own 2D engine in C++17 and SFML, built from scratch with ECS, and a tactical Tetris running on it at a locked 60 FPS.',
+];
+const EXPERIENCE = [
+  'QA, Ankara, August-October 2026',
+  'Game Developer, Blay Games, July 2025-March 2026',
+  'Game Developer Intern, Blay Games, October 2024-March 2025',
+  'Software Test and QA Intern, Testinium, July-August 2024',
+  'BSc Software Engineering, Izmir University of Economics, 2020-2025',
+];
+const hrefs = (source) => tags('a', source).map((tag) => attr(tag, 'href'));
+const section = (id) => between(`<section id="${id}"`, '</section>');
+const project = (name) => {
+  const block = section('work').split(/(?=<article\b)/).find((part) => part.includes(`<h2>${name}</h2>`));
+  assert.ok(block, `missing project: ${name}`);
+  return block;
+};
+const siteCss = () => readFileSync(new URL('css/site.css', root), 'utf8');
+
+test('the sections follow the first screen, in the agreed order', () => {
+  const at = ['</header>', '<section id="work"', '<section id="experience"', '<section id="contact"'].map((mark) => html.indexOf(mark));
+  assert.ok(at.every((pos) => pos !== -1), `missing a section: ${at}`);
+  assert.deepEqual(at, [...at].sort((a, b) => a - b));
+  assert.ok(at[3] < html.indexOf('</main>'));
+  const names = ['Slingshot', 'Alice in Blastland', 'Tetris Reflex', 'Dungeon', 'Dance Battle', 'CRT filter', 'Shh Do Not Wake The Baby'];
+  const positions = names.map((name) => section('work').indexOf(`<h2>${name}</h2>`));
+  assert.ok(positions.every((pos) => pos !== -1), `missing a project: ${positions}`);
+  assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
+});
+
+test('the work copy is verbatim from the spec', () => {
+  for (const line of WORK_COPY) assert.ok(section('work').includes(line), `missing: ${line}`);
+});
+
+test('every project links where it should', () => {
+  const links = {
+    Slingshot: ['slingshot.html', 'https://github.com/Astrobotiq/RockTheGame'],
+    'Alice in Blastland': ['https://play.google.com/store/apps/details?id=com.blay.wonder', 'https://apps.apple.com/us/app/alice-in-blastland/id1631371168'],
+    'Tetris Reflex': ['tetris-reflex.html'],
+    Dungeon: ['https://github.com/Astrobotiq/Dungeon'],
+    'Dance Battle': ['https://github.com/Astrobotiq/Dance-Battle'],
+    'Shh Do Not Wake The Baby': ['https://github.com/Astrobotiq/Shh-Do-Not-Wake-The-Baby'],
+    'CRT filter': ['https://github.com/Astrobotiq/crt-filter-urp'],
+  };
+  for (const [name, expected] of Object.entries(links)) assert.deepEqual(hrefs(project(name)), expected, name);
+});
+
+test('links that leave the site open a new tab', () => {
+  for (const tag of tags('a', section('work')).concat(tags('a', section('contact')))) {
+    if (!/^https:/.test(attr(tag, 'href'))) continue;
+    assert.equal(attr(tag, 'target'), '_blank', tag);
+    assert.equal(attr(tag, 'rel'), 'noopener', tag);
+  }
+});
+
+test('old copy stays out: no old name, course pages, tags or the old Slingshot concept', () => {
+  for (const phrase of ['Tetris Reverse', '.EXE', '.exe', 'reveal', 'foundational', 'Spring Joints', 'syllabus', 'SE 330', 'SE 350', 'İzmir']) {
+    assert.ok(!html.includes(phrase), `found: ${phrase}`);
+  }
+});
+
+test('the experience list is the five dated lines, in order', () => {
+  const items = section('experience').match(/<li>[^<]*<\/li>/g)?.map((item) => item.slice(4, -5));
+  assert.deepEqual(items?.slice(0, 5), EXPERIENCE);
+});
+
+test('there is no grade and no percentage bar', () => {
+  assert.ok(!html.includes('GPA'));
+  assert.ok(!html.includes('<progress'));
+  assert.ok(!html.includes('progressbar'));
+  assert.doesNotMatch(html.replace(/<[^>]*>/g, ' '), /\d\s*%/);
+  assert.match(section('experience'), /<h2>Skills<\/h2>[\s\S]*Unity/);
+});
+
+test('contact has email, LinkedIn and GitHub', () => {
+  assert.deepEqual(hrefs(section('contact')), [
+    'mailto:koselerlie@gmail.com',
+    'https://www.linkedin.com/in/eren-k%C3%B6selerli/',
+    'https://github.com/Astrobotiq',
+  ]);
+});
+
+test('the Slingshot video waits for the play button', () => {
+  const videos = tags('video');
+  assert.equal(videos.length, 1);
+  const video = videos[0];
+  assert.equal(attr(video, 'preload'), 'none');
+  assert.ok(hasAttr(video, 'controls'));
+  assert.equal(attr(video, 'poster'), 'assets/img/slingshot-poster.jpg');
+  assert.equal(attr(video, 'src'), 'assets/video/slingshot-swing.mp4');
+  assert.ok(hasAttr(video, 'playsinline'));
+  assert.ok(!hasAttr(video, 'autoplay'));
+  assert.match(attr(video, 'width') ?? '', /^\d+$/);
+  assert.match(attr(video, 'height') ?? '', /^\d+$/);
+  assert.ok((attr(video, 'aria-label') ?? '').length > 10, 'the video needs a name');
+  assert.ok(project('Slingshot').includes(video), 'the video belongs to Slingshot');
+});
+
+test('the Alice image describes the game and is cropped above its marketing text', () => {
+  const image = tags('img', project('Alice in Blastland'))[0];
+  assert.equal(attr(image, 'src'), 'assets/img/alice.jpg');
+  assert.equal(attr(image, 'loading'), 'lazy');
+  assert.match(attr(image, 'alt') ?? '', /match-3/);
+  assert.doesNotMatch(attr(image, 'alt') ?? '', /pop the objects/i);
+  assert.match(attr(image, 'width') ?? '', /^\d+$/);
+  assert.match(attr(image, 'height') ?? '', /^\d+$/);
+  assert.match(siteCss(), /object-position: top/);
+});
+
+test('the files the sections use exist', () => {
+  for (const path of ['assets/video/slingshot-swing.mp4', 'assets/img/slingshot-poster.jpg', 'assets/img/alice.jpg']) {
+    assert.ok(existsSync(new URL(path, root)), `missing: ${path}`);
+  }
+});
+
+test('the Slingshot colour is a token, reaches 4.5:1 and says so on a line of its own', () => {
+  const css = siteCss();
+  const hex = css.match(/--slingshot: (#[0-9a-f]{6});/)?.[1];
+  assert.ok(hex, 'missing the --slingshot token');
+  const luminance = (value) => {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16) / 255)
+      .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const ratio = (luminance(hex) + 0.05) / (luminance('#0c0c0d') + 0.05);
+  assert.ok(ratio >= 4.5, `only ${ratio}`);
+  assert.match(css, new RegExp(`^\\s*/\\*[^\\n]*${ratio.toFixed(2)}:1[^\\n]*\\*/\\s*$`, 'm'), 'the comment states the ratio');
+  assert.match(css, /background: var\(--slingshot\)/);
+});
+
+test('the sections stay out of the level: none of its class names are reused below the hero', () => {
+  const below = html.slice(html.indexOf('</header>'));
+  for (const tag of below.match(/<[a-z][^>]*>/g)) {
+    for (const name of ['game', 'title', 'cap', 'slot', 'panel', 'ghost', 'contact', 'cv', 'mail', 'base', 'source', 'skip', 'line', 'col', 'dent', 'l']) {
+      assert.ok(!hasClass(tag, name), `${name} in ${tag}`);
+    }
+  }
+});
+
+test('no decoration: no shadows, no entrance animation, and only the dent is round', () => {
+  const css = siteCss();
+  assert.ok(!css.includes('box-shadow'));
+  assert.ok(!css.includes('@keyframes'));
+  assert.deepEqual(css.match(/border-radius:[^;]*/g), ['border-radius: 50%']);
+  assert.match(css, /\.dent {[^}]*border-radius: 50%/);
+});
+
+test('links in the sections show keyboard focus and are big enough to press', () => {
+  const css = siteCss();
+  assert.match(css, /\.go:focus-visible[^{]*{ outline: 3px solid/);
+  assert.match(css, /\.go {[^}]*min-height: 44px/);
+  const below = html.slice(html.indexOf('</header>'));
+  const links = tags('a', below);
+  assert.ok(links.length >= 10, `only ${links.length} links`);
+  for (const tag of links) assert.ok(hasClass(tag, 'go'), `not a .go link: ${tag}`);
+});
+
+test('the first screen stays one screen tall', () => {
+  assert.match(siteCss().match(/^\.hero {[^}]*}/m)[0], /height: 100svh;/);
+});
