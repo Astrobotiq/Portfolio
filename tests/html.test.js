@@ -382,3 +382,40 @@ test('links in the sections show keyboard focus and are big enough to press', ()
 test('the first screen stays one screen tall', () => {
   assert.match(siteCss().match(/^\.hero {[^}]*}/m)[0], /height: 100svh;/);
 });
+
+const page = (name) => readFileSync(new URL(name, root), 'utf8');
+
+test('the old Tetris address redirects to the renamed page', () => {
+  const old = page('tetris-reverse.html');
+  assert.match(old, /<meta http-equiv="refresh" content="0; url=tetris-reflex\.html">/);
+  assert.match(old, /<link rel="canonical" href="[^"]*tetris-reflex\.html">/);
+  assert.match(old, /<a href="tetris-reflex\.html"/);
+  assert.ok(existsSync(new URL('tetris-reflex.html', root)));
+});
+
+test('the Tetris page uses its new name everywhere', () => {
+  assert.ok(!/Tetris Reverse|tetris_reverse|REVERSE/.test(page('tetris-reflex.html')));
+});
+
+test('the subpages link back to the work section', () => {
+  for (const name of ['tetris-reflex.html', 'slingshot.html']) {
+    const source = page(name);
+    assert.ok(!source.includes('#active-projects'), name);
+    assert.ok(!/Active Projects|active_projects|Aktif Projeler/.test(source), name);
+    assert.ok(source.includes('index.html#work'), name);
+  }
+});
+
+test('sharing metadata is present and the image exists', () => {
+  const meta = (key) => tags('meta').find((tag) => attr(tag, 'property') === key || attr(tag, 'name') === key);
+  for (const key of ['og:title', 'og:description', 'og:image', 'og:url', 'twitter:card']) {
+    assert.ok(meta(key), `missing ${key}`);
+  }
+  assert.equal(attr(meta('twitter:card'), 'content'), 'summary_large_image');
+  const canonical = tags('link').find((tag) => attr(tag, 'rel') === 'canonical');
+  assert.equal(attr(canonical, 'href'), 'https://astrobotiq.github.io/Portfolio/');
+  assert.equal(attr(meta('og:url'), 'content'), 'https://astrobotiq.github.io/Portfolio/');
+  const image = attr(meta('og:image'), 'content');
+  assert.match(image, /^https:\/\/astrobotiq\.github\.io\/Portfolio\/assets\/img\/og\.jpg$/);
+  assert.ok(existsSync(new URL(image.replace('https://astrobotiq.github.io/Portfolio/', ''), root)));
+});
