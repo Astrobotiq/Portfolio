@@ -70,7 +70,7 @@ Kurallar:
 
 Sayfa kaydırılır. Sıra: ad, rol, tanıtım, sonra her oyun için başlık, açıklama ve 2:1 görsel; en altta iletişim.
 
-Başlıklar alt alta geldiği için karakter onlara alttan ulaşamaz. Bu yüzden telefonda **koşu yoktur**: renkler ve görseller baştan açıktır, iz çizilmez, karakter düşüp zeminde durur ve oynanabilir. Bilinçli bir takas: telefonda okunabilirlik önde, "wow" anı yok.
+Başlıklar alt alta geldiği için karakter onlara alttan ulaşamaz. Bu yüzden telefonda **koşu yoktur**: iz çizilmez, karakter düşüp zeminde durur ve oynanabilir. Her oyun, en az yarısı görünene kadar tonunda kalır; sonra sütunu dolar ve görseli `Page.reveal` ile açılır. Azaltılmış harekette her şey baştan açıktır, JavaScript yoksa görseller tam renklidir.
 
 ## 4. Görsel dil: Triptych
 
@@ -93,7 +93,7 @@ Kontrast değerleri renk incelemesinden gelir ve uygulama testinde yeniden ölç
 ### Karakter
 
 - Slingshot'ın karakteri: taç, baş, pelerin, hareket eden gözler.
-- Çarpışma kutusu `0.6 x 0.78` birim; çizim ayaklar sabit kalarak 2.5 kat büyük. Telefonda 1.6 kat.
+- Çarpışma kutusu `0.6 x 0.78` birim; çizim ayaklar sabit kalarak 3 kat büyük. Telefonda 1.6 kat.
 - Dolgu `--fg`, kenar `--surface`; böylece kağıtta, siyah yazıda ve görselde okunur. İp aynı şekilde kenarlıklı.
 - Hız kaynaklı esneme ve iniş sıkışması kullanılır.
 
@@ -154,9 +154,10 @@ Diğer linkler (CV, e-posta, GitHub) her zaman linktir ve oyun girdisi sayılmaz
 
 İlk ekranın altına, aynı ızgara ve aynı renklerle:
 
-1. **Slingshot:** Kişisel oyun; site karakterinin de kaynağı. Oynanış videosu, Time Solid prototipinden gelen tek kare veya geç yüklenen döngü, kısa teknik açıklama, GitHub linki. Rengi oyunun görüntüsünden seçilir, siyah yazıyla en az 4.5:1 sağlar ve sahibi onaylar.
+1. **Slingshot:** Kişisel oyun; site karakterinin de kaynağı. Oynanış videosu `muted loop playsinline`, denetimsizdir: en az yarısı görününce başlar, görünmezken durur, basınca durur veya başlar, klavyeyle düğme olarak ulaşılır. Görünene kadar mp4 indirilmez. Azaltılmış hareket, `saveData` ve telefonda kendiliğinden başlamaz: poster görünür, basınca oynar. Kısa teknik açıklama, GitHub linki. Rengi oyunun görüntüsünden seçilir, siyah yazıyla en az 4.5:1 sağlar ve sahibi onaylar.
 2. **Diğer işler:** Alice in Blastland, Tetris Reflex, mevcut sitedeki Dungeon, Dance Battle, Shh Do Not Wake The Baby ve CRT filter. Her biri başlık, tek cümle ve link. Metinler Bölüm 12'de.
-3. **Deneyim ve iletişim:** Tarihli iş listesi, eğitim (not ortalaması olmadan), beceriler düz liste halinde (yüzde çubuğu olmadan), LinkedIn, GitHub, e-posta.
+3. **Deneyim:** Tarihli iş listesi, eğitim (not ortalaması olmadan), beceriler düz liste halinde (yüzde çubuğu olmadan). Masaüstünde rol, şirket ve tarih sayfa ızgarasının üç sütunundadır, telefonda alt alta.
+4. **Kapanış bandı:** Sayfa tam genişlikte `#f5c518` bir bantla biter: başlık boyunda Anton ile e-posta linki, LinkedIn, GitHub ve Download CV. Telefonda e-posta taşmadan genişliğe sığar.
 
 Deneyim listesi:
 
@@ -294,6 +295,10 @@ Kaynak: `Eren-Köselerli-CV.pdf`, eski site ve mağaza sayfaları. Sitede yalnı
 | Alice in Blastland | A mobile match-3 with 100K+ downloads. I fixed live bugs across updates and added anti-cheat. |
 | Tetris Reflex | My own 2D engine in C++17 and SFML, built from scratch with ECS, and a tactical Tetris running on it at a locked 60 FPS. |
 | Slingshot | A precision platformer built around a grappling hook, with my own kinematic physics solver and a state-machine player controller in Unity and C#. |
+| Dungeon | A Viking tactics game inspired by Into The Breach, with a Utility AI I built to pick attack positions and avoid hazards. |
+| Dance Battle | A turn-based disco card game, with a card effect system I built on ScriptableObjects. |
+| CRT filter | A CRT shader I made for Slingshot and published as an open-source Unity package. |
+| Shh Do Not Wake The Baby | A tower defense where you beat enemies without waking the baby, with grid obstacle placement and a runtime NavMesh. |
 
 Kullanılmayanlar: "15+ months of live-ops" (ana CV'de yok, staj tarihleriyle çelişiyor), "0%" hile raporu, "100% deterministic", proje özetlerindeki doldurulmamış veya örnek yüzdeler.
 
