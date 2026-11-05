@@ -1,0 +1,197 @@
+/* The project pages. They load site.css first, so the fonts and tokens are the home page's own, and
+   only what these pages need of their own lives here. */
+
+:root {
+  /* These pages scroll, so height no longer caps the scale. And they are read, not glanced at. */
+  --w: var(--cw);
+  --u: var(--cw);
+  --text-size: clamp(1.0625rem, calc(.75rem + .45vw), 1.3125rem);
+  --note-size: clamp(1rem, calc(.72rem + .34vw), 1.125rem);
+  --code: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+  --cream: color-mix(in srgb, var(--fg) 88%, var(--surface));
+  /* 1% of what lies between the page's edges, so type that fills the width fits at every size. */
+  --span: calc(var(--cw) - 2 * var(--edge) / 100);
+}
+
+/* Each game keeps the colour its title has on the home page. */
+[data-game="slingshot"] { --accent: var(--coral); --title-fit: 15.8; }
+[data-game="tetris"] { --accent: #f5c518; --title-fit: 11.85; }
+
+/* The header sits outside main here, and it needs the same width without a classic scrollbar. */
+@supports (width: 1cqw) {
+  body { container-type: inline-size; }
+}
+
+body { font-variant-emoji: text; }
+a:focus-visible, button:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+
+/* ── The top line ── */
+nav {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s1) var(--edge);
+  background: url("../assets/img/sky.svg") 0 0 / 720px 480px;
+}
+.nav-back { display: inline-flex; align-items: center; gap: .4em; min-height: 44px; font-weight: 600; text-underline-offset: .16em; }
+.nav-back::before { content: "\2190"; }
+.nav-back:hover { text-decoration-thickness: .14em; }
+
+/* ── The first screen: the home page's order, with the game's name in place of the owner's ── */
+.game-hero { position: relative; isolation: isolate; background: var(--surface); }
+.game-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(70% 40% at 62% 64%, rgba(255, 107, 111, .24), transparent 72%),
+    linear-gradient(180deg, transparent 12%, rgba(58, 42, 88, .9) 46%, rgba(123, 66, 119, .85) 76%),
+    url("../assets/img/sky.svg") 0 0 / 720px 480px;
+}
+.game-title-wrap { padding: var(--s1) var(--edge) var(--s2); }
+/* The signature, as on the home page: the name fills the width. --title-fit is measured per name. */
+.game-title-main { font: 400 calc(var(--title-fit) * var(--span))/1.02 var(--display); letter-spacing: -.005em; white-space: nowrap; color: var(--fg); }
+
+.hero-intro { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding-bottom: var(--s3); }
+.game-hero-status, .game-tagline { padding-left: var(--edge); padding-right: var(--gut); }
+.status-badge { font-size: max(1.25rem, calc(1.9 * var(--cw))); font-weight: 600; line-height: 1.1; color: var(--accent); }
+.genre-tag { margin-top: .3em; color: var(--muted); font-size: var(--note-size); }
+.game-tagline { grid-column: 2 / 4; align-self: center; font-weight: 600; font-size: max(1.0625rem, calc(1.3 * var(--cw))); max-width: 58ch; }
+
+/* The band runs edge to edge and ends on the ribbon, as on the home page. */
+.game-band { display: block; width: 100%; height: calc(24.6 * var(--cw)); min-height: 11rem; object-fit: cover; object-position: 50% 62%; }
+.band-board { fill: var(--ground); }
+.band-grid { fill: none; stroke: var(--fg); stroke-width: .02; opacity: .16; }
+.band-pieces { stroke: var(--ground); stroke-width: .07; }
+.p-teal { fill: var(--teal); }
+.p-coral { fill: var(--coral); }
+.p-lilac { fill: var(--lilac); }
+.p-gold { fill: #f5c518; }
+.p-pink { fill: #ff6fae; }
+.p-violet { fill: #8f7bff; }
+
+.hero-meta {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--s1) var(--gut);
+  padding: var(--s2) var(--edge);
+  background: var(--ground);
+  border-top: 3px solid var(--coral);
+}
+.chip-label { display: block; color: var(--muted); font-size: var(--note-size); }
+.chip-val { display: block; font-weight: 600; }
+.meta-chip:last-child .chip-val { color: var(--accent); }
+
+/* ── The page's three columns: the facts in the first, the writing in the other two ── */
+.page-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sidebar { padding: var(--gap) var(--gut) var(--gap) var(--edge); background: var(--dusk); }
+.content-area { grid-column: 2 / 4; min-width: 0; padding: var(--gap) var(--edge); }
+
+.sidebar-section + .sidebar-section { margin-top: var(--gap); }
+.sidebar-label, .content-sep-label { font-size: max(1.25rem, calc(1.5 * var(--cw))); font-weight: 600; line-height: 1.15; color: var(--accent); }
+.sidebar-label { margin-bottom: var(--s2); }
+.sidebar-intro { color: var(--cream); }
+.sidebar-intro strong { color: var(--fg); font-weight: 600; }
+
+/* Rods on a rope, the marks the home page gives its job list. */
+.philo-list, .mechanic-list { display: flex; flex-direction: column; gap: var(--s2); }
+.philo-item { display: grid; grid-template-columns: 1.1em minmax(0, 1fr); column-gap: .7em; }
+.philo-dot { width: 1.1em; height: 4px; margin-top: .62em; background: var(--teal); }
+.philo-text strong, .mechanic-name { display: block; font-weight: 600; line-height: 1.25; }
+.philo-text span, .mechanic-sub { display: block; font-size: var(--note-size); color: var(--muted); line-height: 1.4; }
+.tech-grid { display: flex; flex-wrap: wrap; gap: .4em; }
+.tech-chip { padding: .1em .55em; background: var(--surface); font-size: var(--note-size); }
+
+/* ── The writing ── */
+.intro-article { margin-bottom: var(--gap); }
+.content-sep { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--s3); margin-bottom: var(--s3); }
+.content-sep-line { display: none; }
+.devlog-count { color: var(--muted); font-size: var(--note-size); }
+
+.article-body, .tl-content { max-width: 66ch; line-height: 1.5; color: var(--cream); }
+.article-body p + p, .tl-content p + p { margin-top: 1em; }
+.article-body strong, .tl-content strong { color: var(--fg); font-weight: 600; }
+.article-body em, .tl-content em { font-style: normal; color: var(--accent); }
+/* The one thing here in a third face, from the reader's own system: code has to read as code. */
+code { font-family: var(--code); font-size: .86em; padding: .05em .3em; background: var(--ground); color: var(--lilac); overflow-wrap: anywhere; }
+.tl-content h4 { margin: 1.6em 0 .5em; font-size: 1.25em; font-weight: 600; line-height: 1.2; color: var(--fg); }
+.tl-content h4:first-child { margin-top: 0; }
+.tl-content ul { margin: 1em 0; padding-left: 1.2em; list-style: square; }
+.tl-content li + li { margin-top: .6em; }
+.tl-content li::marker { color: var(--accent); }
+
+/* The devlog hangs on the same rope as the home page's job list, a rod for each entry. */
+.timeline { position: relative; padding-left: 2rem; }
+.timeline::before { content: ""; position: absolute; left: 0; top: 0; bottom: 1.2em; width: 3px; background: var(--coral); }
+.tl-entry { position: relative; }
+.tl-entry + .tl-entry { margin-top: var(--s3); }
+.tl-dot { position: absolute; left: calc(-2rem - .55em + 1.5px); top: 1.9em; width: 1.1em; height: 4px; background: var(--teal); }
+.tl-entry-next .tl-dot { top: .7em; background: var(--muted); }
+.tl-card { background: var(--dusk); }
+.tl-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: var(--s2); padding: var(--s3); cursor: pointer; }
+.tl-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: .2em 1em; margin-bottom: .6em; font-size: var(--note-size); }
+.tl-date { font-weight: 600; }
+.tl-week { color: var(--muted); }
+.tl-tags { display: flex; flex-wrap: wrap; gap: 0 .8em; color: var(--muted); }
+.tl-tag.physics, .tl-tag.cpp { color: var(--teal); }
+.tl-tag.feel { color: #ff6fae; }
+.tl-tag.arch { color: var(--lilac); }
+.tl-tag.design { color: #f5c518; }
+.tl-tag.perf { color: var(--coral); }
+.tl-title { font: 400 max(1.5rem, calc(2.5 * var(--cw)))/1.08 var(--display); }
+.tl-summary { margin-top: .6em; max-width: 58ch; color: var(--cream); }
+.tl-toggle {
+  min-height: 44px;
+  padding: 0 1em;
+  border: 0;
+  background: var(--accent);
+  color: var(--ink);
+  font: 600 var(--note-size)/1 var(--body);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tl-head:hover .tl-toggle { background: color-mix(in srgb, var(--accent) 80%, var(--fg)); }
+/* Its text is dark, and a dark ring would vanish on the card. */
+.tl-toggle:focus-visible { outline-color: var(--fg); }
+
+/* Height follows the text, whatever the width, so a long entry on a phone is never cut off. */
+.tl-body { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows .3s ease, visibility .3s; }
+.tl-body.open { grid-template-rows: 1fr; visibility: visible; }
+.tl-body-inner { min-height: 0; overflow: hidden; }
+.tl-content { padding: 0 var(--s3) var(--s3); }
+/* Without a script nothing can open the entry, so it starts open and the button goes. */
+html:not(.js) .tl-body { grid-template-rows: 1fr; visibility: visible; }
+html:not(.js) .tl-toggle { display: none; }
+.tl-insight { margin: 1.4em 0; padding: 1em 1.2em; background: var(--ground); border-top: 3px solid var(--teal); }
+.tl-insight-label { margin-bottom: .4em; font-weight: 600; color: var(--teal); font-size: var(--note-size); }
+.tl-coming-label { color: var(--muted); font-weight: 600; }
+
+/* ── The end of the page: the ribbon's colour, edge to edge, and the way back ── */
+footer { display: flex; flex-direction: column; align-items: flex-start; padding: var(--gap) var(--edge) var(--s3); background: var(--coral); color: var(--ink); }
+.footer-back {
+  display: inline-block;
+  font: 400 calc(7.85 * var(--span))/1.05 var(--display);
+  white-space: nowrap;
+  text-decoration: none;
+}
+.footer-back:hover { text-decoration: underline; text-decoration-thickness: .05em; text-underline-offset: .08em; }
+.footer-copy { order: 2; margin-top: var(--s2); }
+
+/* ── Stacked: a phone, or any window too narrow for three text columns ── */
+@media (max-aspect-ratio: 1/1), (max-width: 760px) {
+  nav { gap: var(--s2); }
+  .hero-intro, .page-grid { display: block; }
+  .game-tagline { margin-top: var(--s1); }
+  .game-band { height: auto; aspect-ratio: 2 / 1; min-height: 0; }
+  .hero-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .timeline { padding-left: 1.25rem; }
+  .tl-dot { left: calc(-1.25rem - .55em + 1.5px); }
+  .tl-head { grid-template-columns: minmax(0, 1fr); padding: var(--s2); }
+  .tl-toggle { justify-self: start; }
+  .tl-content { padding: 0 var(--s2) var(--s2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-body { transition: none; }
+}

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<script>document.documentElement.classList.add('js');</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tetris Reflex — Eren Köselerli</title>
+<meta name="theme-color" content="#1a1826">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="preload" as="font" type="font/woff2" href="assets/fonts/gasoek-one-latin.woff2" crossorigin>
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/subpage.css">
+</head>
+
+<body data-game="tetris">
+
+  <nav>
+    <a href="index.html#work" class="nav-back">Work</a>
+  </nav>
+
+  <header class="game-hero">
+    <div class="game-title-wrap">
+      <h1 class="game-title-main">TETRIS REFLEX</h1>
+    </div>
+    <div class="hero-intro">
+    <div class="game-hero-status">
+      <div class="status-badge wip">In development</div>
+      <div class="genre-tag">Tactical puzzle</div>
+    </div>
+    <div class="game-tagline">Custom 2D engine in C++17, with RAII and ECS.</div>
+    </div>
+    <svg class="game-band" viewBox="0 0 34 8" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+      <defs><pattern id="cell" width="1" height="1" patternUnits="userSpaceOnUse"><path class="band-grid" d="M1 0H0V1"/></pattern></defs>
+      <rect class="band-board" width="34" height="8"/>
+      <rect fill="url(#cell)" width="34" height="8"/>
+      <g class="band-pieces">
+        <path class="p-pink" d="M19 5h1v1h-1zM19 6h1v1h-1zM18 7h1v1h-1zM19 7h1v1h-1z"/>
+        <path class="p-teal" d="M25 7h1v1h-1zM26 7h1v1h-1zM27 7h1v1h-1zM28 7h1v1h-1z"/>
+        <path class="p-lilac" d="M29 5h1v1h-1zM28 6h1v1h-1zM29 6h1v1h-1zM29 7h1v1h-1z"/>
+        <path class="p-gold" d="M1 6h1v1h-1zM2 6h1v1h-1zM1 7h1v1h-1zM2 7h1v1h-1z"/>
+        <path class="p-violet" d="M4 5h1v1h-1zM4 6h1v1h-1zM5 6h1v1h-1zM5 7h1v1h-1z"/>
+        <path class="p-gold" d="M21 6h1v1h-1zM22 6h1v1h-1zM21 7h1v1h-1zM22 7h1v1h-1z"/>
+        <path class="p-teal" d="M32 4h1v1h-1zM32 5h1v1h-1zM32 6h1v1h-1zM32 7h1v1h-1z"/>
+        <path class="p-pink" d="M9 6h1v1h-1zM9 7h1v1h-1zM10 7h1v1h-1zM11 7h1v1h-1z"/>
+        <path class="p-pink" d="M13 5h1v1h-1zM13 6h1v1h-1zM12 7h1v1h-1zM13 7h1v1h-1z"/>
+        <path class="p-gold" d="M16 6h1v1h-1zM17 6h1v1h-1zM16 7h1v1h-1zM17 7h1v1h-1z"/>
+        <path class="p-lilac" d="M24 5h1v1h-1zM24 6h1v1h-1zM25 6h1v1h-1zM24 7h1v1h-1z"/>
+        <path class="p-gold" d="M6 6h1v1h-1zM7 6h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1z"/>
+        <path class="p-coral" d="M7 4h1v1h-1zM5 5h1v1h-1zM6 5h1v1h-1zM7 5h1v1h-1z"/>
+        <path class="p-pink" d="M15 5h1v1h-1zM15 6h1v1h-1zM14 7h1v1h-1zM15 7h1v1h-1z"/>
+        <path class="p-lilac" d="M9 5h1v1h-1zM10 5h1v1h-1zM11 5h1v1h-1zM10 6h1v1h-1z"/>
+        <path class="p-teal" d="M0 4h1v1h-1zM0 5h1v1h-1zM0 6h1v1h-1zM0 7h1v1h-1z"/>
+        <path class="p-violet" d="M6 3h1v1h-1zM7 3h1v1h-1zM5 4h1v1h-1zM6 4h1v1h-1z"/>
+        <path class="p-lilac" d="M28 3h1v1h-1zM28 4h1v1h-1zM29 4h1v1h-1zM28 5h1v1h-1z"/>
+        <path class="p-coral" d="M31 5h1v1h-1zM30 6h1v1h-1zM31 6h1v1h-1zM30 7h1v1h-1z"/>
+        <path class="p-pink" d="M9 3h1v1h-1zM9 4h1v1h-1zM10 4h1v1h-1zM11 4h1v1h-1z"/>
+        <path class="p-pink" d="M20 5h1v1h-1zM21 5h1v1h-1zM20 6h1v1h-1zM20 7h1v1h-1z"/>
+        <path class="p-coral" d="M15 4h1v1h-1zM16 4h1v1h-1zM16 5h1v1h-1zM17 5h1v1h-1z"/>
+        <path class="p-lilac" d="M30 3h1v1h-1zM30 4h1v1h-1zM31 4h1v1h-1zM30 5h1v1h-1z"/>
+        <path class="p-gold" d="M1 4h1v1h-1zM2 4h1v1h-1zM1 5h1v1h-1zM2 5h1v1h-1z"/>
+        <path class="p-teal" d="M8 4h1v1h-1zM8 5h1v1h-1zM8 6h1v1h-1zM8 7h1v1h-1z"/>
+        <path class="p-coral" d="M13 3h1v1h-1zM12 4h1v1h-1zM13 4h1v1h-1zM12 5h1v1h-1z"/>
+        <path class="p-lilac" d="M17 4h1v1h-1zM18 4h1v1h-1zM19 4h1v1h-1zM18 5h1v1h-1z"/>
+        <path class="p-pink" d="M27 4h1v1h-1zM27 5h1v1h-1zM26 6h1v1h-1zM27 6h1v1h-1z"/>
+        <path class="p-pink" d="M21 2h1v1h-1zM21 3h1v1h-1zM20 4h1v1h-1zM21 4h1v1h-1z"/>
+      </g>
+    </svg>
+    <dl class="hero-meta">
+      <div class="meta-chip"><dt class="chip-label">Engine</dt><dd class="chip-val">SimpleEngine2D</dd></div>
+      <div class="meta-chip"><dt class="chip-label">Language</dt><dd class="chip-val">C++</dd>
+      </div>
+      <div class="meta-chip"><dt class="chip-label">Genre</dt><dd class="chip-val"
+         >Puzzle</dd></div>
+      <div class="meta-chip"><dt class="chip-label">Inspired by</dt><dd class="chip-val">Tetris</dd></div>
+      <div class="meta-chip"><dt class="chip-label">Status</dt><dd class="chip-val"
+         >WIP</dd></div>
+    </dl>
+  </header>
+
+  <main>
+    <div class="page-grid">
+
+      <aside class="sidebar">
+
+        <div class="sidebar-section">
+          <h2 class="sidebar-label">About</h2>
+          <p class="sidebar-intro">A tactical Tetris running on my own C++ engine, <strong>SimpleEngine2D</strong>. Instead of guiding falling blocks, you drag pieces from a deck of three and place them on the board.</p>
+        </div>
+
+        <div class="sidebar-section">
+          <h2 class="sidebar-label">Engine philosophy</h2>
+          <div class="philo-list">
+            <div class="philo-item">
+              <div class="philo-dot"></div>
+              <div class="philo-text">
+                <strong>Manual Memory (RAII)</strong>
+                <span>No garbage collector. Deterministic resource lifecycles using Smart
+                  Pointers and Value Semantics.</span>
+              </div>
+            </div>
+            <div class="philo-item">
+              <div class="philo-dot"></div>
+              <div class="philo-text">
+                <strong>Cache Locality</strong>
+                <span>Data-oriented design. Contiguous memory allocation using std::array for
+                  the game board.</span>
+              </div>
+            </div>
+            <div class="philo-item">
+              <div class="philo-dot"></div>
+              <div class="philo-text">
+                <strong>ECS Architecture</strong>
+                <span>Strict separation of data (Components) and logic (Systems) for an
+                  extensible foundation.</span>
+              </div>
+            </div>
+            <div class="philo-item">
+              <div class="philo-dot"></div>
+              <div class="philo-text">
+                <strong>Decoupled Systems</strong>
+                <span>Type-safe EventBus architecture to broadcast line clears and state changes
+                  across the engine.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h2 class="sidebar-label">Core mechanics</h2>
+          <div class="mechanic-list">
+            <div class="mechanic-item">
+              <div class="mechanic-name">Drag & Drop</div>
+              <div class="mechanic-sub">Tactical placement instead of falling blocks</div>
+            </div>
+            <div class="mechanic-item">
+              <div class="mechanic-name">Deck Management</div>
+              <div class="mechanic-sub">Manage 3 available pieces strategically</div>
+            </div>
+            <div class="mechanic-item">
+              <div class="mechanic-name">AABB Collision</div>
+              <div class="mechanic-sub">Custom bounding box checks for placement</div>
+            </div>
+            <div class="mechanic-item">
+              <div class="mechanic-name">Grid Alignment</div>
+              <div class="mechanic-sub">Pixel-perfect snapping to a 10x18 board</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h2 class="sidebar-label">Tech stack</h2>
+          <div class="tech-grid">
+            <div class="tech-chip">C++17</div>
+            <div class="tech-chip">SimpleEngine2D</div>
+            <div class="tech-chip">ECS</div>
+            <div class="tech-chip">RAII</div>
+            <div class="tech-chip">SFML</div>
+            <div class="tech-chip">EventBus</div>
+            <div class="tech-chip">Smart Pointers</div>
+            <div class="tech-chip">std::array</div>
+          </div>
+        </div>
+
+      </aside>
+
+      <div class="content-area">
+
+        <div class="intro-article">
+          <div class="content-sep">
+            <h2 class="content-sep-label">Introduction</h2>
+            <div class="content-sep-line"></div>
+          </div>
+          <div class="article-body" id="intro-body">
+      <p>I started this project to build a fast game engine, <strong>SimpleEngine2D</strong>, in modern C++ without giving up memory safety. Tetris is the game running on it. There's no Garbage Collector: I manage resource lifecycles entirely through <strong>RAII (Resource Acquisition Is Initialization)</strong>.</p>
+      <p>Without a commercial engine's "magic", I can see what actually happens in memory. The project combines modern C++17 features with Data-Oriented Design.</p>
+      </div>
+        </div>
+
+        <div class="devlog-section">
+          <div class="content-sep">
+            <h2 class="content-sep-label">Devlog: engine diary</h2>
+            <div class="content-sep-line"></div>
+            <div class="devlog-count">1 entry</div>
+          </div>
+
+          <div class="timeline" id="timeline">
+
+            <div class="tl-entry" id="entry-01">
+              <div class="tl-dot"></div>
+              <div class="tl-card">
+                <div class="tl-head" onclick="toggleEntry('entry-01')">
+                  <div>
+                    <div class="tl-meta">
+                      <div class="tl-date">2026 — W01</div>
+                      <div class="tl-week">Week 01</div>
+                      <div class="tl-tags">
+                        <span class="tl-tag cpp">C++</span>
+                        <span class="tl-tag arch">Architecture</span>
+                        <span class="tl-tag perf">Performance</span>
+                        <span class="tl-tag design">Design</span>
+                      </div>
+                    </div>
+                    <h3 class="tl-title">Reimagining Tetris with C++</h3>
+                    <div class="tl-summary">Building the SimpleEngine2D foundation, RAII
+                      memory management, and moving from real-time to tactical drag-and-drop gameplay.</div>
+                  </div>
+                  <button type="button" class="tl-toggle" id="entry-01-toggle" aria-expanded="false" aria-controls="entry-01-body">▶ Read</button>
+                </div>
+                <div class="tl-body" id="entry-01-body">
+                  <div class="tl-body-inner">
+                    <div class="tl-content" id="entry01-content">
+      <h4>1. Design: drag-and-drop mechanic</h4>
+      <p>In classic Tetris, pieces fall while you guide them. Here you drag 3 different pieces from the bottom bar and place them on the board, closer to a <strong>mathematical deck management</strong> game. That moves the genre from "real-time reflex" to "tactical placement."</p>
+
+      <h4>2. Memory management and object lifecycle</h4>
+      <p>Modern C++ is strict about object <strong>ownership</strong>. Here is how I handled it:</p>
+      <ul>
+        <li><strong>Value semantics:</strong> I defined <code>Tetromino</code> pieces as <code>struct</code>s and kept them on the <strong>stack</strong>, instead of treating everything as a "reference" like in C#.</li>
+        <li><strong>Smart pointers:</strong> Core engine systems live in <code>std::unique_ptr</code>, so each has one owner and its memory is released when the engine shuts down.</li>
+        <li><strong>Decoupling:</strong> A type-safe <strong>EventBus</strong> tells the engine when a piece is dropped or a line is cleared.</li>
+      </ul>
+
+      <h4>3. Technical architecture: ECS</h4>
+      <p>SimpleEngine2D is built on an <strong>Entity-Component-System (ECS)</strong> architecture. A Tetris block is just an <code>Entity</code> (an ID). Its position lives in a <code>TransformComponent</code> and its visual in a <code>SpriteComponent</code>.</p>
+
+      <div class="tl-insight">
+        <div class="tl-insight-label">Engineering insight</div>
+        <p>Why <code>std::array</code> over <code>std::vector</code> for the board? The 10x18 grid never changes size, so <code>std::array</code> keeps it in one contiguous block with no separate heap allocation, which is good for CPU cache locality.</p>
+      </div>
+
+      <h4>4. Modern C++ touches</h4>
+      <p>C++17's <code>std::optional</code> and <code>std::variant</code> improved my error handling. To check whether the mouse is holding a piece, I use <code>std::optional&lt;Piece&gt;</code> instead of a raw null pointer, which is cleaner and safer.</p>
+                </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tl-entry tl-entry-next">
+              <div class="tl-dot"></div>
+              <div class="tl-coming">
+                <div class="tl-coming-label">Next entry loading<span>█</span></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-copy">© 2026 Eren Köselerli, Unity developer</div>
+    <a href="index.html#work" class="footer-back">← BACK TO PORTFOLIO</a>
+  </footer>
+
+  <script>
+  function toggleEntry(id) {
+    const body = document.getElementById(id + '-body');
+    const toggle = document.getElementById(id + '-toggle');
+    const isOpen = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    toggle.classList.toggle('open', !isOpen);
+    toggle.setAttribute('aria-expanded', String(!isOpen));
+    toggle.textContent = isOpen ? '▶ Read' : '▲ Close';
+  }
+</script>
+</body>
+
+</html>
