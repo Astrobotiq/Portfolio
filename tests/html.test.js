@@ -319,7 +319,7 @@ test('there is no grade and no percentage bar', () => {
 test('the page ends on a coral band with the email, LinkedIn, GitHub and the CV', () => {
   assert.deepEqual(hrefs(section('contact')), [
     'mailto:koselerlie@gmail.com',
-    'https://www.linkedin.com/in/eren-k%C3%B6selerli/',
+    'https://www.linkedin.com/in/eren-koselerli/',
     'https://github.com/Astrobotiq',
     'assets/Eren-Koselerli-CV.pdf',
   ]);
